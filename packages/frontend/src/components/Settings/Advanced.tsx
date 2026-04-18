@@ -15,6 +15,7 @@ import ProxyConfiguration from '../dialogs/ProxyConfiguration'
 import { selectedAccountId } from '../../ScreenController'
 import TransportsDialog from '../dialogs/Transports'
 import { LogDialog } from '../dialogs/Log'
+import KeyManagementDialog from '../dialogs/KeyManagement'
 import { DialogProps } from '../../contexts/DialogContext'
 import { getLogger } from '../../../../shared/logger'
 
@@ -95,6 +96,18 @@ export default function Advanced({ onClose }: Props) {
 
       <SettingsHeading>{tx('pref_experimental_features')}</SettingsHeading>
       <ExperimentalFeatures />
+
+      {settingsStore.desktopSettings.enableKeyManagement && (
+        <>
+          <SettingsSeparator />
+          <SettingsHeading>{tx('key_management')}</SettingsHeading>
+          <SettingsButton
+            onClick={() => openDialog(KeyManagementDialog)}
+          >
+            {tx('key_management')}
+          </SettingsButton>
+        </>
+      )}
 
       {runtime.getRuntimeInfo().target !== 'browser' && (
         <>
