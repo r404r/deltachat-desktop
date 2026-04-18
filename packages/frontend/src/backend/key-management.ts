@@ -1,4 +1,5 @@
 import { BackendRemote } from '../backend-com'
+import { unknownErrorToString } from '@deltachat-desktop/shared/unknownErrorToString'
 
 // -- Type definitions for key management --
 // These types define the contract for future core RPC APIs.
@@ -108,13 +109,30 @@ export async function unpinContactKey(
   return { success: false, error: 'Not yet supported by core' }
 }
 
-/** Import a secret key (stub until core supports it) */
+/**
+ * Import a secret key from an ASCII-armored PGP file.
+ *
+ * Wraps core's `import_self_keys` RPC. Constraints (must surface in UI):
+ * - Only `.asc` (ASCII-armored) format is supported
+ * - The key must not be passphrase-protected (core accepts `null` only today)
+ * - Only RSA or Ed25519 keys work reliably
+ * - Importing replaces the current account key
+ * - Verified/SecureJoin groups will show "non-verified encryption" warnings
+ *   after the swap
+ *
+ * Upstream removed the UI for this on 2025-03-18 (PR #4784) as a product
+ * decision. The RPC itself is still present and functional in core v2.49.0.
+ */
 export async function importSelfSecretKey(
-  _accountId: number,
-  _keyData: string
+  accountId: number,
+  path: string
 ): Promise<KeyOperationResult> {
-  // TODO: Phase 3 — call RPC import_self_secret_key when available in core
-  return { success: false, error: 'Not yet supported by core' }
+  try {
+    await BackendRemote.rpc.importSelfKeys(accountId, path, null)
+    return { success: true }
+  } catch (err) {
+    return { success: false, error: unknownErrorToString(err) }
+  }
 }
 
 // -- Helpers --
