@@ -7,7 +7,9 @@ import type { ContactKeyInfo } from '../../../backend/key-management'
 import { unknownErrorToString } from '@deltachat-desktop/shared/unknownErrorToString'
 import { runtime } from '@deltachat-desktop/runtime-interface'
 import { InlineVerifiedIcon } from '../../VerifiedIcon'
-import { pinContactKey, unpinContactKey } from '../../../backend/key-management'
+// Pin/unpin stubs are defined in backend/key-management.ts but not yet
+// supported by core. Buttons are rendered disabled until core provides
+// the pin_contact_key / unpin_contact_key RPC endpoints.
 
 type Props = {
   contactId: number
@@ -111,83 +113,53 @@ export default function ContactKeyDetail({ contactId }: Props) {
             : tx('key_management_copy_fingerprint')}
         </button>
 
-        {keyInfo.fingerprint && (
-          <PinUnpinButtons
-            accountId={selectedAccountId()}
-            contactId={contactId}
-            fingerprint={keyInfo.fingerprint}
-          />
-        )}
+        {keyInfo.fingerprint && <PinUnpinButtons />}
       </div>
     </div>
   )
 }
 
-function PinUnpinButtons({
-  accountId,
-  contactId,
-  fingerprint,
-}: {
-  accountId: number
-  contactId: number
-  fingerprint: string
-}) {
+function PinUnpinButtons() {
   const tx = useTranslationFunction()
-  const [status, setStatus] = useState<string | null>(null)
 
-  const handlePin = async () => {
-    const result = await pinContactKey(accountId, contactId, fingerprint)
-    if (!result.success) {
-      setStatus(result.error || tx('error'))
-    }
-  }
-
-  const handleUnpin = async () => {
-    const result = await unpinContactKey(accountId, contactId)
-    if (!result.success) {
-      setStatus(result.error || tx('error'))
-    }
-  }
+  // Core does not yet provide pin_contact_key / unpin_contact_key RPCs.
+  // Buttons are disabled until those endpoints are available.
+  const coreSupportsPin = false
 
   return (
     <>
       <button
         type='button'
-        onClick={handlePin}
+        disabled
         title={tx('key_management_pin_desc')}
         style={{
           padding: '4px 12px',
-          cursor: 'pointer',
+          cursor: coreSupportsPin ? 'pointer' : 'not-allowed',
           border: '1px solid var(--borderColor)',
           borderRadius: '4px',
           background: 'var(--bgPrimary)',
           color: 'var(--textPrimary)',
-          opacity: 0.6,
+          opacity: 0.4,
         }}
       >
         {tx('key_management_pin_key')}
       </button>
       <button
         type='button'
-        onClick={handleUnpin}
+        disabled
         title={tx('key_management_unpin_desc')}
         style={{
           padding: '4px 12px',
-          cursor: 'pointer',
+          cursor: coreSupportsPin ? 'pointer' : 'not-allowed',
           border: '1px solid var(--borderColor)',
           borderRadius: '4px',
           background: 'var(--bgPrimary)',
           color: 'var(--textPrimary)',
-          opacity: 0.6,
+          opacity: 0.4,
         }}
       >
         {tx('key_management_unpin_key')}
       </button>
-      {status && (
-        <p style={{ fontSize: '12px', color: 'var(--textSecondary)', width: '100%' }}>
-          {status}
-        </p>
-      )}
     </>
   )
 }
