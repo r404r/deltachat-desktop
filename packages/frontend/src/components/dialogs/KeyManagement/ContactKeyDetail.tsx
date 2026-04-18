@@ -1,19 +1,111 @@
-import React from 'react'
+import React, { useEffect, useState } from 'react'
 
 import useTranslationFunction from '../../../hooks/useTranslationFunction'
+import { selectedAccountId } from '../../../ScreenController'
+import { getContactKeyInfo } from '../../../backend/key-management'
+import type { ContactKeyInfo } from '../../../backend/key-management'
+import { unknownErrorToString } from '@deltachat-desktop/shared/unknownErrorToString'
+import { runtime } from '@deltachat-desktop/runtime-interface'
+import { InlineVerifiedIcon } from '../../VerifiedIcon'
 
 type Props = {
   contactId: number
 }
 
-export default function ContactKeyDetail({ contactId: _ }: Props) {
+export default function ContactKeyDetail({ contactId }: Props) {
   const tx = useTranslationFunction()
+  const [keyInfo, setKeyInfo] = useState<ContactKeyInfo | null>(null)
+  const [error, setError] = useState<string | null>(null)
+  const [copied, setCopied] = useState(false)
+
+  useEffect(() => {
+    getContactKeyInfo(selectedAccountId(), contactId)
+      .then(setKeyInfo)
+      .catch(err => setError(unknownErrorToString(err)))
+  }, [contactId])
+
+  const copyInfo = async () => {
+    if (!keyInfo) return
+    await runtime.writeClipboardText(keyInfo.encryptionInfo)
+    setCopied(true)
+    setTimeout(() => setCopied(false), 2000)
+  }
+
+  if (error) {
+    return <p style={{ color: 'var(--colorDanger)' }}>{tx('error_x', error)}</p>
+  }
+
+  if (!keyInfo) {
+    return <p style={{ color: 'var(--textSecondary)' }}>{tx('loading')}</p>
+  }
 
   return (
     <div>
-      <p style={{ color: 'var(--textSecondary)' }}>
-        {tx('loading')}
-      </p>
+      <div style={{ marginBottom: '12px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+          <span style={{ fontWeight: 600, fontSize: '16px' }}>
+            {keyInfo.displayName}
+          </span>
+          {keyInfo.isVerified && <InlineVerifiedIcon />}
+        </div>
+        <span
+          style={{
+            color: 'var(--textSecondary)',
+            fontSize: '13px',
+          }}
+        >
+          {keyInfo.address}
+        </span>
+      </div>
+
+      <div style={{ marginBottom: '12px' }}>
+        <span
+          style={{
+            display: 'inline-block',
+            padding: '2px 8px',
+            borderRadius: '4px',
+            fontSize: '12px',
+            fontWeight: 500,
+            background: keyInfo.isEncrypted
+              ? 'var(--colorSuccess, #2e7d32)'
+              : 'var(--colorDanger, #c62828)',
+            color: '#fff',
+          }}
+        >
+          {keyInfo.isEncrypted
+            ? tx('messages_are_e2ee')
+            : tx('unencrypted')}
+        </span>
+      </div>
+
+      <div
+        style={{
+          whiteSpace: 'pre-wrap',
+          fontSize: '13px',
+          padding: '12px',
+          border: '1px solid var(--borderColor)',
+          borderRadius: '4px',
+          fontFamily: 'monospace',
+          marginBottom: '8px',
+        }}
+      >
+        {keyInfo.encryptionInfo}
+      </div>
+
+      <button
+        type='button'
+        onClick={copyInfo}
+        style={{
+          padding: '4px 12px',
+          cursor: 'pointer',
+          border: '1px solid var(--borderColor)',
+          borderRadius: '4px',
+          background: 'var(--bgPrimary)',
+          color: 'var(--textPrimary)',
+        }}
+      >
+        {copied ? tx('copied_to_clipboard') : tx('key_management_copy_fingerprint')}
+      </button>
     </div>
   )
 }
