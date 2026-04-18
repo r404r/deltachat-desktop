@@ -1,4 +1,4 @@
-import { BackendRemote, Type } from '../backend-com'
+import { BackendRemote } from '../backend-com'
 
 import { C } from '@deltachat/jsonrpc-client'
 
