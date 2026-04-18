@@ -95,6 +95,11 @@ export function ExperimentalFeatures() {
       )}
       <SyncAllAccountsSwitch />
       <DesktopSettingsSwitch
+        settingsKey='enableKeyManagement'
+        label={tx('key_management')}
+        description={tx('key_management_desc')}
+      />
+      <DesktopSettingsSwitch
         settingsKey='enableWebxdcDevTools'
         label='Enable Webxdc Devtools'
         // See https://delta.chat/en/2023-05-22-webxdc-security,

@@ -124,5 +124,11 @@
   },
   "remove_attachment": {
     "message": "Remove Attachment"
+  },
+  "key_management": {
+    "message": "Key Management"
+  },
+  "key_management_desc": {
+    "message": "View and manage encryption keys for your account and contacts"
   }
 }

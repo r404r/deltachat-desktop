@@ -83,6 +83,8 @@ export interface DesktopSettingsType {
   autostart: boolean
   /** whether to start Electron with system on supported platforms */
   autostartElectron: boolean
+  /** Enable key management UI (experimental) */
+  enableKeyManagement: boolean
 }
 
 export interface RC_Config {
