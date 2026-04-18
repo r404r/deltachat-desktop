@@ -46,4 +46,5 @@ Connect Desktop UI to real core APIs once available.
 | 4 | Account key info display | `04-account-key-info.md` | DONE |
 | 5 | Contact key list + detail view | `05-contact-key-info.md` | DONE |
 | 6 | Pin / unpin UI | `06-pin-unpin-ui.md` | DONE (disabled, awaiting core) |
-| 7 | Import self key UI | `07-import-self-key.md` | DONE (disabled, awaiting core) |
+| 7 | Import self key UI | `07-import-self-key.md` | SUPERSEDED by Task 8 |
+| 8 | Enable real import self key | `08-enable-import-key.md` | DONE (experimental) |
