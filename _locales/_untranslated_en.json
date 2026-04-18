@@ -168,7 +168,28 @@
     "message": "Import Key"
   },
   "key_management_import_desc": {
-    "message": "Import a private key file to replace the current account key (not yet supported by core)"
+    "message": "Replace the current account key with an imported PGP private key (experimental)"
+  },
+  "key_management_import_warning_header": {
+    "message": "Warning: Key Import Risks"
+  },
+  "key_management_import_warning_body": {
+    "message": "Importing a private key is destructive and experimental. Please read carefully:\n\n• Your current account key will be REPLACED.\n• Verified (green checkmark) groups will break and show 'non-verified encryption' warnings.\n• Only ASCII-armored PGP keys (.asc) without a passphrase are supported.\n• Only RSA or Ed25519 keys are guaranteed to work.\n• Future Delta Chat updates may not migrate imported keys correctly.\n• This feature was removed from the official client for these reasons.\n\nOnly proceed if you understand the consequences."
+  },
+  "key_management_import_warning_continue": {
+    "message": "I understand, continue"
+  },
+  "key_management_import_confirm_header": {
+    "message": "Replace Account Key?"
+  },
+  "key_management_import_confirm_body": {
+    "message": "Import key from:\n%1$s\n\nThis will REPLACE your current account key. This action cannot be undone."
+  },
+  "key_management_import_confirm_action": {
+    "message": "Replace Key"
+  },
+  "key_management_import_success": {
+    "message": "Key imported successfully"
   },
   "key_management_no_fingerprint": {
     "message": "No fingerprint available"
