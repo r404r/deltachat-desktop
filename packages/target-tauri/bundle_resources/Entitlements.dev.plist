@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!--
+  Development entitlements for ad-hoc signed local Tauri builds.
+
+  The production `Entitlements.plist` contains Apple-developer-specific keys
+  (`com.apple.application-identifier`, `com.apple.developer.team-identifier`,
+  `com.apple.developer.associated-domains`) that are only valid when the app
+  is signed with an Apple Developer certificate for team `8Y86453UA8`
+  (merlinux). With ad-hoc signatures those entitlements are rejected by
+  macOS Gatekeeper with "The application can't be opened".
+
+  Use this file when making local/CI builds that are NOT signed with a real
+  Developer ID. Re-sign after `tauri build` with:
+
+    codesign --force --deep --sign - \
+             --entitlements packages/target-tauri/bundle_resources/Entitlements.dev.plist \
+             --options runtime \
+             target/release/bundle/macos/deltachat-tauri.app
+-->
+<plist version="1.0">
+    <dict>
+        <key>com.apple.security.cs.allow-jit</key>
+        <true/>
+        <key>com.apple.security.cs.allow-unsigned-executable-memory</key>
+        <true/>
+        <key>com.apple.security.cs.disable-library-validation</key>
+        <true/>
+
+        <key>com.apple.security.network.client</key>
+        <true/>
+        <key>com.apple.security.network.server</key>
+        <true/>
+
+        <key>com.apple.security.device.audio-input</key>
+        <true/>
+        <key>com.apple.security.device.microphone</key>
+        <true/>
+        <key>com.apple.security.device.camera</key>
+        <true/>
+
+        <key>com.apple.security.files.user-selected.read-only</key>
+        <true/>
+        <key>com.apple.security.files.user-selected.read-write</key>
+        <true/>
+    </dict>
+</plist>
