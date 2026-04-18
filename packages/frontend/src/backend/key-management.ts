@@ -1,5 +1,8 @@
 import { BackendRemote } from '../backend-com'
 import { unknownErrorToString } from '@deltachat-desktop/shared/unknownErrorToString'
+import { getLogger } from '@deltachat-desktop/shared/logger'
+
+const log = getLogger('renderer/backend/key-management')
 
 // -- Type definitions for key management --
 // These types define the contract for future core RPC APIs.
@@ -51,9 +54,17 @@ export interface KeyOperationResult {
  * Get account key info.
  *
  * Core refuses `getContactEncryptionInfo` for the self contact ("special
- * contact"), so we obtain the fingerprint from the Setup-Contact QR code
- * (`getChatSecurejoinQrCode(accountId, null)`) which is the account's own
- * OPENPGP4FPR URI. The fingerprint is the path component before `#`.
+ * contact"). We obtain the fingerprint via a two-step flow:
+ *
+ * 1. Get the account's own Setup-Contact QR string using
+ *    `getChatSecurejoinQrCode(accountId, null)`.
+ * 2. Pass that string to `checkQr()` — core parses it and returns a structured
+ *    `Qr` union whose `withdrawVerifyContact` / `reviveVerifyContact` variants
+ *    (what core returns when you "scan" your own QR) carry a `fingerprint`
+ *    field. Using core's parser instead of a regex avoids format drift.
+ *
+ * If `checkQr` does not yield a fingerprint (e.g. unexpected QR kind), fall
+ * back to a regex parse of the QR URI as a best-effort.
  */
 export async function getAccountKeyInfo(
   accountId: number
@@ -62,7 +73,34 @@ export async function getAccountKeyInfo(
     BackendRemote.rpc.getChatSecurejoinQrCode(accountId, null),
     BackendRemote.rpc.getConfig(accountId, 'configured_addr'),
   ])
-  const fingerprint = parseFingerprintFromQr(qr)
+
+  let fingerprint = ''
+  try {
+    const parsed = await BackendRemote.rpc.checkQr(accountId, qr)
+    if (parsed && typeof parsed === 'object' && 'fingerprint' in parsed) {
+      const fp = (parsed as { fingerprint?: unknown }).fingerprint
+      if (typeof fp === 'string') {
+        fingerprint = fp
+      }
+    }
+    if (!fingerprint) {
+      log.warn(
+        'checkQr returned no fingerprint for account self QR',
+        'kind=',
+        (parsed as { kind?: unknown })?.kind,
+        'qr=',
+        qr
+      )
+    }
+  } catch (err) {
+    log.warn('checkQr failed on account self QR', err, 'qr=', qr)
+  }
+
+  if (!fingerprint) {
+    // Best-effort regex fallback against `OPENPGP4FPR:<hex>#...`.
+    fingerprint = parseFingerprintFromQr(qr)
+  }
+
   return {
     fingerprint: formatFingerprint(fingerprint),
     address: address ?? '',
