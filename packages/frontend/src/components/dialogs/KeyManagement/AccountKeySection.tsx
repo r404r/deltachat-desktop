@@ -134,6 +134,20 @@ function ImportKeyButton({ onImported }: { onImported: () => void }) {
     if (!filename) return
     setLastPath(dirname(filename))
 
+    // In browser builds, showOpenFileDialog uploads the picked file into a
+    // backend temp path. Since this file contains PRIVATE KEY material, we
+    // must delete it on every exit path.
+    const isBrowser = runtime.getRuntimeInfo().target === 'browser'
+    const cleanupTempFile = async () => {
+      if (isBrowser) {
+        try {
+          await runtime.removeTempFile(filename)
+        } catch {
+          // best-effort cleanup; nothing actionable on failure
+        }
+      }
+    }
+
     // Step 3: Final confirmation with file path
     const finalConfirmed = await openConfirmationDialog({
       header: tx('key_management_import_confirm_header'),
@@ -142,7 +156,10 @@ function ImportKeyButton({ onImported }: { onImported: () => void }) {
       cancelLabel: tx('cancel'),
       isConfirmDanger: true,
     })
-    if (!finalConfirmed) return
+    if (!finalConfirmed) {
+      await cleanupTempFile()
+      return
+    }
 
     // Step 4: Execute
     setImporting(true)
@@ -162,6 +179,7 @@ function ImportKeyButton({ onImported }: { onImported: () => void }) {
       }
     } finally {
       setImporting(false)
+      await cleanupTempFile()
     }
   }, [openConfirmationDialog, onImported, tx])
 
