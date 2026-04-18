@@ -24,9 +24,9 @@ export default function ContactKeyDetail({ contactId }: Props) {
       .catch(err => setError(unknownErrorToString(err)))
   }, [contactId])
 
-  const copyInfo = async () => {
-    if (!keyInfo) return
-    await runtime.writeClipboardText(keyInfo.encryptionInfo)
+  const copyFingerprint = async () => {
+    if (!keyInfo?.fingerprint) return
+    await runtime.writeClipboardText(keyInfo.fingerprint)
     setCopied(true)
     setTimeout(() => setCopied(false), 2000)
   }
@@ -94,7 +94,7 @@ export default function ContactKeyDetail({ contactId }: Props) {
 
       <button
         type='button'
-        onClick={copyInfo}
+        onClick={copyFingerprint}
         style={{
           padding: '4px 12px',
           cursor: 'pointer',
