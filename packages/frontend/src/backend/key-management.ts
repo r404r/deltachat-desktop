@@ -32,6 +32,7 @@ export interface ContactKeyInfo {
   contactId: number
   displayName: string
   address: string
+  fingerprint: string
   isVerified: boolean
   isEncrypted: boolean
   encryptionInfo: string
@@ -76,6 +77,7 @@ export async function getContactKeyInfo(
     contactId,
     displayName: contact.displayName,
     address: contact.address,
+    fingerprint: parseFingerprintFromInfo(encryptionInfo),
     isVerified: contact.isVerified,
     isEncrypted: contact.e2eeAvail,
     encryptionInfo,

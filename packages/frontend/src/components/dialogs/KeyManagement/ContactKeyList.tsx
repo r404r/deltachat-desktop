@@ -11,28 +11,59 @@ type Props = {
   onSelectContact: (contactId: number) => void
 }
 
+const BATCH_SIZE = 50
+
 export default function ContactKeyList({ onSelectContact }: Props) {
   const tx = useTranslationFunction()
-  const [contacts, setContacts] = useState<T.Contact[] | null>(null)
+  const [contactIds, setContactIds] = useState<number[] | null>(null)
+  const [contacts, setContacts] = useState<Map<number, T.Contact>>(new Map())
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
     const accountId = selectedAccountId()
     BackendRemote.rpc
-      .getContacts(accountId, 0, null)
-      .then(setContacts)
+      .getContactIds(accountId, 0, null)
+      .then(ids => {
+        setContactIds(ids)
+        // Load first batch
+        const batch = ids.slice(0, BATCH_SIZE)
+        return Promise.all(
+          batch.map(id => BackendRemote.rpc.getContact(accountId, id))
+        ).then(loaded => {
+          const map = new Map<number, T.Contact>()
+          loaded.forEach(c => map.set(c.id, c))
+          setContacts(map)
+        })
+      })
       .catch(err => setError(unknownErrorToString(err)))
   }, [])
+
+  const loadMore = () => {
+    if (!contactIds) return
+    const accountId = selectedAccountId()
+    const loaded = contacts.size
+    const batch = contactIds.slice(loaded, loaded + BATCH_SIZE)
+    if (batch.length === 0) return
+    Promise.all(
+      batch.map(id => BackendRemote.rpc.getContact(accountId, id))
+    ).then(newContacts => {
+      setContacts(prev => {
+        const map = new Map(prev)
+        newContacts.forEach(c => map.set(c.id, c))
+        return map
+      })
+    })
+  }
 
   if (error) {
     return <p style={{ color: 'var(--colorDanger)' }}>{tx('error_x', error)}</p>
   }
 
-  if (!contacts) {
+  if (!contactIds) {
     return <p style={{ color: 'var(--textSecondary)' }}>{tx('loading')}</p>
   }
 
-  if (contacts.length === 0) {
+  if (contactIds.length === 0) {
     return (
       <p style={{ color: 'var(--textSecondary)' }}>
         {tx('key_management_no_contacts')}
@@ -40,57 +71,82 @@ export default function ContactKeyList({ onSelectContact }: Props) {
     )
   }
 
+  const loadedIds = contactIds.filter(id => contacts.has(id))
+  const hasMore = contacts.size < contactIds.length
+
   return (
-    <ol style={{ margin: 0, padding: 0, listStyle: 'none' }}>
-      {contacts.map(contact => (
-        <li key={contact.id}>
-          <button
-            type='button'
-            onClick={() => onSelectContact(contact.id)}
-            style={{
-              width: '100%',
-              padding: '10px 12px',
-              cursor: 'pointer',
-              textAlign: 'left',
-              border: 'none',
-              borderBottom: '1px solid var(--borderColor)',
-              background: 'transparent',
-              color: 'var(--textPrimary)',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px',
-            }}
-          >
-            <span
-              style={{ fontSize: '16px' }}
-              title={
-                contact.e2eeAvail
-                  ? tx('messages_are_e2ee')
-                  : undefined
-              }
-            >
-              {contact.e2eeAvail ? '\u{1F512}' : '\u{1F513}'}
-            </span>
-            <span style={{ flex: 1, minWidth: 0 }}>
-              <span style={{ fontWeight: 500 }}>
-                {contact.displayName}
-              </span>
-              <span
+    <>
+      <ol style={{ margin: 0, padding: 0, listStyle: 'none' }}>
+        {loadedIds.map(id => {
+          const contact = contacts.get(id)!
+          return (
+            <li key={contact.id}>
+              <button
+                type='button'
+                onClick={() => onSelectContact(contact.id)}
                 style={{
-                  display: 'block',
-                  fontSize: '12px',
-                  color: 'var(--textSecondary)',
-                  overflow: 'hidden',
-                  textOverflow: 'ellipsis',
+                  width: '100%',
+                  padding: '10px 12px',
+                  cursor: 'pointer',
+                  textAlign: 'left',
+                  border: 'none',
+                  borderBottom: '1px solid var(--borderColor)',
+                  background: 'transparent',
+                  color: 'var(--textPrimary)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px',
                 }}
               >
-                {contact.address}
-              </span>
-            </span>
-            {contact.isVerified && <InlineVerifiedIcon />}
-          </button>
-        </li>
-      ))}
-    </ol>
+                <span
+                  style={{ fontSize: '16px' }}
+                  title={
+                    contact.e2eeAvail
+                      ? tx('messages_are_e2ee')
+                      : undefined
+                  }
+                >
+                  {contact.e2eeAvail ? '\u{1F512}' : '\u{1F513}'}
+                </span>
+                <span style={{ flex: 1, minWidth: 0 }}>
+                  <span style={{ fontWeight: 500 }}>
+                    {contact.displayName}
+                  </span>
+                  <span
+                    style={{
+                      display: 'block',
+                      fontSize: '12px',
+                      color: 'var(--textSecondary)',
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                    }}
+                  >
+                    {contact.address}
+                  </span>
+                </span>
+                {contact.isVerified && <InlineVerifiedIcon />}
+              </button>
+            </li>
+          )
+        })}
+      </ol>
+      {hasMore && (
+        <button
+          type='button'
+          onClick={loadMore}
+          style={{
+            width: '100%',
+            padding: '8px',
+            cursor: 'pointer',
+            border: 'none',
+            background: 'transparent',
+            color: 'var(--textSecondary)',
+            textAlign: 'center',
+          }}
+        >
+          {tx('load_more_contacts')}
+        </button>
+      )}
+    </>
   )
 }
