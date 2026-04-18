@@ -139,5 +139,8 @@
   },
   "key_management_view_contact_keys": {
     "message": "View Contact Keys"
+  },
+  "key_management_copy_fingerprint": {
+    "message": "Copy Fingerprint"
   }
 }
