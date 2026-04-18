@@ -169,5 +169,8 @@
   },
   "key_management_import_desc": {
     "message": "Import a private key file to replace the current account key (not yet supported by core)"
+  },
+  "key_management_no_fingerprint": {
+    "message": "No fingerprint available"
   }
 }
