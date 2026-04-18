@@ -151,5 +151,17 @@
   },
   "load_more_contacts": {
     "message": "Load more…"
+  },
+  "key_management_pin_key": {
+    "message": "Pin Key"
+  },
+  "key_management_unpin_key": {
+    "message": "Unpin Key"
+  },
+  "key_management_pin_desc": {
+    "message": "Force use of this specific key for encryption (not yet supported by core)"
+  },
+  "key_management_unpin_desc": {
+    "message": "Remove manual key override and restore automatic key selection (not yet supported by core)"
   }
 }

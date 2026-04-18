@@ -7,6 +7,7 @@ import type { ContactKeyInfo } from '../../../backend/key-management'
 import { unknownErrorToString } from '@deltachat-desktop/shared/unknownErrorToString'
 import { runtime } from '@deltachat-desktop/runtime-interface'
 import { InlineVerifiedIcon } from '../../VerifiedIcon'
+import { pinContactKey, unpinContactKey } from '../../../backend/key-management'
 
 type Props = {
   contactId: number
@@ -92,9 +93,68 @@ export default function ContactKeyDetail({ contactId }: Props) {
         {keyInfo.encryptionInfo}
       </div>
 
+      <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+        <button
+          type='button'
+          onClick={copyFingerprint}
+          style={{
+            padding: '4px 12px',
+            cursor: 'pointer',
+            border: '1px solid var(--borderColor)',
+            borderRadius: '4px',
+            background: 'var(--bgPrimary)',
+            color: 'var(--textPrimary)',
+          }}
+        >
+          {copied
+            ? tx('copied_to_clipboard')
+            : tx('key_management_copy_fingerprint')}
+        </button>
+
+        {keyInfo.fingerprint && (
+          <PinUnpinButtons
+            accountId={selectedAccountId()}
+            contactId={contactId}
+            fingerprint={keyInfo.fingerprint}
+          />
+        )}
+      </div>
+    </div>
+  )
+}
+
+function PinUnpinButtons({
+  accountId,
+  contactId,
+  fingerprint,
+}: {
+  accountId: number
+  contactId: number
+  fingerprint: string
+}) {
+  const tx = useTranslationFunction()
+  const [status, setStatus] = useState<string | null>(null)
+
+  const handlePin = async () => {
+    const result = await pinContactKey(accountId, contactId, fingerprint)
+    if (!result.success) {
+      setStatus(result.error || tx('error'))
+    }
+  }
+
+  const handleUnpin = async () => {
+    const result = await unpinContactKey(accountId, contactId)
+    if (!result.success) {
+      setStatus(result.error || tx('error'))
+    }
+  }
+
+  return (
+    <>
       <button
         type='button'
-        onClick={copyFingerprint}
+        onClick={handlePin}
+        title={tx('key_management_pin_desc')}
         style={{
           padding: '4px 12px',
           cursor: 'pointer',
@@ -102,10 +162,32 @@ export default function ContactKeyDetail({ contactId }: Props) {
           borderRadius: '4px',
           background: 'var(--bgPrimary)',
           color: 'var(--textPrimary)',
+          opacity: 0.6,
         }}
       >
-        {copied ? tx('copied_to_clipboard') : tx('key_management_copy_fingerprint')}
+        {tx('key_management_pin_key')}
       </button>
-    </div>
+      <button
+        type='button'
+        onClick={handleUnpin}
+        title={tx('key_management_unpin_desc')}
+        style={{
+          padding: '4px 12px',
+          cursor: 'pointer',
+          border: '1px solid var(--borderColor)',
+          borderRadius: '4px',
+          background: 'var(--bgPrimary)',
+          color: 'var(--textPrimary)',
+          opacity: 0.6,
+        }}
+      >
+        {tx('key_management_unpin_key')}
+      </button>
+      {status && (
+        <p style={{ fontSize: '12px', color: 'var(--textSecondary)', width: '100%' }}>
+          {status}
+        </p>
+      )}
+    </>
   )
 }
