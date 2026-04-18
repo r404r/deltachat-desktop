@@ -52,7 +52,7 @@ export default function AccountKeySection() {
               {keyInfo.fingerprint}
             </div>
           )}
-          <div style={{ display: 'flex', gap: '8px' }}>
+          <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
             {keyInfo.fingerprint && (
               <button
                 type='button'
@@ -71,6 +71,7 @@ export default function AccountKeySection() {
                   : tx('key_management_copy_fingerprint')}
               </button>
             )}
+            <ImportKeyButton />
           </div>
           {keyInfo.encryptionInfo && (
             <details style={{ marginTop: '12px' }}>
@@ -91,5 +92,32 @@ export default function AccountKeySection() {
         </div>
       )}
     </div>
+  )
+}
+
+function ImportKeyButton() {
+  const tx = useTranslationFunction()
+
+  // Core does not yet provide import_self_secret_key RPC.
+  // Button is disabled until that endpoint is available.
+  const coreSupportsImport = false
+
+  return (
+    <button
+      type='button'
+      disabled
+      title={tx('key_management_import_desc')}
+      style={{
+        padding: '4px 12px',
+        cursor: coreSupportsImport ? 'pointer' : 'not-allowed',
+        border: '1px solid var(--borderColor)',
+        borderRadius: '4px',
+        background: 'var(--bgPrimary)',
+        color: 'var(--textPrimary)',
+        opacity: 0.4,
+      }}
+    >
+      {tx('key_management_import_key')}
+    </button>
   )
 }

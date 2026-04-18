@@ -163,5 +163,11 @@
   },
   "key_management_unpin_desc": {
     "message": "Remove manual key override and restore automatic key selection (not yet supported by core)"
+  },
+  "key_management_import_key": {
+    "message": "Import Key"
+  },
+  "key_management_import_desc": {
+    "message": "Import a private key file to replace the current account key (not yet supported by core)"
   }
 }
