@@ -88,12 +88,17 @@ export async function getAccountKeyInfo(
         'checkQr returned no fingerprint for account self QR',
         'kind=',
         (parsed as { kind?: unknown })?.kind,
-        'qr=',
-        qr
+        'qr_prefix=',
+        redactQrForLog(qr)
       )
     }
   } catch (err) {
-    log.warn('checkQr failed on account self QR', err, 'qr=', qr)
+    log.warn(
+      'checkQr failed on account self QR',
+      err,
+      'qr_prefix=',
+      redactQrForLog(qr)
+    )
   }
 
   if (!fingerprint) {
@@ -213,4 +218,15 @@ function parseFingerprintFromInfo(info: string): string {
 function formatFingerprint(hex: string): string {
   if (!hex) return ''
   return hex.match(/.{1,4}/g)?.join(' ') ?? hex
+}
+
+/**
+ * Redact a SecureJoin / account QR for safe logging. The QR URI contains
+ * invitation material (invitenumber, authcode) and the account address, so
+ * only the scheme prefix (before the first ':') is kept.
+ */
+function redactQrForLog(qr: string): string {
+  if (!qr) return '<empty>'
+  const schemeEnd = qr.indexOf(':')
+  return schemeEnd >= 0 ? qr.slice(0, schemeEnd + 1) + '…' : '<unknown-scheme>'
 }
