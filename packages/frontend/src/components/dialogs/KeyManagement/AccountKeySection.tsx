@@ -2,17 +2,22 @@ import React, { useCallback, useEffect, useState } from 'react'
 
 import useTranslationFunction from '../../../hooks/useTranslationFunction'
 import useConfirmationDialog from '../../../hooks/dialog/useConfirmationDialog'
+import useDialog from '../../../hooks/dialog/useDialog'
 import { selectedAccountId } from '../../../ScreenController'
+import { BackendRemote } from '../../../backend-com'
 import {
+  exportSelfSecretKey,
   getAccountKeyInfo,
   importSelfSecretKey,
 } from '../../../backend/key-management'
 import type { AccountKeyInfo } from '../../../backend/key-management'
+import AlertDialog from '../AlertDialog'
 import { runtime } from '@deltachat-desktop/runtime-interface'
 import { unknownErrorToString } from '@deltachat-desktop/shared/unknownErrorToString'
 import { LastUsedSlot, rememberLastUsedPath } from '../../../utils/lastUsedPaths'
 import type { RuntimeOpenDialogOptions } from '@deltachat-desktop/shared/shared-types'
-import { dirname } from 'path'
+import type { DcEventType } from '@deltachat/jsonrpc-client'
+import { basename, dirname } from 'path'
 
 export default function AccountKeySection() {
   const tx = useTranslationFunction()
@@ -97,6 +102,7 @@ export default function AccountKeySection() {
               </button>
             )}
             <ImportKeyButton onImported={refreshKeyInfo} />
+            <ExportKeyButton />
           </div>
         </div>
       )}
@@ -201,6 +207,133 @@ function ImportKeyButton({ onImported }: { onImported: () => void }) {
       {importing
         ? tx('loading')
         : tx('key_management_import_key')}
+    </button>
+  )
+}
+
+function ExportKeyButton() {
+  const tx = useTranslationFunction()
+  const openConfirmationDialog = useConfirmationDialog()
+  const { openDialog } = useDialog()
+  const [exporting, setExporting] = useState(false)
+
+  const handleExport = useCallback(async () => {
+    // Step 1: Risk acknowledgement — exported keys are unencrypted and
+    // cannot be revoked.
+    const acknowledged = await openConfirmationDialog({
+      header: tx('key_management_export_warning_header'),
+      message: tx('key_management_export_warning_body'),
+      confirmLabel: tx('key_management_export_warning_continue'),
+      cancelLabel: tx('cancel'),
+      isConfirmDanger: true,
+    })
+    if (!acknowledged) return
+
+    // Step 2: Choose destination (directory) or use browser placeholder.
+    const isBrowser = runtime.getRuntimeInfo().target === 'browser'
+    let destination: string
+    if (isBrowser) {
+      destination = '<BROWSER>'
+    } else {
+      const { defaultPath, setLastPath } = await rememberLastUsedPath(
+        LastUsedSlot.KeyExport
+      )
+      const opts: RuntimeOpenDialogOptions = {
+        title: tx('key_management_export_key'),
+        defaultPath,
+        properties: ['openDirectory', 'createDirectory'],
+        buttonLabel: tx('select'),
+      }
+      const [chosen] = await runtime.showOpenFileDialog(opts)
+      if (!chosen) return
+      setLastPath(chosen)
+      destination = chosen
+    }
+
+    // Step 3: Final confirmation showing target location.
+    const finalConfirmed = await openConfirmationDialog({
+      header: tx('key_management_export_confirm_header'),
+      message: tx(
+        'key_management_export_confirm_body',
+        isBrowser ? tx('key_management_export_browser_note') : destination
+      ),
+      confirmLabel: tx('key_management_export_confirm_action'),
+      cancelLabel: tx('cancel'),
+      isConfirmDanger: true,
+    })
+    if (!finalConfirmed) return
+
+    // Step 4: Execute, collecting any files core writes along the way.
+    const accountId = selectedAccountId()
+    const writtenFiles: string[] = []
+    const onFileWritten = ({ path }: DcEventType<'ImexFileWritten'>) => {
+      writtenFiles.push(path)
+    }
+    const emitter = BackendRemote.getContextEvents(accountId)
+    emitter.on('ImexFileWritten', onFileWritten)
+
+    setExporting(true)
+    try {
+      const result = await exportSelfSecretKey(accountId, destination)
+
+      // In browser mode, events can arrive slightly after the RPC returns
+      // (see Backup.tsx for the same workaround).
+      if (isBrowser) {
+        await new Promise(res => setTimeout(res, 1000))
+      }
+
+      if (!result.success) {
+        window.__userFeedback({
+          type: 'error',
+          text: tx('error_x', result.error ?? 'unknown error'),
+        })
+        return
+      }
+
+      // Step 5: Success feedback.
+      if (isBrowser) {
+        // Each written file can be downloaded through the backup route.
+        if (writtenFiles.length === 0) {
+          window.__userFeedback({
+            type: 'success',
+            text: tx('key_management_export_success_browser_empty'),
+          })
+        } else {
+          const links = writtenFiles
+            .map(p => `/download-backup/${basename(p)}`)
+            .join('\n')
+          openDialog(AlertDialog, {
+            message: tx('key_management_export_success_browser', links),
+          })
+        }
+      } else {
+        window.__userFeedback({
+          type: 'success',
+          text: tx('key_management_export_success_electron', destination),
+        })
+      }
+    } finally {
+      emitter.off('ImexFileWritten', onFileWritten)
+      setExporting(false)
+    }
+  }, [openConfirmationDialog, openDialog, tx])
+
+  return (
+    <button
+      type='button'
+      onClick={handleExport}
+      disabled={exporting}
+      title={tx('key_management_export_desc')}
+      style={{
+        padding: '4px 12px',
+        cursor: exporting ? 'wait' : 'pointer',
+        border: '1px solid var(--borderColor)',
+        borderRadius: '4px',
+        background: 'var(--bgPrimary)',
+        color: 'var(--textPrimary)',
+      }}
+    >
+      {exporting ? tx('loading') : tx('key_management_export_key')}
     </button>
   )
 }

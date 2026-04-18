@@ -178,6 +178,37 @@ export async function importSelfSecretKey(
   }
 }
 
+/**
+ * Export the account's key pair (private + public) to ASCII-armored PGP
+ * files inside `directoryPath`.
+ *
+ * Wraps core's `export_self_keys` RPC. Constraints (must surface in UI):
+ * - `directoryPath` must be a DIRECTORY; core writes multiple `.asc` files
+ *   into it (private and public halves).
+ * - Exported keys are UNENCRYPTED — `passphrase` is always `null` because
+ *   the legacy UI never wired it up. Anyone with file-system access can
+ *   read the private key.
+ * - There is no revocation: leaked keys can decrypt past and future
+ *   messages sent to this account.
+ * - In browser mode, pass `<BROWSER>` as `directoryPath`; the runtime
+ *   rewrites it to a server-side temp directory and the caller shows the
+ *   user a `/download-backup/<file>` link for each written file.
+ *
+ * Upstream removed the UI on 2025-12-05 (PR #5801) as "dead code" after
+ * the import UI was removed. The RPC is still present and functional.
+ */
+export async function exportSelfSecretKey(
+  accountId: number,
+  directoryPath: string
+): Promise<KeyOperationResult> {
+  try {
+    await BackendRemote.rpc.exportSelfKeys(accountId, directoryPath, null)
+    return { success: true }
+  } catch (err) {
+    return { success: false, error: unknownErrorToString(err) }
+  }
+}
+
 // -- Helpers --
 
 /**
