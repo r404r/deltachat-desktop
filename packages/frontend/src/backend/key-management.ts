@@ -1,7 +1,5 @@
 import { BackendRemote } from '../backend-com'
 
-import { C } from '@deltachat/jsonrpc-client'
-
 // -- Type definitions for key management --
 // These types define the contract for future core RPC APIs.
 // Phase 1 uses existing APIs; Phase 3 will switch to dedicated endpoints.
@@ -24,6 +22,7 @@ export type KeyTrustLevel =
 /** Information about the account's own key */
 export interface AccountKeyInfo {
   fingerprint: string
+  address: string
   encryptionInfo: string
 }
 
@@ -47,20 +46,26 @@ export interface KeyOperationResult {
 // -- RPC adapter functions --
 // These wrap existing or future core APIs.
 
-const DC_CONTACT_ID_SELF = C.DC_CONTACT_ID_SELF
-
-/** Get account key info using existing getContactEncryptionInfo for self */
+/**
+ * Get account key info.
+ *
+ * Core refuses `getContactEncryptionInfo` for the self contact ("special
+ * contact"), so we obtain the fingerprint from the Setup-Contact QR code
+ * (`getChatSecurejoinQrCode(accountId, null)`) which is the account's own
+ * OPENPGP4FPR URI. The fingerprint is the path component before `#`.
+ */
 export async function getAccountKeyInfo(
   accountId: number
 ): Promise<AccountKeyInfo> {
-  const encryptionInfo = await BackendRemote.rpc.getContactEncryptionInfo(
-    accountId,
-    DC_CONTACT_ID_SELF
-  )
-  const fingerprint = parseFingerprintFromInfo(encryptionInfo)
+  const [qr, address] = await Promise.all([
+    BackendRemote.rpc.getChatSecurejoinQrCode(accountId, null),
+    BackendRemote.rpc.getConfig(accountId, 'configured_addr'),
+  ])
+  const fingerprint = parseFingerprintFromQr(qr)
   return {
-    fingerprint,
-    encryptionInfo,
+    fingerprint: formatFingerprint(fingerprint),
+    address: address ?? '',
+    encryptionInfo: qr,
   }
 }
 
@@ -114,17 +119,24 @@ export async function importSelfSecretKey(
 
 // -- Helpers --
 
-/** Parse fingerprint from the encryption info text returned by core */
+/**
+ * Parse fingerprint from an OPENPGP4FPR QR URI.
+ * Format: `OPENPGP4FPR:<HEX_FINGERPRINT>#a=<email>&...`
+ */
+function parseFingerprintFromQr(qr: string): string {
+  const match = qr.match(/^OPENPGP4FPR:([A-Fa-f0-9]+)/i)
+  return match ? match[1].toUpperCase() : ''
+}
+
+/**
+ * Parse fingerprint from the encryption info text returned by core.
+ * The text contains fingerprint lines as groups of 4-hex-char blocks.
+ */
 function parseFingerprintFromInfo(info: string): string {
-  // The encryption info text contains fingerprint lines like:
-  // "Langfristiger Schlüssel-Fingerprint (RSA 2048):"
-  // followed by hex fingerprint groups
   const lines = info.split('\n')
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i].trim()
-    // Look for lines that are pure hex groups (fingerprint format)
     if (/^[A-Fa-f0-9]{4}(\s+[A-Fa-f0-9]{4}){4,}$/.test(line)) {
-      // Collect consecutive fingerprint lines
       let fp = line
       if (i + 1 < lines.length) {
         const nextLine = lines[i + 1].trim()
@@ -136,4 +148,13 @@ function parseFingerprintFromInfo(info: string): string {
     }
   }
   return ''
+}
+
+/**
+ * Format a continuous hex fingerprint into groups of 4 chars separated by spaces,
+ * e.g. "ABCD12345678..." → "ABCD 1234 5678 ..."
+ */
+function formatFingerprint(hex: string): string {
+  if (!hex) return ''
+  return hex.match(/.{1,4}/g)?.join(' ') ?? hex
 }

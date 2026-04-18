@@ -37,7 +37,18 @@ export default function AccountKeySection() {
         <p style={{ color: 'var(--textSecondary)' }}>{tx('loading')}</p>
       ) : (
         <div>
-          {keyInfo.fingerprint && (
+          {keyInfo.address && (
+            <p
+              style={{
+                fontSize: '13px',
+                color: 'var(--textSecondary)',
+                marginBottom: '8px',
+              }}
+            >
+              {keyInfo.address}
+            </p>
+          )}
+          {keyInfo.fingerprint ? (
             <div
               style={{
                 padding: '8px 12px',
@@ -51,6 +62,10 @@ export default function AccountKeySection() {
             >
               {keyInfo.fingerprint}
             </div>
+          ) : (
+            <p style={{ color: 'var(--textSecondary)' }}>
+              {tx('key_management_no_fingerprint')}
+            </p>
           )}
           <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
             {keyInfo.fingerprint && (
@@ -73,22 +88,6 @@ export default function AccountKeySection() {
             )}
             <ImportKeyButton />
           </div>
-          {keyInfo.encryptionInfo && (
-            <details style={{ marginTop: '12px' }}>
-              <summary style={{ cursor: 'pointer', color: 'var(--textSecondary)' }}>
-                {tx('encryption_info_title_desktop')}
-              </summary>
-              <p
-                style={{
-                  whiteSpace: 'pre-wrap',
-                  fontSize: '13px',
-                  marginTop: '8px',
-                }}
-              >
-                {keyInfo.encryptionInfo}
-              </p>
-            </details>
-          )}
         </div>
       )}
     </div>
