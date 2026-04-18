@@ -142,5 +142,11 @@
   },
   "key_management_copy_fingerprint": {
     "message": "Copy Fingerprint"
+  },
+  "key_management_no_contacts": {
+    "message": "No contacts found"
+  },
+  "unencrypted": {
+    "message": "Not encrypted"
   }
 }
