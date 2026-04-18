@@ -191,6 +191,42 @@
   "key_management_import_success": {
     "message": "Key imported successfully"
   },
+  "key_management_export_key": {
+    "message": "Export Key"
+  },
+  "key_management_export_desc": {
+    "message": "Export the account's private and public keys as PGP .asc files (experimental)"
+  },
+  "key_management_export_warning_header": {
+    "message": "Warning: Exporting Private Key"
+  },
+  "key_management_export_warning_body": {
+    "message": "Exporting your private key has serious risks. Please read carefully:\n\n• The exported .asc files are NOT encrypted — anyone with access to them can decrypt your messages (past and future).\n• There is no revocation — once a copy leaves your device you cannot take it back.\n• File permissions are not enforced; store on an encrypted disk or password manager.\n• In browser mode the files are written to a server-side directory and kept briefly after download; do not leave them there.\n\nOnly continue if you understand the consequences."
+  },
+  "key_management_export_warning_continue": {
+    "message": "I understand, continue"
+  },
+  "key_management_export_confirm_header": {
+    "message": "Export Account Keys?"
+  },
+  "key_management_export_confirm_body": {
+    "message": "Export keys to:\n%1$s\n\nMultiple .asc files will be written. Files are UNENCRYPTED."
+  },
+  "key_management_export_confirm_action": {
+    "message": "Export Keys"
+  },
+  "key_management_export_browser_note": {
+    "message": "<browser download>"
+  },
+  "key_management_export_success_electron": {
+    "message": "Keys exported to: %1$s"
+  },
+  "key_management_export_success_browser": {
+    "message": "Keys exported. Download each file:\n%1$s"
+  },
+  "key_management_export_success_browser_empty": {
+    "message": "Export finished, but no files were reported. Check logs."
+  },
   "key_management_no_fingerprint": {
     "message": "No fingerprint available"
   }
