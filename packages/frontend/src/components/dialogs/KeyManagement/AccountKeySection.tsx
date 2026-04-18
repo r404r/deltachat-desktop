@@ -5,6 +5,7 @@ import { selectedAccountId } from '../../../ScreenController'
 import { getAccountKeyInfo } from '../../../backend/key-management'
 import type { AccountKeyInfo } from '../../../backend/key-management'
 import { runtime } from '@deltachat-desktop/runtime-interface'
+import { unknownErrorToString } from '@deltachat-desktop/shared/unknownErrorToString'
 
 export default function AccountKeySection() {
   const tx = useTranslationFunction()
@@ -15,7 +16,7 @@ export default function AccountKeySection() {
   useEffect(() => {
     getAccountKeyInfo(selectedAccountId())
       .then(setKeyInfo)
-      .catch(err => setError(String(err)))
+      .catch(err => setError(unknownErrorToString(err)))
   }, [])
 
   const copyFingerprint = async () => {
