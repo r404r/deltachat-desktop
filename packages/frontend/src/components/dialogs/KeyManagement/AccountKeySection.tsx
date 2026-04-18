@@ -263,11 +263,26 @@ function ExportKeyButton() {
     })
     if (!finalConfirmed) return
 
-    // Step 4: Execute, collecting any files core writes along the way.
+    // Step 4: Execute. For each file core writes, we want an actionable
+    // outcome:
+    //   - Electron/Tauri: the file is on the user's disk already; just
+    //     count it and show a success toast at the end.
+    //   - Browser: open an AlertDialog per file with a clickable OK that
+    //     fires `window.open(/download-backup/...)`. This mirrors the
+    //     pattern used in Backup.tsx for single-file backups but handles
+    //     multiple files because `export_self_keys` writes at least two.
     const accountId = selectedAccountId()
-    const writtenFiles: string[] = []
+    let filesWritten = 0
     const onFileWritten = ({ path }: DcEventType<'ImexFileWritten'>) => {
-      writtenFiles.push(path)
+      filesWritten++
+      if (isBrowser) {
+        const downloadLink = `/download-backup/${basename(path)}`
+        openDialog(AlertDialog, {
+          cb: () => window.open(downloadLink, '__blank'),
+          message: tx('key_management_export_success_browser_file', downloadLink),
+          okBtnLabel: tx('open'),
+        })
+      }
     }
     const emitter = BackendRemote.getContextEvents(accountId)
     emitter.on('ImexFileWritten', onFileWritten)
@@ -276,10 +291,14 @@ function ExportKeyButton() {
     try {
       const result = await exportSelfSecretKey(accountId, destination)
 
-      // In browser mode, events can arrive slightly after the RPC returns
-      // (see Backup.tsx for the same workaround).
+      // In browser mode, ImexFileWritten events can arrive after the RPC
+      // resolves because they're delivered through the event stream. A
+      // short grace window catches late events without stalling the UI.
+      // Backup.tsx uses 1s for a single file; we use 3s because
+      // export_self_keys writes multiple files and unsubscribing too
+      // early would silently drop files.
       if (isBrowser) {
-        await new Promise(res => setTimeout(res, 1000))
+        await new Promise(res => setTimeout(res, 3000))
       }
 
       if (!result.success) {
@@ -291,27 +310,22 @@ function ExportKeyButton() {
       }
 
       // Step 5: Success feedback.
-      if (isBrowser) {
-        // Each written file can be downloaded through the backup route.
-        if (writtenFiles.length === 0) {
-          window.__userFeedback({
-            type: 'success',
-            text: tx('key_management_export_success_browser_empty'),
-          })
-        } else {
-          const links = writtenFiles
-            .map(p => `/download-backup/${basename(p)}`)
-            .join('\n')
-          openDialog(AlertDialog, {
-            message: tx('key_management_export_success_browser', links),
-          })
-        }
-      } else {
+      if (!isBrowser) {
+        // On desktop, per-file dialogs would be noisy; summarise instead.
         window.__userFeedback({
           type: 'success',
           text: tx('key_management_export_success_electron', destination),
         })
+      } else if (filesWritten === 0) {
+        // Browser succeeded but we observed no file events in the grace
+        // window; surface a hint so the user doesn't think it silently
+        // failed.
+        window.__userFeedback({
+          type: 'success',
+          text: tx('key_management_export_success_browser_empty'),
+        })
       }
+      // else: per-file AlertDialogs were already opened during streaming.
     } finally {
       emitter.off('ImexFileWritten', onFileWritten)
       setExporting(false)
