@@ -130,5 +130,14 @@
   },
   "key_management_desc": {
     "message": "View and manage encryption keys for your account and contacts"
+  },
+  "key_management_my_keys": {
+    "message": "My Keys"
+  },
+  "key_management_contact_keys": {
+    "message": "Contact Keys"
+  },
+  "key_management_view_contact_keys": {
+    "message": "View Contact Keys"
   }
 }
