@@ -40,10 +40,10 @@ Connect Desktop UI to real core APIs once available.
 
 | # | Task | Spec File | Status |
 |---|---|---|---|
-| 1 | Feature flag + docs-fix setup | `01-feature-flag.md` | TODO |
-| 2 | TypeScript type definitions for key management RPC | `02-type-definitions.md` | TODO |
-| 3 | Key Management settings entry point | `03-settings-entry.md` | TODO |
-| 4 | Account key info display | `04-account-key-info.md` | TODO |
-| 5 | Contact key list + detail view | `05-contact-key-info.md` | TODO |
-| 6 | Pin / unpin UI | `06-pin-unpin-ui.md` | TODO |
-| 7 | Import self key UI | `07-import-self-key.md` | TODO |
+| 1 | Feature flag + docs-fix setup | `01-feature-flag.md` | DONE |
+| 2 | TypeScript type definitions for key management RPC | `02-type-definitions.md` | DONE |
+| 3 | Key Management settings entry point | `03-settings-entry.md` | DONE |
+| 4 | Account key info display | `04-account-key-info.md` | DONE |
+| 5 | Contact key list + detail view | `05-contact-key-info.md` | DONE |
+| 6 | Pin / unpin UI | `06-pin-unpin-ui.md` | DONE (disabled, awaiting core) |
+| 7 | Import self key UI | `07-import-self-key.md` | DONE (disabled, awaiting core) |
