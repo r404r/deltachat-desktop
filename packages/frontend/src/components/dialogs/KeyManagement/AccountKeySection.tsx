@@ -263,26 +263,14 @@ function ExportKeyButton() {
     })
     if (!finalConfirmed) return
 
-    // Step 4: Execute. For each file core writes, we want an actionable
-    // outcome:
-    //   - Electron/Tauri: the file is on the user's disk already; just
-    //     count it and show a success toast at the end.
-    //   - Browser: open an AlertDialog per file with a clickable OK that
-    //     fires `window.open(/download-backup/...)`. This mirrors the
-    //     pattern used in Backup.tsx for single-file backups but handles
-    //     multiple files because `export_self_keys` writes at least two.
+    // Step 4: Execute. Collect every `ImexFileWritten` event into a buffer
+    // while the RPC runs — do NOT surface anything to the user yet. If the
+    // export fails mid-way we want to show the error, not a partial set of
+    // download links that look successful.
     const accountId = selectedAccountId()
-    let filesWritten = 0
+    const writtenPaths: string[] = []
     const onFileWritten = ({ path }: DcEventType<'ImexFileWritten'>) => {
-      filesWritten++
-      if (isBrowser) {
-        const downloadLink = `/download-backup/${basename(path)}`
-        openDialog(AlertDialog, {
-          cb: () => window.open(downloadLink, '__blank'),
-          message: tx('key_management_export_success_browser_file', downloadLink),
-          okBtnLabel: tx('open'),
-        })
-      }
+      writtenPaths.push(path)
     }
     const emitter = BackendRemote.getContextEvents(accountId)
     emitter.on('ImexFileWritten', onFileWritten)
@@ -309,14 +297,16 @@ function ExportKeyButton() {
         return
       }
 
-      // Step 5: Success feedback.
+      // Step 5: Success feedback — only now expose anything to the user.
       if (!isBrowser) {
-        // On desktop, per-file dialogs would be noisy; summarise instead.
         window.__userFeedback({
           type: 'success',
           text: tx('key_management_export_success_electron', destination),
         })
-      } else if (filesWritten === 0) {
+        return
+      }
+
+      if (writtenPaths.length === 0) {
         // Browser succeeded but we observed no file events in the grace
         // window; surface a hint so the user doesn't think it silently
         // failed.
@@ -324,8 +314,24 @@ function ExportKeyButton() {
           type: 'success',
           text: tx('key_management_export_success_browser_empty'),
         })
+        return
       }
-      // else: per-file AlertDialogs were already opened during streaming.
+
+      // Browser success: open one AlertDialog per file with a clickable
+      // OK button that triggers `window.open(/download-backup/...)`.
+      // Mirrors Backup.tsx's single-file flow but fanned out per file
+      // because export_self_keys writes private + public halves.
+      for (const path of writtenPaths) {
+        const downloadLink = `/download-backup/${basename(path)}`
+        openDialog(AlertDialog, {
+          cb: () => window.open(downloadLink, '__blank'),
+          message: tx(
+            'key_management_export_success_browser_file',
+            downloadLink
+          ),
+          okBtnLabel: tx('open'),
+        })
+      }
     } finally {
       emitter.off('ImexFileWritten', onFileWritten)
       setExporting(false)
