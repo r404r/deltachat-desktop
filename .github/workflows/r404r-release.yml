@@ -343,10 +343,15 @@ jobs:
               echo "Full diff: https://github.com/${{ github.repository }}/compare/${PREV_TAG}...${{ github.ref_name }}"
             else
               echo "First fork release tagged with the \`r404r-v*\` convention."
-              echo "Recent commits up to and including this tag:"
+              echo "Recent commits up to and including this tag (most recent 50):"
               echo
-              git log --pretty=format:'- %s (%h)' \
-                "${{ github.ref_name }}" | head -50
+              # Use `git log -n 50` rather than `... | head -50`. With
+              # `set -o pipefail` (set above), piping to head causes
+              # `git log` to receive SIGPIPE once head finishes early →
+              # exit code 141 → step fails. `-n 50` lets git stop on its
+              # own without involving a pipe.
+              git log -n 50 --pretty=format:'- %s (%h)' \
+                "${{ github.ref_name }}"
             fi
             echo
             echo
