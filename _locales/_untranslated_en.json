@@ -224,8 +224,11 @@
   "key_management_export_success_browser_file": {
     "message": "A key file is ready to download:\n%1$s"
   },
+  "key_management_export_partial_header": {
+    "message": "Partial Export Failed"
+  },
   "key_management_export_partial_browser_file": {
-    "message": "Partial export — download to clean up the server copy:\n%1$s"
+    "message": "The export failed, but a key file was already written to the server:\n%1$s\n\nDownload it now? (Clicking download will also trigger server-side cleanup 10s after download completes.)"
   },
   "key_management_export_success_browser_empty": {
     "message": "Export finished, but no files were reported. Check logs."
