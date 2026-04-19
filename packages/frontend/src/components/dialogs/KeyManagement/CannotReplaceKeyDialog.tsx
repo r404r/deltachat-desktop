@@ -29,6 +29,17 @@ import type { DialogProps } from '../../../contexts/DialogContext'
  */
 export type Props = {
   currentFingerprint: string
+  /**
+   * Triggered when the user clicks "Add New Profile". This function is
+   * responsible for:
+   *   - creating + switching to the new account
+   *   - tearing down any surrounding UI that still refers to the
+   *     previous account (otherwise the caller's dialog will show
+   *     stale data while its action handlers target the new account)
+   *   - surfacing any error to the user (this dialog closes itself
+   *     before invoking this callback and cannot report errors on its
+   *     own)
+   */
   onAddAccount: () => void | Promise<void>
 } & DialogProps
 
@@ -39,13 +50,15 @@ export default function CannotReplaceKeyDialog({
 }: Props) {
   const tx = useTranslationFunction()
 
-  const handleAddAccount = async () => {
+  const handleAddAccount = () => {
+    // Close this explanatory dialog first so it doesn't linger during
+    // the account switch. The caller is responsible for both the
+    // account switch AND error reporting — see the prop JSDoc above.
     onClose()
-    try {
-      await onAddAccount()
-    } catch {
-      // caller surfaces failures; nothing to do here
-    }
+    // Fire-and-forget: we deliberately don't await here because we
+    // don't want to keep this unmounted component's render alive.
+    // The caller handles success/error feedback.
+    void onAddAccount()
   }
 
   return (
