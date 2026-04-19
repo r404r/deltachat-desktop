@@ -49,10 +49,17 @@ jobs:
       - name: build DMG (ad-hoc signed)
         env:
           CSC_IDENTITY_AUTO_DISCOVERY: 'false'
+          # `--publish never` below disables electron-builder's auto-publish
+          # logic. Without GH_TOKEN set, electron-builder errors out as soon
+          # as it sees a tag context, even with --publish never. Provide it
+          # so any incidental rate-limited GH-releases download (e.g. the
+          # dmg-builder bundle) can authenticate too.
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         working-directory: packages/target-electron
         run: |
           pnpm exec electron-builder \
             --config ./electron-builder.json5 \
+            --publish never \
             --mac dmg \
             -c.mac.provisioningProfile= \
             -c.mac.identity=null \
@@ -89,10 +96,15 @@ jobs:
           pnpm pack:generate_config
           pnpm pack:patch-node-modules
       - name: build AppImage
+        env:
+          # See electron-mac job above for why both flags are needed even
+          # though we don't intend to publish from this step.
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         working-directory: packages/target-electron
         run: |
           pnpm exec electron-builder \
             --config ./electron-builder.json5 \
+            --publish never \
             --linux AppImage
       - uses: actions/upload-artifact@v4
         with:
