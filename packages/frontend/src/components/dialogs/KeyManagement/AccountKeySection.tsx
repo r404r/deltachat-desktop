@@ -12,6 +12,7 @@ import {
 } from '../../../backend/key-management'
 import type { AccountKeyInfo } from '../../../backend/key-management'
 import AlertDialog from '../AlertDialog'
+import ConfirmationDialog from '../ConfirmationDialog'
 import { runtime } from '@deltachat-desktop/runtime-interface'
 import { unknownErrorToString } from '@deltachat-desktop/shared/unknownErrorToString'
 import { LastUsedSlot, rememberLastUsedPath } from '../../../utils/lastUsedPaths'
@@ -301,26 +302,37 @@ function ExportKeyButton() {
         // inside DC_ACCOUNTS_DIR/backups. The `/download-backup/:file`
         // route is what deletes them (10s after the download completes),
         // and there is no other cleanup endpoint. Offer each link as an
-        // explicit confirm/cancel prompt — importantly we do NOT auto-
-        // download on dismissal (Escape / backdrop click), because that
-        // would exfiltrate secret key material without the user asking.
-        // A `ConfirmationDialog` gives us that clean separation (its cb
-        // is called with `false` on dismiss and only `true` on confirm).
+        // explicit confirm/cancel prompt.
+        //
+        // IMPORTANT: `window.open(...)` must run SYNCHRONOUSLY from the
+        // dialog's click callback so the browser's popup blocker keeps
+        // the user-activation token. If we `await openConfirmationDialog`
+        // and call `window.open` afterwards, Safari/strict Chromium drop
+        // user activation and block the popup. So open the dialog
+        // directly and pass an inline `cb` that fires `window.open`.
+        // Dismissal (Escape / backdrop) invokes the cb with `false`,
+        // which leaves the file in place — the safe default for secret
+        // key material.
         if (isBrowser && writtenPaths.length > 0) {
           for (const path of writtenPaths) {
             const downloadLink = `/download-backup/${basename(path)}`
-            const shouldDownload = await openConfirmationDialog({
-              header: tx('key_management_export_partial_header'),
-              message: tx(
-                'key_management_export_partial_browser_file',
-                downloadLink
-              ),
-              confirmLabel: tx('download'),
-              cancelLabel: tx('cancel'),
+            await new Promise<void>(resolveDialog => {
+              openDialog(ConfirmationDialog, {
+                header: tx('key_management_export_partial_header'),
+                message: tx(
+                  'key_management_export_partial_browser_file',
+                  downloadLink
+                ),
+                confirmLabel: tx('download'),
+                cancelLabel: tx('cancel'),
+                cb: (yes: boolean) => {
+                  if (yes) {
+                    window.open(downloadLink, '__blank')
+                  }
+                  resolveDialog()
+                },
+              })
             })
-            if (shouldDownload) {
-              window.open(downloadLink, '__blank')
-            }
             // Declined: file stays on server until manual cleanup or
             // next `/download-backup` hit. We can't do better without a
             // dedicated delete endpoint (separate cross-package change).
