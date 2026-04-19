@@ -1,0 +1,375 @@
+# r404r fork release workflow.
+#
+# Triggered by `r404r-v*` tag pushes (does NOT match upstream's `v*` tags).
+# Builds Electron+Tauri across mac/Linux/Windows (no Apple Developer cert,
+# so macOS bundles are ad-hoc signed and re-signed with our dev
+# entitlements per docs-fix/09-tauri-macos-adhoc-build.md). Collects every
+# artifact and creates a GitHub Release with auto-generated changelog.
+#
+# Lives only on `r404r-main`; the `main` branch is a pristine upstream
+# mirror and must not contain this file. See README.r404r.md for the
+# branch strategy and docs-fix/12-ci-workflow-notes.md for the CI audit.
+
+name: r404r Release
+
+on:
+  push:
+    tags: ['r404r-v*']
+
+# Default permissions are read-only; the release job below escalates to write.
+permissions:
+  contents: read
+
+jobs:
+  # =====================================================================
+  # 1) Electron macOS arm64 (.dmg, ad-hoc signed)
+  # =====================================================================
+  electron-mac:
+    name: Electron macOS arm64
+    runs-on: macos-latest # arm64 by default on GitHub-hosted runners
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22.x
+      - name: install pnpm
+        run: npm i -g pnpm
+      - name: install deps
+        run: pnpm install --frozen-lockfile
+      - name: build production frontend + main process
+        env:
+          VERSION_INFO_GIT_REF: ${{ github.ref_name }}
+        working-directory: packages/target-electron
+        run: pnpm build4production
+      - name: prepare electron-builder
+        working-directory: packages/target-electron
+        run: |
+          pnpm pack:generate_config
+          pnpm pack:patch-node-modules
+      - name: build DMG (ad-hoc signed)
+        env:
+          CSC_IDENTITY_AUTO_DISCOVERY: 'false'
+        working-directory: packages/target-electron
+        run: |
+          pnpm exec electron-builder \
+            --config ./electron-builder.json5 \
+            --mac dmg \
+            -c.mac.provisioningProfile= \
+            -c.mac.identity=null \
+            -c.afterSign=./stub.cjs
+      - uses: actions/upload-artifact@v4
+        with:
+          name: electron-mac-arm64
+          path: packages/target-electron/dist/DeltaChat-*-arm64.dmg
+          if-no-files-found: error
+
+  # =====================================================================
+  # 2) Electron Linux x86_64 (.AppImage)
+  # =====================================================================
+  electron-linux:
+    name: Electron Linux x86_64
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22.x
+      - name: install pnpm
+        run: npm i -g pnpm
+      - name: install deps
+        run: pnpm install --frozen-lockfile
+      - name: build production frontend + main process
+        env:
+          VERSION_INFO_GIT_REF: ${{ github.ref_name }}
+        working-directory: packages/target-electron
+        run: pnpm build4production
+      - name: prepare electron-builder
+        working-directory: packages/target-electron
+        run: |
+          pnpm pack:generate_config
+          pnpm pack:patch-node-modules
+      - name: build AppImage
+        working-directory: packages/target-electron
+        run: |
+          pnpm exec electron-builder \
+            --config ./electron-builder.json5 \
+            --linux AppImage
+      - uses: actions/upload-artifact@v4
+        with:
+          name: electron-linux-x86_64
+          path: packages/target-electron/dist/*.AppImage
+          if-no-files-found: error
+
+  # =====================================================================
+  # 3) Tauri macOS arm64 (.dmg, ad-hoc signed + re-signed with dev
+  #    entitlements + DMG repacked from the re-signed .app)
+  # =====================================================================
+  tauri-mac:
+    name: Tauri macOS arm64
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22.x
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: aarch64-apple-darwin
+      - uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            target/
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+      - name: install pnpm
+        run: npm i -g pnpm
+      - name: install deps
+        run: pnpm install --frozen-lockfile
+      - name: force-refresh frontend bundle
+        # Defensive: pnpm tauri build calls beforeBuildCommand internally,
+        # but we've seen it skipped on incremental runs and ship a stale
+        # bundle. See docs-fix/09 known issue #2.
+        env:
+          VERSION_INFO_GIT_REF: ${{ github.ref_name }}
+        working-directory: packages/target-tauri
+        run: pnpm build4production
+      - name: build Tauri (ad-hoc signed)
+        env:
+          VERSION_INFO_GIT_REF: ${{ github.ref_name }}
+          APPLE_SIGNING_IDENTITY: '-'
+        working-directory: packages/target-tauri
+        run: pnpm tauri build
+      - name: re-sign .app with dev entitlements
+        # The Tauri-bundled signature uses Entitlements.plist with the
+        # merlinux developer team-identifier; ad-hoc signing cannot satisfy
+        # that, so Gatekeeper rejects the app. Re-sign with the
+        # team-id-free Entitlements.dev.plist. See docs-fix/09 known
+        # issue #1.
+        run: |
+          codesign --force --deep --sign - \
+            --entitlements packages/target-tauri/bundle_resources/Entitlements.dev.plist \
+            --options runtime \
+            target/release/bundle/macos/deltachat-tauri.app
+      - name: rebuild DMG from re-signed .app
+        # Tauri's bundled DMG was created BEFORE the re-sign step, so it
+        # contains the old signature and would still be rejected by
+        # Gatekeeper. Drop it and rebuild via bundle_dmg.sh. See
+        # docs-fix/09 known issue #4.
+        working-directory: target/release/bundle/dmg
+        run: |
+          rm -f deltachat-tauri_*.dmg rw.*.dmg
+          bash bundle_dmg.sh \
+            --volname "deltachat-tauri" \
+            --icon-size 128 \
+            --icon "deltachat-tauri.app" 180 170 \
+            --app-drop-link 480 170 \
+            --window-size 660 400 \
+            "deltachat-tauri_${{ github.ref_name }}_aarch64.dmg" \
+            "../macos/deltachat-tauri.app"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: tauri-mac-arm64
+          path: target/release/bundle/dmg/deltachat-tauri_*.dmg
+          if-no-files-found: error
+
+  # =====================================================================
+  # 4) Tauri Linux x86_64 (.deb + .rpm + .AppImage)
+  # =====================================================================
+  tauri-linux:
+    name: Tauri Linux x86_64
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22.x
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            target/
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+      - name: install Linux build deps
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            libwebkit2gtk-4.1-dev \
+            libappindicator3-dev \
+            librsvg2-dev \
+            patchelf
+      - name: install pnpm
+        run: npm i -g pnpm
+      - name: install deps
+        run: pnpm install --frozen-lockfile
+      - name: force-refresh frontend bundle
+        env:
+          VERSION_INFO_GIT_REF: ${{ github.ref_name }}
+        working-directory: packages/target-tauri
+        run: pnpm build4production
+      - name: build Tauri
+        env:
+          VERSION_INFO_GIT_REF: ${{ github.ref_name }}
+        working-directory: packages/target-tauri
+        run: pnpm tauri build
+      - uses: actions/upload-artifact@v4
+        with:
+          name: tauri-linux-x86_64
+          path: |
+            target/release/bundle/deb/*.deb
+            target/release/bundle/rpm/*.rpm
+            target/release/bundle/appimage/*.AppImage
+          if-no-files-found: error
+
+  # =====================================================================
+  # 5) Tauri Windows x86_64 (.msi + .exe)
+  # =====================================================================
+  tauri-windows:
+    name: Tauri Windows x86_64
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22.x
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            target/
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+      - name: install pnpm
+        run: npm i -g pnpm
+      - name: install deps
+        run: pnpm install --frozen-lockfile
+      - name: force-refresh frontend bundle
+        env:
+          VERSION_INFO_GIT_REF: ${{ github.ref_name }}
+        working-directory: packages/target-tauri
+        run: pnpm build4production
+      - name: build Tauri
+        env:
+          VERSION_INFO_GIT_REF: ${{ github.ref_name }}
+        working-directory: packages/target-tauri
+        run: pnpm tauri build
+      - uses: actions/upload-artifact@v4
+        with:
+          name: tauri-windows-x86_64
+          path: |
+            target/release/bundle/msi/*.msi
+            target/release/bundle/nsis/*.exe
+          if-no-files-found: error
+
+  # =====================================================================
+  # Final job: assemble all artifacts and publish a GitHub Release
+  # =====================================================================
+  release:
+    name: Create GitHub Release
+    needs:
+      - electron-mac
+      - electron-linux
+      - tauri-mac
+      - tauri-linux
+      - tauri-windows
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # Full history needed so `git describe` / `git log` can walk back
+          # to the previous r404r-v* tag for the changelog.
+          fetch-depth: 0
+      - uses: actions/download-artifact@v4
+        with:
+          path: release-assets/
+      - name: list collected artifacts
+        run: find release-assets -type f | sort
+      - name: detect prerelease (any non-numeric suffix => prerelease)
+        id: detect
+        # Stable tag pattern: r404r-vMAJOR.MINOR.PATCH
+        # Anything else (e.g. r404r-v2.49.1-beta01, r404r-v2.49.1-mod02)
+        # is treated as a prerelease.
+        run: |
+          if [[ "${{ github.ref_name }}" =~ ^r404r-v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "prerelease=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "prerelease=true" >> "$GITHUB_OUTPUT"
+          fi
+      - name: generate changelog
+        run: |
+          set -euo pipefail
+          # Find the previous r404r-v* tag (excluding the current one).
+          # Use `^` to start the search from the current tag's parent so
+          # the current tag isn't its own "previous".
+          PREV_TAG=$(git describe --tags --abbrev=0 --match='r404r-v*' \
+            "${{ github.ref_name }}^" 2>/dev/null || true)
+          UPSTREAM_BASE=$(git merge-base "${{ github.ref_name }}" \
+            origin/main 2>/dev/null \
+            || git merge-base "${{ github.ref_name }}" main 2>/dev/null \
+            || echo "unknown")
+          {
+            echo "## Changes"
+            echo
+            if [ -n "$PREV_TAG" ]; then
+              echo "Since previous fork release \`$PREV_TAG\`:"
+              echo
+              git log --pretty=format:'- %s (%h)' \
+                "$PREV_TAG..${{ github.ref_name }}"
+              echo
+              echo
+              echo "Full diff: https://github.com/${{ github.repository }}/compare/${PREV_TAG}...${{ github.ref_name }}"
+            else
+              echo "First fork release tagged with the \`r404r-v*\` convention."
+              echo "Recent commits up to and including this tag:"
+              echo
+              git log --pretty=format:'- %s (%h)' \
+                "${{ github.ref_name }}" | head -50
+            fi
+            echo
+            echo
+            echo "## Upstream baseline"
+            echo
+            echo "Built on top of upstream commit \`$UPSTREAM_BASE\`."
+            echo
+            echo "## Notes for installers"
+            echo
+            echo "- **macOS**: builds are ad-hoc signed (no Apple Developer cert)."
+            echo "  First launch must be triggered via right-click → Open in Finder,"
+            echo "  not a double-click. See"
+            echo "  [docs-fix/09-tauri-macos-adhoc-build.md](https://github.com/${{ github.repository }}/blob/r404r-main/docs-fix/09-tauri-macos-adhoc-build.md)"
+            echo "  for the rationale and known issues."
+            echo "- **Linux** AppImages need \`chmod +x\` before running."
+            echo "- **Windows** binaries are unsigned; SmartScreen will warn on"
+            echo "  first launch."
+            echo
+            echo "## Fork-specific features"
+            echo
+            echo "See [README.r404r.md](https://github.com/${{ github.repository }}/blob/r404r-main/README.r404r.md)"
+            echo "for the full list. Key Management UI is gated behind the"
+            echo "\`enableKeyManagement\` flag in"
+            echo "Settings → Advanced → Experimental Features."
+          } > release-notes.md
+          echo "----- generated release notes -----"
+          cat release-notes.md
+      - uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.ref_name }}
+          name: ${{ github.ref_name }}
+          body_path: release-notes.md
+          files: release-assets/**/*
+          draft: false
+          prerelease: ${{ steps.detect.outputs.prerelease }}
+          fail_on_unmatched_files: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

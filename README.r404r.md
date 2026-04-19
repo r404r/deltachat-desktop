@@ -201,11 +201,30 @@ git push origin r404r-main
 
 ## Release tagging
 
-Fork-specific releases use a `r404r-` prefix so they never collide with
-upstream tags:
+Fork-specific releases use a `r404r-v*` prefix so they never collide with
+upstream's `v*` tags:
 
 ```bash
 git checkout r404r-main
-git tag r404r-v2.49.1-keymgmt
-git push origin r404r-v2.49.1-keymgmt
+git tag r404r-v2.49.1
+git push origin r404r-v2.49.1
 ```
+
+Pushing a `r404r-v*` tag triggers
+[`.github/workflows/r404r-release.yml`](./.github/workflows/r404r-release.yml),
+which builds five binaries in parallel (Electron mac arm64 / Electron Linux /
+Tauri mac arm64 / Tauri Linux / Tauri Windows), assembles them, and creates
+a GitHub Release with an auto-generated changelog. macOS bundles are ad-hoc
+signed and re-signed with `Entitlements.dev.plist` per
+[`docs-fix/09-tauri-macos-adhoc-build.md`](./docs-fix/09-tauri-macos-adhoc-build.md).
+
+**Tag suffix convention** (used by the workflow's prerelease detection):
+
+| Tag pattern | Treated as |
+|---|---|
+| `r404r-vMAJOR.MINOR.PATCH` (e.g. `r404r-v2.49.1`) | stable release |
+| `r404r-vMAJOR.MINOR.PATCH-anything` (e.g. `r404r-v2.49.1-beta01`, `r404r-v2.49.1-mod02`) | prerelease |
+
+Releases appear at `https://github.com/r404r/deltachat-desktop/releases`
+roughly 30–45 minutes after `git push --tags` (Tauri builds dominate the
+critical path).

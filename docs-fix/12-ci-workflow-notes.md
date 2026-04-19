@@ -6,7 +6,8 @@ if upstream had disabled them through the web UI.
 
 This document is the running inventory of what each workflow does, whether
 it works on this fork out of the box, and what to do about the ones that
-don't.
+don't. The fork also adds **one** of its own workflow file
+(`r404r-release.yml`, only on `r404r-main`).
 
 ## Summary table
 
@@ -18,9 +19,10 @@ don't.
 | `delete-preview.yml` | PR closed | ⚠️ needs SSH secrets to `download.delta.chat` | Only runs with `#public-preview` in PR body; likely leave as-is |
 | `basic-tests.yml` | push main, PR | ✅ | — |
 | `build-tauri-preview.yml` | PR on `packages/target-tauri/**` | ✅ | — |
-| `build-tauri-release.yml` | push tag `v*` | ✅ | — |
-| `build-windows-appx.yml` | push any tag | ✅ | — |
+| `build-tauri-release.yml` | push tag `v*` | ✅ but produces only Linux+Windows artifacts (no Release object) | Triggers on upstream-style tags; ignore unless you also want loose artifacts. |
+| `build-windows-appx.yml` | push any tag | ✅ | Note: also fires on `r404r-v*` tags. Consider disabling if you don't ship to Windows Store. |
 | `rust-tauri-lint.yml` | PR on `packages/target-tauri/**` | ✅ | — |
+| `r404r-release.yml` (fork-only, `r404r-main`) | push tag `r404r-v*` | ✅ — built specifically for this fork | See "Fork release workflow" below. |
 
 "Works on fork" means: runs to green without manual GitHub repo configuration
 (secrets / variables / enabling / disabling).
@@ -148,12 +150,72 @@ paired). Disable otherwise.
 - **`build-tauri-preview.yml`** and **`rust-tauri-lint.yml`** are path-
   filtered to `packages/target-tauri/**`, use only the auto-provisioned
   `GITHUB_TOKEN`, and work on any fork.
-- **`build-tauri-release.yml`** only fires on `push tag v*`. Tags come from
-  either upstream (when we sync them) or our own `r404r-v*` tags
-  (which don't match `v*` — safe).
-- **`build-windows-appx.yml`** fires on any tag. Runs
-  `cd packages/target-electron && pnpm build` which IS valid because
-  `target-electron/package.json` has a `build` script.
+- **`build-tauri-release.yml`** fires on `push tag v*`. ⚠️ It produces only
+  Linux + Windows Tauri artifacts and does NOT create a GitHub Release —
+  artifacts land in the per-run Actions sidebar. For fork releases use the
+  fork-only workflow below instead.
+- **`build-windows-appx.yml`** fires on **any** tag (`tags: '*'`), so it
+  also matches `r404r-v*`. Produces an Electron `.appx` artifact for the
+  Windows Store. The fork has no Microsoft Store presence; consider
+  disabling unless you have a reason to keep these artifacts around.
+
+---
+
+## Fork release workflow
+
+`r404r-release.yml` (lives only on `r404r-main`) is the fork's
+purpose-built release pipeline. Triggered by `r404r-v*` tag pushes.
+
+**Build matrix (5 jobs in parallel):**
+
+| Job | Runner | Output |
+|---|---|---|
+| `electron-mac` | `macos-latest` (arm64) | `DeltaChat-<ver>-arm64.dmg` |
+| `electron-linux` | `ubuntu-22.04` | `DeltaChat-<ver>.AppImage` |
+| `tauri-mac` | `macos-latest` (arm64) | `deltachat-tauri_<ver>_aarch64.dmg` |
+| `tauri-linux` | `ubuntu-22.04` | `.deb` + `.rpm` + `.AppImage` |
+| `tauri-windows` | `windows-latest` | `.msi` + `.exe` (NSIS) |
+
+**Final job (`release`):**
+
+1. Downloads every build job's artifacts.
+2. Detects whether this is a stable or prerelease tag (stable iff the tag
+   matches `r404r-vMAJOR.MINOR.PATCH$` exactly; everything else is
+   prerelease).
+3. Generates a changelog by walking `git log <previous r404r-v*
+   tag>..<this tag>` (or, if this is the first such tag, walks back 50
+   commits).
+4. Notes the upstream merge-base commit so consumers can tell which
+   upstream baseline this fork build sits on.
+5. Calls `softprops/action-gh-release@v2` to create the Release with all
+   artifacts attached.
+
+**macOS specifics:**
+
+- Both Electron and Tauri are ad-hoc signed (no Apple Developer cert).
+- Electron uses `-c.mac.identity=null -c.afterSign=./stub.cjs`.
+- Tauri uses `APPLE_SIGNING_IDENTITY=-`, then **re-signs the .app** with
+  `bundle_resources/Entitlements.dev.plist`, then **rebuilds the DMG**
+  via `bundle_dmg.sh` from the re-signed bundle. Necessary because
+  Tauri's bundled DMG was created with the merlinux-team-id production
+  entitlements which Gatekeeper rejects under ad-hoc signing.
+- See [`docs-fix/09-tauri-macos-adhoc-build.md`](./09-tauri-macos-adhoc-build.md)
+  for the full background and gotchas.
+
+**Why this lives only on `r404r-main`:**
+
+- Tag-triggered workflows execute the workflow file as it exists in the
+  commit the tag points to. Since `r404r-v*` tags are always created on
+  `r404r-main`, the workflow only needs to live there.
+- Keeping it off `main` preserves the zero-drift invariant
+  (`git diff main deltachat/deltachat-desktop/main` stays empty).
+
+**Why we don't auto-publish from upstream's `build-tauri-release.yml`:**
+
+- It only covers Linux + Windows Tauri (no macOS, no Electron).
+- It uploads to Actions artifacts, not Releases — would still need a
+  follow-up step to assemble a Release.
+- Modifying it on `main` would break the upstream-mirror invariant.
 
 ---
 
