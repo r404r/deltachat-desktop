@@ -224,6 +224,9 @@
   "key_management_export_success_browser_file": {
     "message": "A key file is ready to download:\n%1$s"
   },
+  "key_management_export_partial_browser_file": {
+    "message": "Partial export — download to clean up the server copy:\n%1$s"
+  },
   "key_management_export_success_browser_empty": {
     "message": "Export finished, but no files were reported. Check logs."
   },

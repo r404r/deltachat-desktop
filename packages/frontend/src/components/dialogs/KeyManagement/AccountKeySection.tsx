@@ -289,11 +289,34 @@ function ExportKeyButton() {
         await new Promise(res => setTimeout(res, 3000))
       }
 
+      // Failure path.
       if (!result.success) {
         window.__userFeedback({
           type: 'error',
           text: tx('error_x', result.error ?? 'unknown error'),
         })
+
+        // Browser special case: if any `ImexFileWritten` events fired
+        // before the failure, those .asc files are still on the server
+        // inside DC_ACCOUNTS_DIR/backups. The `/download-backup/:file`
+        // route is what deletes them (10s after the download completes),
+        // and there is no other cleanup endpoint. Surface the links so
+        // the user can either take the partial output or trigger the
+        // auto-cleanup by downloading once — clearly marked as a
+        // partial/failed export so they don't mistake it for success.
+        if (isBrowser && writtenPaths.length > 0) {
+          for (const path of writtenPaths) {
+            const downloadLink = `/download-backup/${basename(path)}`
+            openDialog(AlertDialog, {
+              cb: () => window.open(downloadLink, '__blank'),
+              message: tx(
+                'key_management_export_partial_browser_file',
+                downloadLink
+              ),
+              okBtnLabel: tx('open'),
+            })
+          }
+        }
         return
       }
 
