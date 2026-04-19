@@ -1,5 +1,11 @@
 [![code style: prettier](https://img.shields.io/badge/code_style-prettier-ff69b4.svg?style=flat-square)](https://github.com/prettier/prettier)
 
+> **r404r fork notice**: You're viewing the fork's enhanced branch (`r404r-main`).
+> It tracks upstream [`deltachat/deltachat-desktop`](https://github.com/deltachat/deltachat-desktop)
+> plus fork-specific features documented in [`README.r404r.md`](./README.r404r.md).
+> The `main` branch of this fork is a clean mirror of upstream, used only for
+> submitting PRs back upstream.
+
 # Delta Chat Desktop <a id="deltachat-desktop"></a>
 
 **Desktop Application for [delta.chat](https://delta.chat)**
