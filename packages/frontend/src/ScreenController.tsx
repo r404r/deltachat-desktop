@@ -82,6 +82,7 @@ export default class ScreenController extends Component {
     window.__userFeedback = this.userFeedback.bind(this)
     window.__changeScreen = this.changeScreen.bind(this)
     window.__selectAccount = this.selectAccount.bind(this)
+    window.__addAndSelectAccount = this.addAndSelectAccount.bind(this)
     window.__screen = this.state.screen
   }
 

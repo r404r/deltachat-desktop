@@ -191,6 +191,18 @@
   "key_management_import_success": {
     "message": "Key imported successfully"
   },
+  "key_management_cannot_replace_header": {
+    "message": "Cannot Replace Existing Key"
+  },
+  "key_management_cannot_replace_body": {
+    "message": "This account already has an encryption key, and Delta Chat Core does not allow replacing it.\n\nReason: changing the key would break verified groups and encrypted conversations you are already part of. The underlying protocols (Autocrypt / SecureJoin) have no way to tell peers that your key changed.\n\nTo use a custom PGP key:\n\n1. Create a new profile (below)\n2. Import the key BEFORE logging in\n3. Then configure the email transport\n\nMake sure the key's email matches the address you will log in with."
+  },
+  "key_management_cannot_replace_current": {
+    "message": "Current key fingerprint on this account:"
+  },
+  "key_management_cannot_replace_add_account": {
+    "message": "Add New Profile"
+  },
   "key_management_export_key": {
     "message": "Export Key"
   },
