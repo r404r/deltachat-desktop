@@ -137,7 +137,21 @@ function ImportKeyButton({ onImported }: { onImported: () => void }) {
       openDialog(CannotReplaceKeyDialog, {
         currentFingerprint: existingInfo.fingerprint,
         onAddAccount: async () => {
-          await window.__addAndSelectAccount()
+          // Switching accounts while Key Management is open would leave
+          // it mounted against the OLD account's cached state while its
+          // action handlers (Import / Export / Copy) use
+          // `selectedAccountId()` which now returns the NEW account. Tear
+          // down all open dialogs first so the user has to reopen Key
+          // Management from Settings on the new account.
+          window.__closeAllDialogs?.()
+          try {
+            await window.__addAndSelectAccount()
+          } catch (err) {
+            window.__userFeedback({
+              type: 'error',
+              text: tx('error_x', unknownErrorToString(err)),
+            })
+          }
         },
       })
       return
