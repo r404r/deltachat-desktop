@@ -49,3 +49,4 @@ Connect Desktop UI to real core APIs once available.
 | 7 | Import self key UI | `07-import-self-key.md` | SUPERSEDED by Task 8 |
 | 8 | Enable real import self key | `08-enable-import-key.md` | DONE (experimental) |
 | 9 | Export self key | `10-export-self-key.md` | DONE (experimental) |
+| 10 | Import key preflight + add-account guidance | `11-import-key-preflight.md` | DONE |
