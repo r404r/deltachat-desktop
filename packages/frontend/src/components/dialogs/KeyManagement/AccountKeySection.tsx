@@ -300,21 +300,30 @@ function ExportKeyButton() {
         // before the failure, those .asc files are still on the server
         // inside DC_ACCOUNTS_DIR/backups. The `/download-backup/:file`
         // route is what deletes them (10s after the download completes),
-        // and there is no other cleanup endpoint. Surface the links so
-        // the user can either take the partial output or trigger the
-        // auto-cleanup by downloading once — clearly marked as a
-        // partial/failed export so they don't mistake it for success.
+        // and there is no other cleanup endpoint. Offer each link as an
+        // explicit confirm/cancel prompt — importantly we do NOT auto-
+        // download on dismissal (Escape / backdrop click), because that
+        // would exfiltrate secret key material without the user asking.
+        // A `ConfirmationDialog` gives us that clean separation (its cb
+        // is called with `false` on dismiss and only `true` on confirm).
         if (isBrowser && writtenPaths.length > 0) {
           for (const path of writtenPaths) {
             const downloadLink = `/download-backup/${basename(path)}`
-            openDialog(AlertDialog, {
-              cb: () => window.open(downloadLink, '__blank'),
+            const shouldDownload = await openConfirmationDialog({
+              header: tx('key_management_export_partial_header'),
               message: tx(
                 'key_management_export_partial_browser_file',
                 downloadLink
               ),
-              okBtnLabel: tx('open'),
+              confirmLabel: tx('download'),
+              cancelLabel: tx('cancel'),
             })
+            if (shouldDownload) {
+              window.open(downloadLink, '__blank')
+            }
+            // Declined: file stays on server until manual cleanup or
+            // next `/download-backup` hit. We can't do better without a
+            // dedicated delete endpoint (separate cross-package change).
           }
         }
         return
