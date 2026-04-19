@@ -13,6 +13,7 @@ import {
 import type { AccountKeyInfo } from '../../../backend/key-management'
 import AlertDialog from '../AlertDialog'
 import ConfirmationDialog from '../ConfirmationDialog'
+import CannotReplaceKeyDialog from './CannotReplaceKeyDialog'
 import { runtime } from '@deltachat-desktop/runtime-interface'
 import { unknownErrorToString } from '@deltachat-desktop/shared/unknownErrorToString'
 import { LastUsedSlot, rememberLastUsedPath } from '../../../utils/lastUsedPaths'
@@ -114,9 +115,34 @@ export default function AccountKeySection() {
 function ImportKeyButton({ onImported }: { onImported: () => void }) {
   const tx = useTranslationFunction()
   const openConfirmationDialog = useConfirmationDialog()
+  const { openDialog } = useDialog()
   const [importing, setImporting] = useState(false)
 
   const handleImport = useCallback(async () => {
+    // Preflight: core v2.49.0 does not allow replacing an existing key
+    // (see PR chatmail/core#6574). If the account already has a key,
+    // show a dialog explaining why and offering to add a new account —
+    // the only path where import works end-to-end. Skipping this check
+    // would bubble the raw SQL error
+    // `UNIQUE constraint failed: config.keyname` up to the user.
+    let existingInfo: AccountKeyInfo | null = null
+    try {
+      existingInfo = await getAccountKeyInfo(selectedAccountId())
+    } catch {
+      // If the preflight fetch fails we fall through to the normal
+      // flow; core will raise a clearer error if something is really
+      // wrong with the account.
+    }
+    if (existingInfo?.fingerprint) {
+      openDialog(CannotReplaceKeyDialog, {
+        currentFingerprint: existingInfo.fingerprint,
+        onAddAccount: async () => {
+          await window.__addAndSelectAccount()
+        },
+      })
+      return
+    }
+
     // Step 1: Risk acknowledgement
     const acknowledged = await openConfirmationDialog({
       header: tx('key_management_import_warning_header'),
@@ -188,7 +214,7 @@ function ImportKeyButton({ onImported }: { onImported: () => void }) {
       setImporting(false)
       await cleanupTempFile()
     }
-  }, [openConfirmationDialog, onImported, tx])
+  }, [openConfirmationDialog, openDialog, onImported, tx])
 
   return (
     <button

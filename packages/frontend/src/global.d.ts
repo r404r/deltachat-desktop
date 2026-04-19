@@ -10,6 +10,7 @@ declare global {
     __userFeedback: (message: userFeedback | false) => void
     __changeScreen: (screen: Screens) => void
     __selectAccount: (accountId: number) => Promise<void>
+    __addAndSelectAccount: () => Promise<number>
     readonly __selectedAccountId: number | undefined
     __selectedChatId: number | undefined
     __screen: Screens
