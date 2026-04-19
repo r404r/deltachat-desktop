@@ -48,3 +48,4 @@ Connect Desktop UI to real core APIs once available.
 | 6 | Pin / unpin UI | `06-pin-unpin-ui.md` | DONE (disabled, awaiting core) |
 | 7 | Import self key UI | `07-import-self-key.md` | SUPERSEDED by Task 8 |
 | 8 | Enable real import self key | `08-enable-import-key.md` | DONE (experimental) |
+| 9 | Export self key | `10-export-self-key.md` | DONE (experimental) |
