@@ -6,17 +6,73 @@ official releases, see the main [`README.md`](./README.md).
 
 ---
 
-## Branch layout
+## Branch strategy — three-line parallel model
 
-This fork uses two long-lived branches with very different purposes:
+The fork needs to do three different things that must not contaminate each
+other:
 
-| Branch | Purpose | Contents |
-|---|---|---|
-| [`main`](../../tree/main) | Pristine mirror of upstream `deltachat/deltachat-desktop/main`. Used exclusively as the base for upstream-bound PRs. | 100% upstream, no fork additions. |
-| [`r404r-main`](../../tree/r404r-main) | Default branch of this fork. Upstream + fork-specific features. Consumed by downstream users of the fork. | Upstream + key management UI + docs in `docs-fix/`. |
+1. **Stay in sync with upstream** (absorb their bug fixes and features)
+2. **Contribute back to upstream** (send them PRs from clean bases)
+3. **Carry fork-only features** that upstream won't or can't accept
 
-Short-lived PR branches are cut off `main` and named `fix/*`, `feat/*`, etc.
-Fork-only feature branches are cut off `r404r-main` and named `r404r/*`.
+Mixing all of these into one branch produces the classic fork-rot where
+upstream PRs leak fork-private code, `git merge deltachat/main` hits
+spurious conflicts, and nobody can tell which commits are "ours" anymore.
+
+We avoid that with three long-lived lines plus short-lived worker branches:
+
+```
+deltachat/deltachat-desktop/main ─────●──────●──────●───→   (upstream, read-only for us)
+                                       \      \      \
+                                        \      \      \     fetch + ff-only merge
+                                         ↓      ↓      ↓
+origin/main ──────────────────────────●─●──────●──────●───→  (pristine upstream mirror)
+                                       ↑
+                                       └── short-lived fix/* or feat/* PR branches
+                                           cut from here, pushed to open PRs
+                                           against deltachat/deltachat-desktop
+
+                                                   rebase r404r-main onto main
+                                                   to absorb upstream updates
+                                                         ↓
+origin/r404r-main ──●──●──●──●──●──●──●──●──●──●──●──●──→   (fork integration / default)
+                          ↑                    ↑
+                          │                    └── short-lived r404r/* sub-feature
+                          │                        branches cut from r404r-main,
+                          │                        merged back with --no-ff
+                          └── this is what GitHub shows to visitors and what
+                              end users download builds from
+```
+
+### Role of each line
+
+| Line | Purpose | Accepted inputs | Push policy |
+|---|---|---|---|
+| `deltachat/deltachat-desktop/main` (remote) | Source of truth for upstream project. | (nothing — read-only from our side) | (n/a) |
+| [`origin/main`](../../tree/main) | Pristine mirror of upstream. Used as the base for outgoing PRs so upstream sees a clean diff. | Only fast-forward merges from `deltachat/deltachat-desktop/main`. Never rebase, never force-push, never merge `r404r-main` into it. | `git merge --ff-only` + plain `git push`. |
+| [`origin/r404r-main`](../../tree/r404r-main) | Integration branch for all fork-specific work. Default branch of this repo. Build artifacts are cut from here. | (a) rebases onto `main` to absorb upstream updates; (b) `--no-ff` merges from `r404r/*` sub-feature branches. | `git rebase main` + `git push --force-with-lease`. |
+| `r404r/*` (short-lived) | One per fork-only feature or bugfix. Keeps big changes isolated while in progress. | Normal commits. | Normal push; delete after merging to `r404r-main`. |
+| `fix/*`, `feat/*` (short-lived) | One per PR going to upstream. | Normal commits. | Push to `origin`, open PR with base `deltachat/deltachat-desktop:main`. Delete after merge. |
+
+### Why this works
+
+- **Upstream merges never conflict with fork features.** Fork features only
+  live on `r404r-main`. When upstream lands work that touches the same
+  files, the conflict surfaces during `git rebase main` on `r404r-main` —
+  and we resolve it once, in isolation, away from any PR submission.
+- **Upstream PRs stay clean.** Because `fix/*` / `feat/*` branches start
+  from `main` (which is byte-identical to upstream), diffs contain only the
+  intended change. Upstream maintainers see no fork contamination.
+- **End users get the enhanced version by default.** GitHub's default
+  branch is `r404r-main`, so fresh clones and web-UI visitors land on the
+  fork with all its features and its README prominent.
+- **`main` is a free tool.** Anyone (including upstream maintainers) can
+  `diff main deltachat/deltachat-desktop/main` and get an empty result,
+  which is the strongest proof that the fork isn't secretly shipping
+  hidden code on the upstream-mirror branch.
+
+See [**Fork management workflow**](#fork-management-workflow) below for the
+exact commands used to keep these invariants true.
 
 ## Features added by this fork
 
