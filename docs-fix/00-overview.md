@@ -50,3 +50,13 @@ Connect Desktop UI to real core APIs once available.
 | 8 | Enable real import self key | `08-enable-import-key.md` | DONE (experimental) |
 | 9 | Export self key | `10-export-self-key.md` | DONE (experimental) |
 | 10 | Import key preflight + add-account guidance | `11-import-key-preflight.md` | DONE |
+
+## Related fork-infrastructure docs
+
+Not part of the key management feature, but live here because they document
+fork-specific practices:
+
+| Doc | Topic |
+|---|---|
+| [`09-tauri-macos-adhoc-build.md`](./09-tauri-macos-adhoc-build.md) | Building macOS DMGs with ad-hoc signing (no Apple Developer cert); four known gotchas |
+| [`12-ci-workflow-notes.md`](./12-ci-workflow-notes.md) | GitHub Actions audit for the fork — which workflows work out of the box, which need disabling, and the sync checklist |
