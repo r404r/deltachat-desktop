@@ -104,9 +104,20 @@ mkdirSync(getLogsPath(), { recursive: true })
 mkdirSync(getCustomThemesPath(), { recursive: true })
 
 // Setup Logger
-import { cleanupLogFolder, createLogHandler } from './log-handler.js'
-const logHandler = createLogHandler()
-import { getLogger, setLogHandler } from '../../shared/logger.js'
+import {
+  cleanupLogFolder,
+  createLogHandler,
+} from '@deltachat-desktop/shared/log-handler.js'
+const logHandler = createLogHandler(getLogsPath(), {
+  onWriteError: (err, logFilePath) => {
+    // Trigger our `uncaughtException` listener.
+    throw new Error(
+      `Failed to write to logfile (${logFilePath}): ${err.message}`,
+      { cause: err }
+    )
+  },
+})
+import { getLogger, setLogHandler } from '@deltachat-desktop/shared/logger.js'
 const log = getLogger('main/index')
 setLogHandler(logHandler.log, rc)
 log.info(
@@ -125,8 +136,10 @@ process.on('uncaughtException', err => {
   }
   dialog.showErrorBox(
     'Error - uncaughtException',
-    `See the logfile (${logHandler.logFilePath()}) for details and contact the developers about this issue:\n` +
-      JSON.stringify(error)
+    `See the logfile (${logHandler.logFilePath()}) for details and contact the developers about this issue:\n\n` +
+      error.message +
+      '\n\n' +
+      error.stack
   )
 })
 
@@ -263,7 +276,7 @@ async function onReady([_appReady, _loadedState, _appx, _webxdc_cleanup]: [
     )
   }
 
-  cleanupLogFolder().catch(err =>
+  cleanupLogFolder(getLogsPath()).catch(err =>
     log.error('Cleanup of old logfiles failed: ', err)
   )
   cleanupDraftTempDir()

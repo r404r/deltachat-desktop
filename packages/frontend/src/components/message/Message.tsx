@@ -18,13 +18,9 @@ import MessageMetaData, { isMediaWithoutText } from './MessageMetaData'
 import {
   onDownload,
   openAttachmentInShell,
-  openForwardDialog,
-  openMessageInfo,
   isMessageEditable,
   setQuoteInDraft,
   openMessageHTML,
-  confirmDeleteMessage,
-  downloadFullMessage,
   openWebxdc,
   enterEditMessageMode,
 } from './messageFunctions'
@@ -68,6 +64,9 @@ import { avatarInitial } from '@deltachat-desktop/shared/avatarInitial'
 import { getLogger } from '@deltachat-desktop/shared/logger'
 import { IconButton } from '../Icon'
 import { useRpcFetch } from '../../hooks/useFetch'
+import ForwardMessage from '../dialogs/ForwardMessage'
+import MessageDetail from '../dialogs/MessageDetail/MessageDetail'
+import ConfirmDeleteMessageDialog from '../dialogs/ConfirmDeleteMessage'
 
 const log = getLogger('Message')
 
@@ -331,7 +330,7 @@ function buildContextMenu(
     // Forward message
     {
       label: tx('forward'),
-      action: openForwardDialog.bind(null, openDialog, message),
+      action: () => openDialog(ForwardMessage, { message }),
     },
     // Save Message
     // For reference, the conditions when it's shown:
@@ -433,19 +432,18 @@ function buildContextMenu(
     // Message Info
     {
       label: tx('info'),
-      action: openMessageInfo.bind(null, openDialog, message),
+      action: () => openDialog(MessageDetail, { id: message.id }),
     },
     { type: 'separator' },
     // Delete message
     {
       label: tx('delete_message_desktop'),
-      action: confirmDeleteMessage.bind(
-        null,
-        openDialog,
-        accountId,
-        message,
-        chat
-      ),
+      action: () =>
+        openDialog(ConfirmDeleteMessageDialog, {
+          accountId,
+          msg: message,
+          chat,
+        }),
       danger: true,
     },
   ]
@@ -634,7 +632,11 @@ export default function Message(props: {
       ) {
         e.preventDefault()
         e.stopPropagation()
-        confirmDeleteMessage(openDialog, accountId, message, props.chat)
+        openDialog(ConfirmDeleteMessageDialog, {
+          accountId,
+          msg: message,
+          chat,
+        })
         return
       }
 
@@ -845,7 +847,9 @@ export default function Message(props: {
         {(downloadState == 'Failure' || downloadState === 'Available') && (
           <button
             type='button'
-            onClick={downloadFullMessage.bind(null, message.id)}
+            onClick={() =>
+              BackendRemote.rpc.downloadFullMessage(accountId, message.id)
+            }
             tabIndex={tabindexForInteractiveContents}
           >
             {tx('download')}
@@ -994,7 +998,7 @@ export default function Message(props: {
               timestamp={message.timestamp * 1000}
               encrypted={message.showPadlock}
               isSavedMessage={isOrHasSavedMessage}
-              onClickError={openMessageInfo.bind(null, openDialog, message)}
+              onClickError={() => openDialog(MessageDetail, { id: message.id })}
               viewType={message.viewType}
               chatType={chat.chatType}
               tabindexForInteractiveContents={tabindexForInteractiveContents}

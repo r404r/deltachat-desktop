@@ -31,9 +31,9 @@ export default defineConfig<TestOptions>({
   // Our tests involve network interaction, so we want a higher timeout
   // for assertions, such as receiving an invitation to a group,
   // as well as whole tests.
-  timeout: 5 * 60 * 1000,
+  timeout: (process.env.CI ? 5 : 1) * 60 * 1000,
   expect: {
-    timeout: 60_000,
+    timeout: process.env.CI ? 60_000 : 20_000,
   },
 
   /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */
@@ -46,10 +46,9 @@ export default defineConfig<TestOptions>({
     video: 'retain-on-failure',
     screenshot: 'only-on-failure',
     permissions: ['notifications'],
-    ignoreHTTPSErrors: true,
+    ignoreHTTPSErrors: !DC_FRONTEND_NO_TLS,
     launchOptions: {
-      // Only relevant with TLS.
-      args: ['--ignore-certificate-errors'],
+      args: DC_FRONTEND_NO_TLS ? undefined : ['--ignore-certificate-errors'],
     },
   },
 
@@ -79,7 +78,7 @@ export default defineConfig<TestOptions>({
     } ../target-browser/dist/server.js`,
     url: baseURL,
     timeout: 120 * 1000,
-    ignoreHTTPSErrors: true,
+    ignoreHTTPSErrors: !DC_FRONTEND_NO_TLS,
     reuseExistingServer: !process.env.CI,
     stdout: 'pipe',
     stderr: 'pipe',
