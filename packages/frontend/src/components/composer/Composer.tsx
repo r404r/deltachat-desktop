@@ -692,7 +692,7 @@ const Composer = forwardRef<
               selectedChat={selectedChat}
             />
           )}
-          {settingsStore && !recording && (
+          {!recording && (
             <>
               <ComposerMessageInput
                 text={draftState.text}
@@ -707,7 +707,9 @@ const Composer = forwardRef<
                 hidden={messageEditing.isEditingModeActive}
                 isMessageEditingMode={false}
                 ref={regularMessageInputRef}
-                enterKeySends={settingsStore?.desktopSettings.enterKeySends}
+                enterKeySends={
+                  settingsStore?.desktopSettings.enterKeySends ?? false
+                }
                 loadingDraft={draftIsLoading}
                 sendMessageOrEditRequest={
                   (!messageEditing.isEditingModeActive
@@ -729,7 +731,9 @@ const Composer = forwardRef<
                 isMessageEditingMode={true}
                 hidden={!messageEditing.isEditingModeActive}
                 ref={editMessageInputRef}
-                enterKeySends={settingsStore?.desktopSettings.enterKeySends}
+                enterKeySends={
+                  settingsStore?.desktopSettings.enterKeySends ?? false
+                }
                 loadingDraft={false}
                 sendMessageOrEditRequest={
                   messageEditing.doSendEditRequest ?? (() => {})

@@ -30,7 +30,7 @@ $paddingVertical: 20px;
       0 0 0 1px rgba(16, 22, 26, 0.1),
       0 4px 8px rgba(16, 22, 26, 0.2),
       0 0 20px 3px rgba(16, 22, 26, 0.2);
-    // display: flex;
+    display: flex;
     flex-direction: column;
     max-height: calc(100% - 50px);
     max-width: 733px;
@@ -77,7 +77,7 @@ $paddingVertical: 20px;
   background-color: var(--bp4DialogBgPrimary);
   flex: 1 1 auto;
   max-height: 90vh;
-  overflow: overlay;
+  overflow: auto;
 
   &::-webkit-scrollbar-track {
     background: transparent;

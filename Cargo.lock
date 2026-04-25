@@ -1875,8 +1875,7 @@ dependencies = [
 
 [[package]]
 name = "deltachat"
-version = "2.49.0"
-source = "git+https://github.com/chatmail/core?tag=v2.49.0#dab7ca19fec91fe2462cb70eb52ec407343b4b2d"
+version = "2.50.0-dev"
 dependencies = [
  "anyhow",
  "astral-tokio-tar",
@@ -1959,7 +1958,6 @@ dependencies = [
 [[package]]
 name = "deltachat-contact-tools"
 version = "0.0.0"
-source = "git+https://github.com/chatmail/core?tag=v2.49.0#dab7ca19fec91fe2462cb70eb52ec407343b4b2d"
 dependencies = [
  "anyhow",
  "chrono",
@@ -1969,8 +1967,7 @@ dependencies = [
 
 [[package]]
 name = "deltachat-jsonrpc"
-version = "2.49.0"
-source = "git+https://github.com/chatmail/core?tag=v2.49.0#dab7ca19fec91fe2462cb70eb52ec407343b4b2d"
+version = "2.50.0-dev"
 dependencies = [
  "anyhow",
  "async-channel 2.5.0",
@@ -2039,12 +2036,10 @@ dependencies = [
 [[package]]
 name = "deltachat-time"
 version = "1.0.0"
-source = "git+https://github.com/chatmail/core?tag=v2.49.0#dab7ca19fec91fe2462cb70eb52ec407343b4b2d"
 
 [[package]]
 name = "deltachat_derive"
 version = "2.0.0"
-source = "git+https://github.com/chatmail/core?tag=v2.49.0#dab7ca19fec91fe2462cb70eb52ec407343b4b2d"
 dependencies = [
  "quote",
  "syn 2.0.111",
@@ -2976,7 +2971,6 @@ dependencies = [
 [[package]]
 name = "format-flowed"
 version = "1.0.0"
-source = "git+https://github.com/chatmail/core?tag=v2.49.0#dab7ca19fec91fe2462cb70eb52ec407343b4b2d"
 
 [[package]]
 name = "fsevent-sys"
@@ -7279,7 +7273,6 @@ dependencies = [
 [[package]]
 name = "ratelimit"
 version = "1.0.0"
-source = "git+https://github.com/chatmail/core?tag=v2.49.0#dab7ca19fec91fe2462cb70eb52ec407343b4b2d"
 
 [[package]]
 name = "rav1e"

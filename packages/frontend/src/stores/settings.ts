@@ -11,7 +11,6 @@ export interface SettingsStoreState {
   selfContact: Type.Contact
   settings: {
     [P in (typeof settingsKeys)[number]]: {
-      mvbox_move: string
       configured_addr: string
       displayname: string
       selfstatus: string
@@ -21,7 +20,6 @@ export interface SettingsStoreState {
       delete_device_after: string
       delete_server_after: string
       download_limit: string
-      only_fetch_mvbox: string
       media_quality: string
       is_chatmail: '0' | '1'
       who_can_call_me: WhoCanCallMe
@@ -33,7 +31,6 @@ export interface SettingsStoreState {
 }
 
 const settingsKeys = [
-  'mvbox_move',
   'configured_addr',
   'displayname',
   'selfstatus',
@@ -43,7 +40,6 @@ const settingsKeys = [
   'delete_device_after',
   'delete_server_after',
   'download_limit',
-  'only_fetch_mvbox',
   'media_quality',
   'is_chatmail',
   'who_can_call_me',

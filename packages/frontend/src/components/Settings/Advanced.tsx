@@ -2,7 +2,7 @@ import React, { useEffect, useState, useCallback } from 'react'
 
 import type { SettingsStoreState } from '../../stores/settings'
 import { ExperimentalFeatures } from './ExperimentalFeatures'
-import ImapFolderHandling from './ImapFolderHandling'
+// ImapFolderHandling removed: forked core no longer supports mvbox_move/only_fetch_mvbox
 import SettingsHeading from './SettingsHeading'
 import SettingsSeparator from './SettingsSeparator'
 import useTranslationFunction from '../../hooks/useTranslationFunction'
@@ -17,7 +17,6 @@ import ProxyConfiguration from '../dialogs/ProxyConfiguration'
 import { selectedAccountId } from '../../ScreenController'
 import TransportsDialog from '../dialogs/Transports'
 import { LogDialog } from '../dialogs/Log'
-import KeyManagementDialog from '../dialogs/KeyManagement'
 import { DialogProps } from '../../contexts/DialogContext'
 import { getLogger } from '../../../../shared/logger'
 
@@ -101,16 +100,21 @@ export default function Advanced({ onClose, settingsStore }: Props) {
       <ExperimentalFeatures />
 
       {settingsStore.desktopSettings.enableKeyManagement && (
-        <>
-          <SettingsSeparator />
-          <SettingsHeading>{tx('key_management')}</SettingsHeading>
-          <SettingsButton
-            onClick={() => openDialog(KeyManagementDialog)}
-          >
-            {tx('key_management')}
-          </SettingsButton>
-        </>
-      )}
+          <>
+            <SettingsSeparator />
+            <SettingsHeading>{tx('key_management')}</SettingsHeading>
+            <SettingsButton
+              onClick={async () => {
+                const { default: KeyManagementDialog } = await import(
+                  '../dialogs/KeyManagement'
+                )
+                openDialog(KeyManagementDialog)
+              }}
+            >
+              {tx('key_management')}
+            </SettingsButton>
+          </>
+        )}
 
       {runtime.getRuntimeInfo().target !== 'browser' && (
         <>
@@ -119,13 +123,7 @@ export default function Advanced({ onClose, settingsStore }: Props) {
         </>
       )}
 
-      {settingsStore.settings.is_chatmail === '0' && (
-        <>
-          <SettingsSeparator />
-          <SettingsHeading>Legacy Options</SettingsHeading>
-          <ImapFolderHandling settingsStore={settingsStore} />
-        </>
-      )}
+      {/* Legacy Options removed: forked core no longer supports mvbox_move/only_fetch_mvbox */}
     </>
   )
 }
