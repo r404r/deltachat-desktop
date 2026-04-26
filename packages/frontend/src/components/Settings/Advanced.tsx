@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useCallback } from 'react'
 
 import { ExperimentalFeatures } from './ExperimentalFeatures'
+import KeyManagementDialog from '../dialogs/KeyManagement'
 import SettingsHeading from './SettingsHeading'
 import SettingsSeparator from './SettingsSeparator'
 import useTranslationFunction from '../../hooks/useTranslationFunction'
@@ -103,10 +104,7 @@ export default function Advanced({ onClose }: Props) {
           <SettingsSeparator />
           <SettingsHeading>{tx('key_management')}</SettingsHeading>
           <SettingsButton
-            onClick={async () => {
-              const { default: KeyManagementDialog } = await import(
-                '../dialogs/KeyManagement'
-              )
+            onClick={() => {
               openDialog(KeyManagementDialog)
             }}
           >
