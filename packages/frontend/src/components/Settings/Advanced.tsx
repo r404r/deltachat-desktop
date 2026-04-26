@@ -2,7 +2,7 @@ import React, { useEffect, useState, useCallback } from 'react'
 
 import type { SettingsStoreState } from '../../stores/settings'
 import { ExperimentalFeatures } from './ExperimentalFeatures'
-// ImapFolderHandling removed: forked core no longer supports mvbox_move/only_fetch_mvbox
+import KeyManagementDialog from '../dialogs/KeyManagement'
 import SettingsHeading from './SettingsHeading'
 import SettingsSeparator from './SettingsSeparator'
 import useTranslationFunction from '../../hooks/useTranslationFunction'
@@ -104,10 +104,7 @@ export default function Advanced({ onClose, settingsStore }: Props) {
             <SettingsSeparator />
             <SettingsHeading>{tx('key_management')}</SettingsHeading>
             <SettingsButton
-              onClick={async () => {
-                const { default: KeyManagementDialog } = await import(
-                  '../dialogs/KeyManagement'
-                )
+              onClick={() => {
                 openDialog(KeyManagementDialog)
               }}
             >
