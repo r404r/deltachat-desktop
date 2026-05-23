@@ -94,7 +94,7 @@ function StickersListItem(props: {
         {
           label: tx('menu_copy_image_to_clipboard'),
           action: () => {
-            runtime.writeClipboardImage(filePath)
+            runtime.writeClipboardImage(filePath.replace('file://', ''))
           },
         },
         { type: 'separator' },
@@ -108,7 +108,7 @@ function StickersListItem(props: {
               isConfirmDanger: true,
             })
             if (confirmed) {
-              await runtime.deleteSticker(filePath)
+              await runtime.deleteSticker(filePath.replace('file://', ''))
               onStickerDeleted()
             }
           },
