@@ -56,8 +56,8 @@
   },
   "dependencies": {
     "@deltachat/calls-webapp": "catalog:",
-    "@deltachat/jsonrpc-client": "link:/Users/thomasd/work/github/r404r/deltachat-core-rust/deltachat-jsonrpc/typescript",
-    "@deltachat/stdio-rpc-server": "link:/Users/thomasd/work/github/r404r/deltachat-core-rust/deltachat-rpc-server/npm-package",
+    "@deltachat/jsonrpc-client": "catalog:",
+    "@deltachat/stdio-rpc-server": "catalog:",
     "escape-html": "^1.0.3",
     "mime-types": "catalog:",
     "sass": "catalog:",
