@@ -46,6 +46,9 @@ jobs:
         run: |
           pnpm pack:generate_config
           pnpm pack:patch-node-modules
+      - name: create afterSign stub
+        working-directory: packages/target-electron
+        run: echo "module.exports=()=>Promise.resolve()" > stub.cjs
       - name: build DMG (ad-hoc signed)
         env:
           CSC_IDENTITY_AUTO_DISCOVERY: 'false'
