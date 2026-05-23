@@ -8,7 +8,7 @@
   },
   "dependencies": {
     "@deltachat-desktop/shared": "link:../shared",
-    "@deltachat/jsonrpc-client": "catalog:",
+    "@deltachat/jsonrpc-client": "link:/Users/thomasd/work/github/r404r/deltachat-core-rust/deltachat-jsonrpc/typescript",
     "@types/node": "catalog:"
   }
 }

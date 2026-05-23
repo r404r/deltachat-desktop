@@ -25,7 +25,7 @@
     "@breezystack/lamejs": "^1.2.7",
     "@deltachat-desktop/runtime-interface": "link:../runtime",
     "@deltachat-desktop/shared": "link:../shared",
-    "@deltachat/jsonrpc-client": "catalog:",
+    "@deltachat/jsonrpc-client": "link:/Users/thomasd/work/github/r404r/deltachat-core-rust/deltachat-jsonrpc/typescript",
     "@emoji-mart-awesome/react": "1.0.0",
     "@emoji-mart/data": "1.2.1",
     "@jcoreio/async-throttle": "^1.6.1",
