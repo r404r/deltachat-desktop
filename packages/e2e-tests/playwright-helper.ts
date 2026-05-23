@@ -1,4 +1,3 @@
-/* eslint-disable no-console */
 import { expect, test as base, Page } from '@playwright/test'
 import { loadEnv } from './load-env'
 
@@ -398,6 +397,14 @@ export async function createDummyChat(page: Page, chatName: string) {
   await page.getByRole('textbox', { name: 'Group Name' }).fill(chatName)
   await page.getByTestId('group-create-button').click()
 }
+export async function deleteChat(page: Page, chatName: string | RegExp) {
+  await page
+    .getByLabel('Chats')
+    .getByRole('tab', { name: chatName })
+    .click({ button: 'right' })
+  await page.getByRole('menuitem', { name: /.*(Delete|Leave).*/ }).click()
+  await page.getByRole('button', { name: 'Delete' }).click()
+}
 export async function createNDummyChats(
   page: Page,
   n: number,
@@ -535,6 +542,7 @@ export const createGroupChat = async (
   await page.locator('#new-chat-button').click()
   await page.locator('#newgroup button').click()
   await page.locator('.group-name-input').fill(groupName)
+  await page.getByPlaceholder('Description').fill('Test group description')
   await page.locator('#addmember button').click()
   const addMemberDialog = page.getByTestId('add-member-dialog')
   await page

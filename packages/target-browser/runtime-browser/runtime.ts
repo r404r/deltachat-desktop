@@ -179,11 +179,11 @@ class BrowserRuntime implements Runtime {
   }
   openMessageHTML(
     _accountId: number,
-    _message_id: number,
+    _messageId: number,
     _isContactRequest: boolean,
     _subject: string,
     _sender: string,
-    _receiveTime: string,
+    _sentTime: string,
     _content: string
   ): void {
     throw new Error('Method not implemented.')
@@ -652,6 +652,9 @@ class BrowserRuntime implements Runtime {
     return ''
   }
   transformStickerURL(_sticker_path: string): string {
+    throw new Error('sticker picker is not implemented yet for browser')
+  }
+  async deleteSticker(_stickerPath: string): Promise<void> {
     throw new Error('sticker picker is not implemented yet for browser')
   }
   async showOpenFileDialog(

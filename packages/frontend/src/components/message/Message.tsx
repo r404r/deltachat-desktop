@@ -25,7 +25,7 @@ import {
   enterEditMessageMode,
 } from './messageFunctions'
 import Attachment from '../attachment/messageAttachment'
-import { isGenericAttachment, isImage, isVideo } from '../attachment/Attachment'
+import { isGenericAttachment, isImage } from '../attachment/Attachment'
 import { runtime } from '@deltachat-desktop/runtime-interface'
 import { ConversationType } from './MessageList'
 import { getDirection } from '../../utils/getDirection'
@@ -67,6 +67,7 @@ import { useRpcFetch } from '../../hooks/useFetch'
 import ForwardMessage from '../dialogs/ForwardMessage'
 import MessageDetail from '../dialogs/MessageDetail/MessageDetail'
 import ConfirmDeleteMessageDialog from '../dialogs/ConfirmDeleteMessage'
+import AlertDialog from '../dialogs/AlertDialog'
 
 const log = getLogger('Message')
 
@@ -288,7 +289,8 @@ function buildContextMenu(
   }
 
   const showAttachmentOptions = !!message.file
-  const showCopyImage = !!message.file && message.viewType === 'Image'
+  const showCopyImage =
+    !!message.file && isImage(message.viewType) && message.viewType !== 'Gif'
   const showResend =
     message.sender.id === C.DC_CONTACT_ID_SELF && message.viewType !== 'Call'
 
@@ -388,7 +390,7 @@ function buildContextMenu(
     // Open Attachment
     showAttachmentOptions &&
       message.viewType !== 'Webxdc' &&
-      isGenericAttachment(message.fileMime) && {
+      isGenericAttachment(message.viewType) && {
         label: tx('open_attachment'),
         action: openAttachmentInShell.bind(null, message),
       },
@@ -688,33 +690,29 @@ export default function Message(props: {
 
   const messageContainerRef = useRef<HTMLDivElement>(null)
   useEffect(() => {
-    const resizeHandler = () => {
-      if (messageContainerRef.current) {
-        let messageWidth = 0
-        // set message width which is used by reaction component
-        // to adapt the number of visible reactions
-        if (
-          (message.fileMime && isImage(message.fileMime)) ||
-          window.innerWidth < 900
-        ) {
-          // image messages have a defined width
-          messageWidth = messageContainerRef.current.clientWidth
-        } else {
-          // text messages might be smaller than min width but
-          // they can be extended to at least max image width
-          // so we pass that value to the reaction calculation
-          messageWidth = 450
-        }
-        setMessageWidth(messageWidth)
+    const el = messageContainerRef.current
+    if (!el) return
+
+    const update = () => {
+      if (
+        isImage(message.viewType) ||
+        message.viewType === 'Sticker' ||
+        window.innerWidth < 900
+      ) {
+        setMessageWidth(el.clientWidth)
+      } else {
+        // Text messages may be narrower than the max image width, but reactions
+        // can always spread to that width, so pass a fixed value.
+        setMessageWidth(450)
       }
     }
-    window.addEventListener('resize', resizeHandler)
-    // call once on first render
-    resizeHandler()
-    return () => {
-      window.removeEventListener('resize', resizeHandler)
-    }
-  }, [message.fileMime])
+
+    // ResizeObserver catches both window resizes and post-image-load reflows,
+    const ro = new ResizeObserver(update)
+    ro.observe(el)
+    update()
+    return () => ro.disconnect()
+  }, [message.viewType])
 
   // Info Message
   if (message.isInfo) {
@@ -774,6 +772,7 @@ export default function Message(props: {
         onContextMenu={showContextMenu}
       >
         <TagName
+          type='button'
           className={'bubble ' + rovingTabindex.className}
           onClick={onClick}
           {...commonAttrs}
@@ -868,7 +867,7 @@ export default function Message(props: {
 
   const hasText = text !== null && text !== ''
   const fileMime = message.fileMime || null
-  const isWithoutText = isMediaWithoutText(fileMime, hasText, message.viewType)
+  const isWithoutText = isMediaWithoutText(hasText, message.viewType)
   const showAttachment = (message: T.Message) =>
     message.file &&
     message.viewType !== 'Webxdc' &&
@@ -883,7 +882,7 @@ export default function Message(props: {
         direction,
         styles.message,
         rovingTabindex.className,
-        isWithoutText && isVideo(fileMime) ? 'video-only' : '',
+        isWithoutText && viewType === 'Video' ? 'video-only' : '',
         {
           [styles.withReactions]: message.reactions,
           'type-sticker': viewType === 'Sticker',
@@ -998,7 +997,16 @@ export default function Message(props: {
               timestamp={message.timestamp * 1000}
               encrypted={message.showPadlock}
               isSavedMessage={isOrHasSavedMessage}
-              onClickError={() => openDialog(MessageDetail, { id: message.id })}
+              onClickError={() =>
+                openDialog(AlertDialog, {
+                  message: message.error
+                    ? tx('error_x', message.error)
+                    : tx('ok'),
+                  dialogComponentProps: {
+                    width: 600,
+                  },
+                })
+              }
               viewType={message.viewType}
               chatType={chat.chatType}
               tabindexForInteractiveContents={tabindexForInteractiveContents}
@@ -1082,7 +1090,12 @@ export const Quote = ({
   const Tag = onClick ? 'button' : 'div'
 
   return (
-    <Tag className='quote-background' onClick={onClick} tabIndex={tabIndex}>
+    <Tag
+      type='button'
+      className='quote-background'
+      onClick={onClick}
+      tabIndex={tabIndex}
+    >
       <div
         className={`quote ${hasMessage && 'has-message'}`}
         style={borderStyle}
@@ -1229,7 +1242,7 @@ function WebxdcMessageContent({
     <div className='webxdc'>
       <img
         src={runtime.getWebxdcIconURL(selectedAccountId(), message.id)}
-        alt={`icon of ${info.name}`}
+        alt=''
         // No need to turn this element into a `<button>` for a11y,
         // because there is a button below that does the same.
         onClick={() => openWebxdc(message, webxdcInfo ?? undefined)}
@@ -1272,31 +1285,40 @@ function CallIconButton({
   const refresh = useEffectEvent(callInfoFetch.refresh)
   useEffect(() => {
     return onDCEvent(accountId, 'MsgsChanged', event => {
+      // MsgsChanged event is fired when the call state changes
       if (event.msgId !== messageId) {
         return
       }
+      // update the call info
       refresh()
     })
   }, [accountId, messageId])
 
-  const onClickParams:
-    | undefined
-    | Parameters<typeof runtime.openIncomingVideoCallWindow>[0] =
-    callInfoFetch.result?.ok &&
-    callInfoFetch.result.value.state.kind === 'Alerting'
-      ? {
-          accountId,
-          chatId,
-          callMessageId: messageId,
-          callerWebrtcOffer: callInfoFetch.result.value.sdpOffer,
-          startWithCameraEnabled: callInfoFetch.result.value.hasVideo,
-        }
-      : undefined
-  // TODO fix: don't open a second window if one is already open
-  // for this message (this should be done in the main process).
-  const onClick = onClickParams
-    ? () => runtime.openIncomingVideoCallWindow(onClickParams)
+  const callInfo = callInfoFetch.result?.ok
+    ? callInfoFetch.result.value
     : undefined
+
+  const callWindowParams = callInfo
+    ? {
+        accountId,
+        chatId,
+        callMessageId: messageId,
+        callerWebrtcOffer: callInfo.sdpOffer,
+        startWithCameraEnabled: callInfo.hasVideo,
+      }
+    : undefined
+
+  const onClick =
+    callInfo == undefined
+      ? undefined
+      : callInfo.state.kind === 'Alerting' || callInfo.state.kind === 'Active'
+        ? // Focus the existing window (if any) or open the incoming call dialog.
+          () => runtime.openIncomingVideoCallWindow(callWindowParams!)
+        : // Terminated state (Completed, Missed, Declined, Canceled): start a new outgoing call.
+          () =>
+            runtime.startOutgoingVideoCall(accountId, chatId, {
+              startWithCameraEnabled: callInfo.hasVideo,
+            })
 
   return (
     <IconButton

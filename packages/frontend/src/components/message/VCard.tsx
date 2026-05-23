@@ -73,6 +73,7 @@ export function VisualVCardComponent({
   const Tag = onClick ? 'button' : 'div'
   return (
     <Tag
+      type='button'
       onClick={onClick}
       tabIndex={tabindexForInteractiveContents}
       className={styles.vcard}
@@ -83,7 +84,7 @@ export function VisualVCardComponent({
       >
         {profileImage ? (
           <img
-            alt={displayName}
+            alt=''
             className='content'
             src={'data:image/jpeg;base64,' + profileImage}
           />

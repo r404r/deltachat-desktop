@@ -203,31 +203,37 @@ function ShareProfileDialog(
   const { onClose, onParentClose, contact } = props
 
   const tx = useTranslationFunction()
-  const accountId = selectedAccountId()
+  const currentAccountId = selectedAccountId()
   const createDraftMessage = useCreateDraftMessage()
 
-  const onChatClick = async (chatId: number) => {
+  const onChatClick = async ({
+    targetAccountId,
+    chatId,
+  }: {
+    targetAccountId: number
+    chatId: number
+  }) => {
+    // Close dialogs before createDraftMessage
+    onClose()
+    onParentClose()
+
     if (contact.isKeyContact) {
-      const vcard = await BackendRemote.rpc.makeVcard(accountId, [contact.id])
+      // Use the current account for makeVcard because the contact belongs to it
+      const vcard = await BackendRemote.rpc.makeVcard(currentAccountId, [
+        contact.id,
+      ])
 
       const filePath = await runtime.writeTempFile('contact.vcard', vcard)
-      // treefit: I would like to use setDraftVcard here, but it requires a draft message, which we may now have:
-      // BackendRemote.rpc.setDraftVcard(accountId, msgId, contacts)
-      // and there is no way to create an empty draft message with the current api as far as I know
-      //
-      // why is this better? because we then only would need to ask to replace draft when there is a file
 
-      await createDraftMessage(accountId, chatId, '', {
+      await createDraftMessage(targetAccountId, chatId, '', {
         name: `${contact.displayName}.vcard`,
         path: filePath,
         viewType: 'Vcard',
         deleteTempFileWhenDone: true,
       })
     } else {
-      await createDraftMessage(accountId, chatId, contact.address)
+      await createDraftMessage(targetAccountId, chatId, contact.address)
     }
-    onClose()
-    onParentClose()
   }
 
   return (
@@ -236,6 +242,7 @@ function ShareProfileDialog(
       onChatClick={onChatClick}
       onClose={onClose}
       listFlags={C.DC_GCL_FOR_FORWARDING | C.DC_GCL_NO_SPECIALS}
+      enableAccountSwitch
     />
   )
 }

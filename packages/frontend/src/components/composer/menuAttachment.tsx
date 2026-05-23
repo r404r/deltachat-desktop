@@ -2,7 +2,11 @@ import React, { useContext } from 'react'
 import { dirname, basename } from 'path'
 
 import { runtime } from '@deltachat-desktop/runtime-interface'
-import { IMAGE_EXTENSIONS } from '../../../../shared/constants'
+import {
+  AUDIO_EXTENSIONS,
+  IMAGE_EXTENSIONS,
+  VIDEO_EXTENSIONS,
+} from '../../../../shared/constants'
 import useTranslationFunction from '../../hooks/useTranslationFunction'
 import useDialog from '../../hooks/dialog/useDialog'
 import SelectContactDialog from '../dialogs/SelectContact'
@@ -21,7 +25,7 @@ import useMessage from '../../hooks/chat/useMessage'
 type Props = {
   addFileToDraft: (file: string, fileName: string, viewType: T.Viewtype) => void
   showAppPicker: (show: boolean) => void
-  selectedChat: Pick<T.BasicChat, 'name' | 'id'> | null
+  selectedChat: Pick<T.BasicChat, 'name' | 'id' | 'chatType'> | null
 }
 
 // Main component that creates the menu and popover
@@ -86,7 +90,20 @@ export default function MenuAttachment({
 
     if (files.length === 1) {
       setLastPath(dirname(files[0]))
-      addFileToDraft(files[0], basename(files[0]), 'File')
+      // for Audio, Video & Vcard set a ViewType that has a preview here
+      let viewType = 'File' as T.Viewtype
+      if (
+        AUDIO_EXTENSIONS.some(ext => files[0].toLowerCase().endsWith('.' + ext))
+      ) {
+        viewType = 'Audio'
+      } else if (
+        VIDEO_EXTENSIONS.some(ext => files[0].toLowerCase().endsWith('.' + ext))
+      ) {
+        viewType = 'Video'
+      } else if (files[0].toLowerCase().endsWith('.vcf')) {
+        viewType = 'Vcard'
+      }
+      addFileToDraft(files[0], basename(files[0]), viewType)
     } else if (files.length > 1) {
       confirmSendMultipleFiles(files, 'File')
     }
@@ -155,12 +172,6 @@ export default function MenuAttachment({
       action: selectContact.bind(null),
     },
     {
-      icon: 'apps',
-      label: tx('webxdc_app'),
-      action: selectAppPicker.bind(null),
-      dataTestid: 'open-app-picker',
-    },
-    {
       icon: 'upload-file',
       label: tx('file'),
       action: addFilenameFile.bind(null),
@@ -172,6 +183,16 @@ export default function MenuAttachment({
       action: addFilenameMedia.bind(null),
     },
   ]
+
+  if (selectedChat?.chatType !== 'OutBroadcast') {
+    // apps don't work (yet) well for channels
+    menu.splice(1, 0, {
+      icon: 'apps',
+      label: tx('webxdc_app'),
+      action: selectAppPicker.bind(null),
+      dataTestid: 'open-app-picker',
+    })
+  }
 
   const onClickAttachmentMenu = (event: React.MouseEvent<any, MouseEvent>) => {
     const attachmentMenuButtonElement = document.querySelector(

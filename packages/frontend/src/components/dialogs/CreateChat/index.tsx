@@ -60,6 +60,7 @@ import { RovingTabindexProvider } from '../../../contexts/RovingTabindex'
 import ViewProfile from '../ViewProfile'
 import { isInviteLink } from '@deltachat-desktop/shared/util'
 import { copyToBlobDir } from '../../../utils/copyToBlobDir'
+import { DeltaTextarea } from '../../Login-Styles'
 import { useRpcFetch } from '../../../hooks/useFetch'
 import { I18nContext } from '../../../contexts/I18nContext'
 import { SCAN_CONTEXT_TYPE } from '../../../hooks/useProcessQr'
@@ -138,9 +139,17 @@ export function CloneChat(props: { chatTemplateId: number } & DialogProps) {
   ])
   const chat = chatFetch.result?.ok ? chatFetch.result.value : null
 
+  const descriptionFetch = useRpcFetch(BackendRemote.rpc.getChatDescription, [
+    accountId,
+    chatTemplateId,
+  ])
+  const description = descriptionFetch.result?.ok
+    ? descriptionFetch.result.value
+    : undefined
+
   return (
     <Dialog width={400} onClose={onClose} fixed>
-      {chat && (
+      {chat && description !== undefined && (
         <>
           <DialogHeader title={tx('clone_chat')} />
           <CreateGroup
@@ -154,6 +163,7 @@ export function CloneChat(props: { chatTemplateId: number } & DialogProps) {
               onClose,
               groupMembers: chat.contactIds,
               groupImage: chat.profileImage,
+              groupDescription: description,
             }}
           />
         </>
@@ -200,9 +210,7 @@ function CreateChatMain(props: CreateChatMainProps) {
   const isChatmail = settingsStore?.settings.is_chatmail === '1'
 
   const showAddGroup = queryStr.length === 0
-  const showAddBroadcastList =
-    queryStr.length === 0 &&
-    (settingsStore?.desktopSettings.enableBroadcastLists ?? false)
+  const showAddBroadcastList = queryStr.length === 0
   const showAddContactQRScan = queryStr.length === 0
 
   // Chatmail accounts can't send unencrypted emails. See
@@ -583,6 +591,7 @@ type CreateGroupProps = {
   groupType: GroupType.REGULAR_GROUP | GroupType.PLAIN_EMAIL
   onClose: DialogProps['onClose']
   groupMembers?: number[]
+  groupDescription?: string
 } & (
   | {
       groupType: GroupType.REGULAR_GROUP
@@ -601,6 +610,9 @@ export function CreateGroup(props: CreateGroupProps) {
   const accountId = selectedAccountId()
 
   const [groupName, setGroupName] = useState('')
+  const [groupDescription, setGroupDescription] = useState(
+    props.groupDescription ?? ''
+  )
   const useGroupImageRet = useGroupImage(
     groupType === GroupType.REGULAR_GROUP ? props.groupImage || null : null
   )
@@ -616,7 +628,8 @@ export function CreateGroup(props: CreateGroupProps) {
     groupType,
     groupName,
     groupImage,
-    groupMembers
+    groupMembers,
+    groupDescription
   )
 
   const [errorMissingGroupName, setErrorMissingGroupName] = useState(false)
@@ -692,14 +705,22 @@ export function CreateGroup(props: CreateGroupProps) {
       <DialogBody>
         <DialogContent>
           <ChatSettingsSetNameAndProfileImage
-            groupImage={groupImage}
-            onSetGroupImage={onSetGroupImage}
-            onUnsetGroupImage={onUnsetGroupImage}
             chatName={groupName}
             setChatName={setGroupName}
             errorMissingChatName={errorMissingGroupName}
             setErrorMissingChatName={setErrorMissingGroupName}
-            groupType={groupType}
+            {...((groupType === GroupType.PLAIN_EMAIL
+              ? { groupType }
+              : {
+                  groupType,
+                  groupImage,
+                  onSetGroupImage: onSetGroupImage!,
+                  onUnsetGroupImage: onUnsetGroupImage!,
+                  description: groupDescription,
+                  setDescription: setGroupDescription,
+                }) satisfies Partial<
+              Parameters<typeof ChatSettingsSetNameAndProfileImage>[0]
+            >)}
           />
         </DialogContent>
         <div id='create-group-members-title' className='group-separator'>
@@ -762,7 +783,15 @@ function CreateBroadcastList(props: CreateBroadcastListProps) {
   const tx = useTranslationFunction()
 
   const [broadcastName, setBroadcastName] = useState<string>('')
-  const finishCreateBroadcast = useCreateBroadcast(broadcastName, onClose)
+  const [broadcastDescription, setBroadcastDescription] = useState<string>('')
+  const [broadcastImage, onSetBroadcastImage, onUnsetBroadcastImage] =
+    useGroupImage(null)
+  const finishCreateBroadcast = useCreateBroadcast(
+    broadcastName,
+    broadcastImage,
+    broadcastDescription,
+    onClose
+  )
 
   const [errorMissingChatName, setErrorMissingChatName] =
     useState<boolean>(false)
@@ -787,11 +816,16 @@ function CreateBroadcastList(props: CreateBroadcastListProps) {
             </div>
             <br />
             <ChatSettingsSetNameAndProfileImage
+              groupImage={broadcastImage}
+              onSetGroupImage={onSetBroadcastImage}
+              onUnsetGroupImage={onUnsetBroadcastImage}
               chatName={broadcastName}
               setChatName={setBroadcastName}
               errorMissingChatName={errorMissingChatName}
               setErrorMissingChatName={setErrorMissingChatName}
               groupType={GroupType.BROADCAST_LIST}
+              description={broadcastDescription}
+              setDescription={setBroadcastDescription}
             />
           </DialogContent>
         </DialogBody>
@@ -810,6 +844,29 @@ function CreateBroadcastList(props: CreateBroadcastListProps) {
   )
 }
 
+type ChatSettingsSetNameAndProfileImageProps = {
+  chatName: string
+  setChatName: (newGroupName: string) => void
+  errorMissingChatName: boolean
+  setErrorMissingChatName: React.Dispatch<React.SetStateAction<boolean>>
+  color?: string
+  description?: string
+  setDescription?: (desc: string) => void
+} & (
+  | {
+      groupType: GroupType.REGULAR_GROUP | GroupType.BROADCAST_LIST
+      groupImage?: string | null
+      onSetGroupImage: () => void
+      onUnsetGroupImage: () => void
+    }
+  | {
+      groupType: GroupType.PLAIN_EMAIL
+      groupImage?: never
+      onSetGroupImage?: never
+      onUnsetGroupImage?: never
+    }
+)
+
 export const ChatSettingsSetNameAndProfileImage = ({
   groupImage,
   onSetGroupImage,
@@ -820,29 +877,13 @@ export const ChatSettingsSetNameAndProfileImage = ({
   setErrorMissingChatName,
   color,
   groupType,
-}: {
-  groupImage?: string | null
-  onSetGroupImage?: () => void
-  onUnsetGroupImage?: () => void
-  chatName: string
-  setChatName: (newGroupName: string) => void
-  errorMissingChatName: boolean
-  setErrorMissingChatName: React.Dispatch<React.SetStateAction<boolean>>
-  color?: string
-  groupType: GroupType
-}) => {
+  description,
+  setDescription,
+}: ChatSettingsSetNameAndProfileImageProps) => {
   const tx = useTranslationFunction()
   const onChange = ({ target }: React.ChangeEvent<HTMLInputElement>) => {
     if (target.value.length > 0) setErrorMissingChatName(false)
     setChatName(target.value)
-  }
-  if (
-    groupType === GroupType.REGULAR_GROUP &&
-    !(onSetGroupImage && onUnsetGroupImage)
-  ) {
-    throw new Error(
-      'if type is group, onSetGroupImage and onUnsetGroupImage must be present'
-    )
   }
 
   let inputLabel: string
@@ -866,18 +907,17 @@ export const ChatSettingsSetNameAndProfileImage = ({
   return (
     <>
       <div className='group-settings-container'>
-        {groupType === GroupType.REGULAR_GROUP &&
-          onUnsetGroupImage &&
-          onSetGroupImage && (
-            <GroupImage
-              style={{ float: 'left' }}
-              groupImage={groupImage}
-              onSetGroupImage={onSetGroupImage}
-              onUnsetGroupImage={onUnsetGroupImage}
-              groupName={chatName}
-              color={color}
-            />
-          )}
+        {(groupType === GroupType.REGULAR_GROUP ||
+          groupType === GroupType.BROADCAST_LIST) && (
+          <GroupImage
+            style={{ float: 'left' }}
+            groupImage={groupImage}
+            onSetGroupImage={onSetGroupImage}
+            onUnsetGroupImage={onUnsetGroupImage}
+            groupName={chatName}
+            color={color}
+          />
+        )}
         <div className='group-name-input-wrapper'>
           <input
             className='group-name-input'
@@ -893,6 +933,13 @@ export const ChatSettingsSetNameAndProfileImage = ({
           )}
         </div>
       </div>
+      {setDescription !== undefined && (
+        <DeltaTextarea
+          placeholder={tx('chat_description')}
+          value={description ?? ''}
+          onChange={ev => setDescription(ev.target.value)}
+        />
+      )}
     </>
   )
 }
@@ -903,7 +950,8 @@ function useCreateGroup<
   groupType: T,
   groupName: string,
   groupImage: T extends GroupType.REGULAR_GROUP ? string | null : null,
-  groupMembers: number[]
+  groupMembers: number[],
+  description: string
 ) {
   const accountId = selectedAccountId()
   const { openDialog } = useDialog()
@@ -937,21 +985,22 @@ function useCreateGroup<
       }
     }
 
-    if (groupImage && groupImage !== '') {
-      await BackendRemote.rpc.setChatProfileImage(accountId, chatId, groupImage)
-    }
-
-    await Promise.all(
-      groupMembers.map(contactId => {
+    await Promise.all([
+      groupImage &&
+        groupImage !== '' &&
+        BackendRemote.rpc.setChatProfileImage(accountId, chatId, groupImage),
+      description !== '' &&
+        BackendRemote.rpc.setChatDescription(accountId, chatId, description),
+      ...groupMembers.map(contactId => {
         if (contactId === C.DC_CONTACT_ID_SELF) {
           return
         }
         return BackendRemote.rpc.addContactToChat(accountId, chatId, contactId)
-      })
-    )
+      }),
+    ])
 
     return chatId
-  }, [accountId, groupImage, groupMembers, groupName, groupType])
+  }, [accountId, description, groupImage, groupMembers, groupName, groupType])
 
   return async () => {
     if (groupName === '') {
@@ -972,6 +1021,8 @@ function useCreateGroup<
 
 const useCreateBroadcast = (
   groupName: string,
+  groupImage: string | null,
+  description: string,
   onClose: DialogProps['onClose']
 ) => {
   const accountId = selectedAccountId()
@@ -980,7 +1031,14 @@ const useCreateBroadcast = (
   const createBroadcastList = async () => {
     const chatId = await BackendRemote.rpc.createBroadcast(accountId, groupName)
 
-    await BackendRemote.rpc.setChatName(accountId, chatId, groupName)
+    await Promise.all([
+      BackendRemote.rpc.setChatName(accountId, chatId, groupName),
+      groupImage &&
+        groupImage !== '' &&
+        BackendRemote.rpc.setChatProfileImage(accountId, chatId, groupImage),
+      description !== '' &&
+        BackendRemote.rpc.setChatDescription(accountId, chatId, description),
+    ])
 
     return chatId
   }

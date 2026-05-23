@@ -167,7 +167,7 @@ class ElectronRuntime implements Runtime {
     isContactRequest: boolean,
     subject: string,
     sender: string,
-    receiveTime: string,
+    sentTime: string,
     content: string
   ): void {
     ipcBackend.invoke(
@@ -177,7 +177,7 @@ class ElectronRuntime implements Runtime {
       isContactRequest,
       subject,
       sender,
-      receiveTime,
+      sentTime,
       content
     )
   }
@@ -260,6 +260,10 @@ class ElectronRuntime implements Runtime {
   }
   removeTempFile(path: string): Promise<void> {
     return ipcBackend.invoke('app.removeTempFile', path)
+  }
+
+  deleteSticker(stickerPath: string): Promise<void> {
+    return ipcBackend.invoke('app.deleteSticker', stickerPath)
   }
 
   private notificationCallback: (data: {

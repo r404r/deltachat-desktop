@@ -349,6 +349,13 @@ test('Withdraw group invite link', async ({ browserName }) => {
   // note the withdrawn code is still in clipboard
   // now userB tries to readd himself by pasting the old invite link
   await switchToProfile(page, userB.id)
+  await page.getByLabel('Chats').getByRole('tab', { name: groupName }).click()
+  // Wait until we get removed from the group,
+  // because scanning the invite link to a group that we're already a member of
+  // might just not do anything, even if the link is revoked.
+  await expect(
+    page.getByRole('list', { name: 'Messages' }).getByRole('listitem').last()
+  ).toContainText('Member Me removed by Alice')
   await clickThroughTestIds(page, ['qr-scan-button', 'show-qr-scan', 'paste'])
 
   const confirmJoinGroupDialog = page.getByTestId('confirm-join-group')
@@ -425,9 +432,7 @@ test('Add group description', async () => {
   // Open group profile
   await page.getByTestId('chat-info-button').click()
 
-  // Description should not be visible initially
   const descriptionDiv = page.locator('.group-profile-description')
-  await expect(descriptionDiv).not.toBeVisible()
 
   // Open edit dialog
   await page.getByTestId('view-group-dialog-header-edit').click()
@@ -585,18 +590,6 @@ test('create channel and add members', async ({ browserName }) => {
 
   await switchToProfile(page, userA.id)
 
-  // Enable the experimental Channels feature in settings (if not already enabled)
-  await page.getByTestId('open-settings-button').click()
-  await page.getByTestId('open-advanced-settings').click()
-  const channelsLabel = page.locator('label').filter({ hasText: 'Channels' })
-  await expect(channelsLabel).toBeVisible()
-  const channelsCheckbox = channelsLabel.locator('input[type="checkbox"]')
-  if (!(await channelsCheckbox.isChecked())) {
-    await channelsCheckbox.click({ force: true })
-    await page.getByTestId('alert-ok').click()
-  }
-  await page.getByTestId('settings-advanced-close').click()
-
   // Create a channel
   await page.locator('#new-chat-button').click()
   await page.locator('#newbroadcastlist button').click()
@@ -720,6 +713,64 @@ test('accept or decline channel invite', async ({ browserName }) => {
 
   // Channel should now be in userC's chat list
   await expect(channelChatItemC).toBeVisible()
+})
+
+test('add channel description and verify subscriber sees it', async () => {
+  const userA = existingProfiles[0]
+  const userB = existingProfiles[1]
+  const channelDescription = 'This is a test channel description'
+
+  // userA (owner) adds a description to the channel
+  await switchToProfile(page, userA.id)
+  const channelChatItem = page
+    .locator('.chat-list .chat-list-item')
+    .filter({ hasText: channelName })
+  await expect(channelChatItem).toBeVisible()
+  await channelChatItem.click()
+
+  await page.getByTestId('chat-info-button').click()
+  await page.getByTestId('view-group-dialog-header-edit').click()
+
+  await page.locator('#description').fill(channelDescription)
+  await page.getByTestId('ok').click()
+
+  // Description should be visible in the channel profile
+  const descriptionDiv = page.locator('.group-profile-description')
+  await expect(descriptionDiv).toBeVisible()
+  await expect(descriptionDiv).toHaveText(channelDescription)
+
+  await page.getByTestId('view-group-dialog-header-close').click()
+
+  // Verify system message for the owner
+  await expect(
+    page
+      .getByRole('list', { name: 'Messages' })
+      .getByRole('listitem')
+      .filter({ hasText: 'You changed the chat description.' })
+  ).toBeVisible()
+
+  // Verify subscriber (userB) sees the description change message
+  await switchToProfile(page, userB.id)
+  const channelChatItemB = page
+    .locator('.chat-list .chat-list-item')
+    .filter({ hasText: channelName })
+  await expect(channelChatItemB).toBeVisible()
+  await channelChatItemB.click()
+
+  // Wait for the description change to be received by userB before opening profile
+  await expect(
+    page
+      .getByRole('list', { name: 'Messages' })
+      .getByRole('listitem')
+      .filter({ hasText: 'Chat description changed by' })
+  ).toBeVisible()
+
+  await page.getByTestId('chat-info-button').click()
+  await expect(page.getByTestId('profile-description')).toBeVisible()
+  await expect(page.getByTestId('profile-description')).toHaveText(
+    channelDescription
+  )
+  await page.keyboard.press('Escape')
 })
 
 test('channel main view shows Leave Channel instead of Delete Chat', async () => {

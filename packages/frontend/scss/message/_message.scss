@@ -48,8 +48,6 @@ $info-text-max-width: 400px;
         --local-avatar-color: #bcbac9;
         background-color: var(--local-avatar-color);
 
-        top: -121px;
-        left: -10px;
         border-radius: 50%;
         width: 36px;
         height: 36px;
@@ -112,6 +110,7 @@ $info-text-max-width: 400px;
         font-size: 14px;
         line-height: 18px;
         text-align: start;
+        unicode-bidi: plaintext;
 
         overflow-wrap: break-word;
         word-wrap: break-word;
@@ -352,7 +351,7 @@ $info-text-max-width: 400px;
       // where the footer text wraps.
       margin-bottom: 26px;
 
-      cursor: default;
+      cursor: pointer;
     }
   }
 
@@ -558,10 +557,15 @@ $info-text-max-width: 400px;
     text-overflow: ellipsis;
   }
 
+  .quote-author {
+    white-space: nowrap;
+  }
+
   .quoted-text {
     font-size: 12px;
     line-height: 12px;
     margin: 0;
+    unicode-bidi: plaintext;
     max-height: 40px;
     overflow: hidden;
     line-clamp: 3;

@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react'
+import React, { useCallback, useEffect, useRef, useMemo, useState } from 'react'
 
 import { ActionEmitter, KeybindAction } from '../keybindings'
 import { marknoticedChat, saveLastChatId } from '../backend/chat'
@@ -56,7 +56,45 @@ export const ChatProvider = ({
   accountId,
   unselectChatRef,
 }: PropsWithChildren<Props>) => {
-  const [chatId, setChatId] = useState<number | undefined>()
+  const sessionId = useMemo(
+    () => Symbol(),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [accountId]
+  )
+  const sessionIdRef = useRef(sessionId)
+  sessionIdRef.current = sessionId
+
+  // When the `accountId` changes, we invalidate `chatId`,
+  // and the `setChatId` function.
+  //
+  // We usually utilize `key={accountId}` for this,
+  // but applying `key=` to a React context provider
+  // makes _all_ its descendants (as opposed just the components
+  // that depend on the context) re-render, including `AccountListSidebar`.
+  const [chatId_, setChatId_] = useState<
+    undefined | { sessionId: symbol; chatId: number }
+  >(undefined)
+  const chatId =
+    chatId_ == undefined || chatId_.sessionId !== sessionId
+      ? undefined
+      : chatId_.chatId
+  const setChatId = useCallback(
+    (newChatId: number | undefined) => {
+      if (sessionId !== sessionIdRef.current) {
+        // This may happen when `selectChat` gets called
+        // from `Promise.then` or `setTimeout` and such.
+        log.info(
+          "Called setChatId, but we've already switched the account after the closure was created, ignoring"
+        )
+        return
+      }
+      setChatId_(
+        newChatId == undefined ? undefined : { chatId: newChatId, sessionId }
+      )
+    },
+    [sessionId]
+  )
+
   useEffect(() => {
     window.__selectedChatId = chatId
   }, [chatId])
@@ -79,10 +117,9 @@ export const ChatProvider = ({
     // Make sure that the chat belongs to the current account,
     // to prevent data leaking between accounts, and weird race-y bugs.
     //
-    // We usually utilize `key={accountId}` for this,
-    // but applying `key=` to a React context provider
-    // makes _all_ its descendants (as opposed just the components
-    // that depend on the context) re-render, including `AccountListSidebar`.
+    // I think now that we have `sessionId` this check is no longer needed,
+    // because that basically ensures that `chatId` is always valid
+    // for the current `accountId`?
     accountId === chatFetch.lingeringResult.value.accountId
       ? chatFetch.lingeringResult.value.chat
       : undefined
@@ -154,24 +191,18 @@ export const ChatProvider = ({
       // Remember that user selected this chat to open it again when they come back
       saveLastChatId(accountId, nextChatId)
     },
-    [accountId, chatId]
+    [accountId, chatId, setChatId]
   )
 
   const unselectChat = useCallback<UnselectChat>(() => {
     setChatId(undefined)
-  }, [])
+  }, [setChatId])
 
   // Callback ref pattern: keeping ref in sync for external callers
-  // eslint-disable-next-line react-hooks/refs
   unselectChatRef.current = unselectChat
 
   const lastArchivedCheckChatId = useRef<number | undefined>(undefined)
-  if (
-    chatNoLinger != undefined &&
-    // eslint-disable-next-line react-hooks/refs
-    chatId !== lastArchivedCheckChatId.current
-  ) {
-    // eslint-disable-next-line react-hooks/refs
+  if (chatNoLinger != undefined && chatId !== lastArchivedCheckChatId.current) {
     lastArchivedCheckChatId.current = chatId
     // Switch to "archived" view if selected chat is there
     // @TODO: We probably want this to be part of the UI logic instead

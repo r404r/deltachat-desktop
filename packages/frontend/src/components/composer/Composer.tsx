@@ -305,6 +305,23 @@ const Composer = forwardRef<
   })
 
   const onEmojiIconClick = () => setShowEmojiPicker(!showEmojiPicker)
+  const onStickerClick = useCallback(
+    async (stickerPath: string) => {
+      const quotedMessageId =
+        draftState.quote?.kind === 'WithMessage'
+          ? draftState.quote.messageId
+          : null
+      await sendMessage(accountId, chatId, {
+        file: stickerPath,
+        viewtype: 'Sticker',
+        quotedMessageId,
+      })
+      if (quotedMessageId) {
+        removeQuote()
+      }
+    },
+    [accountId, chatId, draftState.quote, removeQuote, sendMessage]
+  )
   const shiftPressed = useRef(false)
   const onEmojiSelect = (emoji: EmojiMartData) => {
     log.debug(`EmojiPicker: Selected ${emoji.id}`)
@@ -389,8 +406,15 @@ const Composer = forwardRef<
 
   useEffect(() => {
     if (!showEmojiPicker) return
-    const onClick = (e: MouseEvent) => {
+
+    // We use `mousedown` instead of `click` for outside-click detection
+    // because by the time a `click` fires, React may have already flushed
+    // state updates and removed dialogs/context menus from the DOM, making
+    // it impossible to check whether the click originated inside one.
+    const onMouseDown = (e: MouseEvent) => {
       if (!emojiAndStickerRef.current) return
+      // Don't close when interacting with dialogs or context menus
+      if ((e.target as Element).closest?.('dialog') != null) return
       // The same approach as in `OutsideClickHelper`.
       const clickIsOutSideEmojiPicker = !emojiAndStickerRef.current.contains(
         e.target as Node
@@ -399,14 +423,14 @@ const Composer = forwardRef<
     }
 
     // `setTimeout` to work around the fact that otherwise we'd catch
-    // the "click" event that caused the emoji picker to open
+    // the event that caused the emoji picker to open
     // in the first place, resulting in it getting closed immediately.
     const timeoutId = setTimeout(() => {
-      document.addEventListener('click', onClick)
+      document.addEventListener('mousedown', onMouseDown)
     })
     return () => {
       clearTimeout(timeoutId)
-      document.removeEventListener('click', onClick)
+      document.removeEventListener('mousedown', onMouseDown)
     }
   }, [showEmojiPicker, emojiAndStickerRef])
 
@@ -812,6 +836,7 @@ const Composer = forwardRef<
             // The way the sticker picker currently works is that
             // it simply sends a message when you click on a sticker.
             hideStickerPicker={messageEditing.isEditingModeActive}
+            onStickerClick={onStickerClick}
           />
         )}
       </section>

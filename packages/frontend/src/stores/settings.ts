@@ -15,10 +15,8 @@ export interface SettingsStoreState {
       displayname: string
       selfstatus: string
       mdns_enabled: string
-      show_emails: string
       bcc_self: string
       delete_device_after: string
-      delete_server_after: string
       download_limit: string
       media_quality: string
       is_chatmail: '0' | '1'
@@ -35,10 +33,8 @@ const settingsKeys = [
   'displayname',
   'selfstatus',
   'mdns_enabled',
-  'show_emails',
   'bcc_self',
   'delete_device_after',
-  'delete_server_after',
   'download_limit',
   'media_quality',
   'is_chatmail',

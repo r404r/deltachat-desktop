@@ -1,9 +1,11 @@
 import React, {
   useState,
   useEffect,
+  useCallback,
   forwardRef,
   PropsWithChildren,
   useRef,
+  useContext,
 } from 'react'
 import classNames from 'classnames'
 
@@ -11,9 +13,9 @@ import { BackendRemote } from '../../backend-com'
 import { selectedAccountId } from '../../ScreenController'
 import { runtime } from '@deltachat-desktop/runtime-interface'
 import EmojiPicker from '../EmojiPicker'
-import Button from '../Button'
 import useTranslationFunction from '../../hooks/useTranslationFunction'
-import useMessage from '../../hooks/chat/useMessage'
+import { ContextMenuContext } from '../../contexts/ContextMenuContext'
+import useConfirmationDialog from '../../hooks/dialog/useConfirmationDialog'
 
 import styles from './styles.module.scss'
 
@@ -26,32 +28,23 @@ import {
 type Props = {
   stickerPackName: string
   stickerPackImages: string[]
-  chatId: number
   setShowEmojiPicker: (enabled: boolean) => void
+  onStickerDeleted: () => void
+  onStickerClick: (stickerPath: string) => void
 }
 
 const DisplayedStickerPack = ({
   stickerPackName,
   stickerPackImages,
-  chatId,
   setShowEmojiPicker,
+  onStickerDeleted,
+  onStickerClick,
 }: Props) => {
-  const { jumpToMessage } = useMessage()
-  const accountId = selectedAccountId()
-
   const listRef = useRef<HTMLDivElement>(null)
 
   const onClickSticker = (fileName: string) => {
     const stickerPath = fileName.replace('file://', '')
-    BackendRemote.rpc.sendSticker(accountId, chatId, stickerPath).then(msgId =>
-      jumpToMessage({
-        accountId,
-        msgId,
-        msgChatId: chatId,
-        highlight: false,
-        focus: false,
-      })
-    )
+    onStickerClick(stickerPath)
     setShowEmojiPicker(false)
   }
 
@@ -71,6 +64,7 @@ const DisplayedStickerPack = ({
               key={filePath}
               filePath={filePath}
               onClick={() => onClickSticker(filePath)}
+              onStickerDeleted={onStickerDeleted}
             />
           ))}
         </RovingTabindexProvider>
@@ -79,16 +73,58 @@ const DisplayedStickerPack = ({
   )
 }
 
-function StickersListItem(props: { filePath: string; onClick: () => void }) {
-  const { filePath, onClick } = props
+function StickersListItem(props: {
+  filePath: string
+  onClick: () => void
+  onStickerDeleted: () => void
+}) {
+  const { filePath, onClick, onStickerDeleted } = props
   const ref = useRef<HTMLButtonElement>(null)
   const rovingTabindex = useRovingTabindex(ref)
+  const { openContextMenu } = useContext(ContextMenuContext)
+  const openConfirmationDialog = useConfirmationDialog()
+  const tx = useTranslationFunction()
+
+  const onContextMenu = (ev: React.MouseEvent) => {
+    ev.preventDefault()
+    openContextMenu({
+      x: ev.clientX,
+      y: ev.clientY,
+      items: [
+        {
+          label: tx('menu_copy_image_to_clipboard'),
+          action: () => {
+            runtime.writeClipboardImage(filePath)
+          },
+        },
+        { type: 'separator' },
+        {
+          label: tx('delete'),
+          danger: true,
+          action: async () => {
+            const confirmed = await openConfirmationDialog({
+              message: tx('ask_delete_sticker'),
+              confirmLabel: tx('delete'),
+              isConfirmDanger: true,
+            })
+            if (confirmed) {
+              await runtime.deleteSticker(filePath)
+              onStickerDeleted()
+            }
+          },
+        },
+      ],
+    })
+  }
+
   return (
     <button
       type='button'
       ref={ref}
       className={'sticker ' + rovingTabindex.className}
       onClick={onClick}
+      onContextMenu={onContextMenu}
+      aria-haspopup='menu'
       tabIndex={rovingTabindex.tabIndex}
       onKeyDown={rovingTabindex.onKeydown}
       onFocus={rovingTabindex.setAsActiveElement}
@@ -103,23 +139,19 @@ export const StickerPicker = ({
   id,
   labelledBy,
   stickers,
-  chatId,
   setShowEmojiPicker,
+  onStickerDeleted,
+  onStickerClick,
 }: {
   role: 'tabpanel' | undefined
   id: string
   labelledBy: string
   stickers: { [key: string]: string[] }
-  chatId: number
   setShowEmojiPicker: (enabled: boolean) => void
+  onStickerDeleted: () => void
+  onStickerClick: (stickerPath: string) => void
 }) => {
   const tx = useTranslationFunction()
-
-  const onOpenStickerFolder = async () => {
-    const folder =
-      await BackendRemote.rpc.miscGetStickerFolder(selectedAccountId())
-    runtime.openPath(folder)
-  }
 
   const stickerPackNames = Object.keys(stickers)
 
@@ -135,27 +167,20 @@ export const StickerPicker = ({
           <div className='sticker-container'>
             {stickerPackNames.map(name => (
               <DisplayedStickerPack
-                chatId={chatId}
                 key={name}
                 stickerPackName={name}
                 stickerPackImages={stickers[name]}
                 setShowEmojiPicker={setShowEmojiPicker}
+                onStickerDeleted={onStickerDeleted}
+                onStickerClick={onStickerClick}
               />
             ))}
-          </div>
-          <div className='sticker-actions-container'>
-            <Button onClick={onOpenStickerFolder}>
-              {tx('open_sticker_folder')}
-            </Button>
           </div>
         </>
       ) : (
         <div className='sticker-container'>
           <div className='no-stickers'>
             <p className='description'>{tx('add_stickers_instructions')}</p>
-            <Button onClick={onOpenStickerFolder}>
-              {tx('open_sticker_folder')}
-            </Button>
           </div>
         </div>
       )}
@@ -195,12 +220,18 @@ export const EmojiAndStickerPicker = forwardRef<
      * This is useful for the message editing mode.
      */
     hideStickerPicker?: boolean
+    onStickerClick: (stickerPath: string) => void
   }
 >((props, ref) => {
   const tx = useTranslationFunction()
 
   const accountId = selectedAccountId()
-  const { onEmojiSelect, chatId, setShowEmojiPicker, hideStickerPicker } = props
+  const {
+    onEmojiSelect,
+    setShowEmojiPicker,
+    hideStickerPicker,
+    onStickerClick,
+  } = props
 
   const [_showSticker, setShowSticker] = useState(false)
   const showSticker = hideStickerPicker ? false : _showSticker
@@ -208,14 +239,18 @@ export const EmojiAndStickerPicker = forwardRef<
     [key: string]: string[]
   }>({})
 
+  const refreshStickers = useCallback(() => {
+    BackendRemote.rpc
+      .miscGetStickers(accountId)
+      .then(stickers => setStickers(stickers))
+  }, [accountId])
+
   useEffect(() => {
     if (hideStickerPicker) {
       return
     }
-    BackendRemote.rpc
-      .miscGetStickers(accountId)
-      .then(stickers => setStickers(stickers))
-  }, [accountId, hideStickerPicker])
+    refreshStickers()
+  }, [refreshStickers, hideStickerPicker])
 
   return (
     <div className={'emoji-sticker-picker'} ref={ref}>
@@ -254,9 +289,10 @@ export const EmojiAndStickerPicker = forwardRef<
           role='tabpanel'
           id='emoji-sticker-picker-tabpanel-sticker'
           labelledBy='emoji-sticker-picker-tab-sticker'
-          chatId={chatId}
           stickers={stickers}
           setShowEmojiPicker={setShowEmojiPicker}
+          onStickerDeleted={refreshStickers}
+          onStickerClick={onStickerClick}
         />
       )}
     </div>

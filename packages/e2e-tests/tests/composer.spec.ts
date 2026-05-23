@@ -9,6 +9,7 @@ import {
   test,
   createNDummyChats,
   createDummyChat,
+  deleteChat,
   makeDummyContactInviteLink,
   selectChat as selectChatByName,
 } from '../playwright-helper'
@@ -216,7 +217,15 @@ test.describe('draft', () => {
       .getByRole('button', { name: 'Add attachment' })
       .click()
     await page.getByRole('menuitem', { name: 'Contact' }).click()
-    await page.getByRole('dialog').getByRole('button', { name: 'Me' }).click()
+    const dialog = page.getByRole('dialog')
+    // Filter by current accounts display name so only the
+    // self-contact ("Me") remains.
+    await dialog.locator('input').fill('Alice')
+    const selfContactItem = dialog
+      .getByRole('listitem')
+      .filter({ hasText: 'Me' })
+    await expect(selfContactItem).toBeVisible()
+    await selfContactItem.getByRole('button').click()
   }
   async function testDraftHasFile() {
     const myName = 'Alice'
@@ -292,18 +301,17 @@ test.describe('draft', () => {
     await testDraftIsEmpty()
 
     // Switch the chat back and forth.
-    const currChat = await chatList
+    const currChatHandle = await chatList
       .getByRole('tab', { selected: true })
       .elementHandle()
-    await chatList
+    const otherChatTab = chatList
       .getByRole('tab', { selected: false, name: 'Some chat' })
       .first()
-      .click()
-    // Make sure that we have actually switched the chat
-    // and loaded its draft.
-    await textarea.fill('foo')
-    await currChat!.click()
-    await expect(textarea).toBeEmpty()
+    await otherChatTab.click()
+    // Wait for the other chat to fully load before going back.
+    await expect(textarea).not.toBeDisabled()
+    await currChatHandle!.click()
+    await expect(composerSection).toHaveText('')
 
     await testDraftIsEmpty()
   }
@@ -579,6 +587,7 @@ test.describe('Ctrl + Up shortcut', () => {
   })
 
   test('removes quote on Ctrl + Down', async () => {
+    await textarea.focus()
     await up()
     await expectQuote(9)
     await down()
@@ -715,5 +724,47 @@ test.describe('Ctrl + Up shortcut', () => {
     await expect(
       page.getByLabel('Messages').getByRole('listitem').filter({ hasText: msg })
     ).toContainText(getMessageText(8))
+  })
+})
+
+test.describe('Emoji picker', () => {
+  test.beforeAll(async () => {
+    await createDummyChat(page, 'Chat for emoji picker tests')
+  })
+  test.afterAll(async () => {
+    await deleteChat(page, 'Chat for emoji picker tests')
+  })
+
+  test('adds emoji to draft', async () => {
+    await textarea.focus()
+    await textarea.fill('12345')
+    await page.keyboard.press('ArrowLeft')
+    await page.keyboard.press('ArrowLeft')
+    await page.keyboard.press('Tab')
+    await page.keyboard.press('Space')
+    await expect(
+      page.getByRole('tabpanel', { name: 'Emoji' }).getByRole('searchbox')
+    ).toBeFocused()
+    await page.keyboard.type('thumbs up')
+    await page.keyboard.press('Enter')
+    await expect(
+      page.getByRole('tabpanel', { name: 'Emoji' })
+    ).not.toBeVisible()
+    await expect(textarea).toBeFocused()
+    await expect(textarea).toHaveText('123👍45')
+  })
+  test('focuses composer when closed with Escape', async () => {
+    await textarea.focus()
+    await page.keyboard.press('Tab')
+    await page.keyboard.press('Space')
+    await expect(
+      page.getByRole('tabpanel', { name: 'Emoji' }).getByRole('searchbox')
+    ).toBeFocused()
+    await page.keyboard.press('Escape')
+    await expect(
+      page.getByRole('tabpanel', { name: 'Emoji' })
+    ).not.toBeVisible()
+    await expect(textarea).toBeFocused()
+    await expect(textarea).toBeEmpty()
   })
 })
