@@ -1989,7 +1989,7 @@ dependencies = [
 
 [[package]]
 name = "deltachat-tauri"
-version = "2.49.1"
+version = "2.50.1"
 dependencies = [
  "anyhow",
  "ashpd",
