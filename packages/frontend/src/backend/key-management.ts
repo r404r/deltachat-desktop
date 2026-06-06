@@ -9,11 +9,7 @@ const log = getLogger('renderer/backend/key-management')
 // Phase 1 uses existing APIs; Phase 3 will switch to dedicated endpoints.
 
 /** Key source indicating how the key was obtained */
-export type KeySource =
-  | 'autocrypt'
-  | 'gossip'
-  | 'securejoin'
-  | 'manual_import'
+export type KeySource = 'autocrypt' | 'gossip' | 'securejoin' | 'manual_import'
 
 /** Trust level of a key */
 export type KeyTrustLevel =

@@ -17,13 +17,18 @@ Desktop and Core.
 export type KeySource = 'autocrypt' | 'gossip' | 'securejoin' | 'manual_import'
 
 /** Trust level of a key */
-export type KeyTrustLevel = 'verified' | 'trusted' | 'pinned' | 'opportunistic' | 'unknown'
+export type KeyTrustLevel =
+  | 'verified'
+  | 'trusted'
+  | 'pinned'
+  | 'opportunistic'
+  | 'unknown'
 
 /** Information about the account's own key */
 export interface AccountKeyInfo {
   fingerprint: string
-  created: number          // unix timestamp
-  algorithm: string        // e.g. "Ed25519"
+  created: number // unix timestamp
+  algorithm: string // e.g. "Ed25519"
   addressMatchesAccount: boolean
 }
 
@@ -31,10 +36,10 @@ export interface AccountKeyInfo {
 export interface ContactKeyObservation {
   fingerprint: string
   source: KeySource
-  firstSeen: number        // unix timestamp
-  lastSeen: number         // unix timestamp
+  firstSeen: number // unix timestamp
+  lastSeen: number // unix timestamp
   isPinned: boolean
-  isActive: boolean        // currently used for encryption
+  isActive: boolean // currently used for encryption
   trustLevel: KeyTrustLevel
 }
 
@@ -71,10 +76,16 @@ This module wraps calls to BackendRemote. Initially uses existing APIs
 
 ```typescript
 import { BackendRemote } from '../backend-com'
-import type { AccountKeyInfo, ContactKeyInfo, KeyOperationResult } from '../types/key-management'
+import type {
+  AccountKeyInfo,
+  ContactKeyInfo,
+  KeyOperationResult,
+} from '../types/key-management'
 
 /** Get account key info - uses existing getContactEncryptionInfo for self */
-export async function getAccountKeyInfo(accountId: number): Promise<AccountKeyInfo | null> {
+export async function getAccountKeyInfo(
+  accountId: number
+): Promise<AccountKeyInfo | null> {
   // Phase 1: parse from existing getContactEncryptionInfo(selfContactId)
   // Phase 3: call dedicated RPC method when available
 }

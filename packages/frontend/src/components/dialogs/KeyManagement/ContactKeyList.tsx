@@ -101,17 +101,13 @@ export default function ContactKeyList({ onSelectContact }: Props) {
                 <span
                   style={{ fontSize: '16px' }}
                   title={
-                    contact.e2eeAvail
-                      ? tx('messages_are_e2ee')
-                      : undefined
+                    contact.e2eeAvail ? tx('messages_are_e2ee') : undefined
                   }
                 >
                   {contact.e2eeAvail ? '\u{1F512}' : '\u{1F513}'}
                 </span>
                 <span style={{ flex: 1, minWidth: 0 }}>
-                  <span style={{ fontWeight: 500 }}>
-                    {contact.displayName}
-                  </span>
+                  <span style={{ fontWeight: 500 }}>{contact.displayName}</span>
                   <span
                     style={{
                       display: 'block',

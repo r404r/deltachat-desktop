@@ -46,13 +46,13 @@ origin/r404r-main ──●──●──●──●──●──●──�
 
 ### Role of each line
 
-| Line | Purpose | Accepted inputs | Push policy |
-|---|---|---|---|
-| `deltachat/deltachat-desktop/main` (remote) | Source of truth for upstream project. | (nothing — read-only from our side) | (n/a) |
-| [`origin/main`](../../tree/main) | Pristine mirror of upstream. Used as the base for outgoing PRs so upstream sees a clean diff. | Only fast-forward merges from `deltachat/deltachat-desktop/main`. Never rebase, never force-push, never merge `r404r-main` into it. | `git merge --ff-only` + plain `git push`. |
-| [`origin/r404r-main`](../../tree/r404r-main) | Integration branch for all fork-specific work. Default branch of this repo. Build artifacts are cut from here. | (a) rebases onto `main` to absorb upstream updates; (b) `--no-ff` merges from `r404r/*` sub-feature branches. | `git rebase main` + `git push --force-with-lease`. |
-| `r404r/*` (short-lived) | One per fork-only feature or bugfix. Keeps big changes isolated while in progress. | Normal commits. | Normal push; delete after merging to `r404r-main`. |
-| `fix/*`, `feat/*` (short-lived) | One per PR going to upstream. | Normal commits. | Push to `origin`, open PR with base `deltachat/deltachat-desktop:main`. Delete after merge. |
+| Line                                         | Purpose                                                                                                        | Accepted inputs                                                                                                                     | Push policy                                                                                 |
+| -------------------------------------------- | -------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------- |
+| `deltachat/deltachat-desktop/main` (remote)  | Source of truth for upstream project.                                                                          | (nothing — read-only from our side)                                                                                                 | (n/a)                                                                                       |
+| [`origin/main`](../../tree/main)             | Pristine mirror of upstream. Used as the base for outgoing PRs so upstream sees a clean diff.                  | Only fast-forward merges from `deltachat/deltachat-desktop/main`. Never rebase, never force-push, never merge `r404r-main` into it. | `git merge --ff-only` + plain `git push`.                                                   |
+| [`origin/r404r-main`](../../tree/r404r-main) | Integration branch for all fork-specific work. Default branch of this repo. Build artifacts are cut from here. | (a) rebases onto `main` to absorb upstream updates; (b) `--no-ff` merges from `r404r/*` sub-feature branches.                       | `git rebase main` + `git push --force-with-lease`.                                          |
+| `r404r/*` (short-lived)                      | One per fork-only feature or bugfix. Keeps big changes isolated while in progress.                             | Normal commits.                                                                                                                     | Normal push; delete after merging to `r404r-main`.                                          |
+| `fix/*`, `feat/*` (short-lived)              | One per PR going to upstream.                                                                                  | Normal commits.                                                                                                                     | Push to `origin`, open PR with base `deltachat/deltachat-desktop:main`. Delete after merge. |
 
 ### Why this works
 
@@ -81,14 +81,14 @@ in Settings → Advanced → Experimental Features.
 
 ### Key Management UI
 
-| Capability | Status | Spec |
-|---|---|---|
-| Feature flag `enableKeyManagement` | shipped | [`docs-fix/01-feature-flag.md`](./docs-fix/01-feature-flag.md) |
-| Account key info display (fingerprint, email, copy button) | shipped | [`docs-fix/04-account-key-info.md`](./docs-fix/04-account-key-info.md) |
-| Contact key list (lazy-loaded) + detail view | shipped | [`docs-fix/05-contact-key-info.md`](./docs-fix/05-contact-key-info.md) |
-| Import self key (with preflight warning dialog) | shipped | [`docs-fix/08-enable-import-key.md`](./docs-fix/08-enable-import-key.md), [`docs-fix/11-import-key-preflight.md`](./docs-fix/11-import-key-preflight.md) |
-| Export self key (multi-step warnings, browser download fan-out) | shipped | [`docs-fix/10-export-self-key.md`](./docs-fix/10-export-self-key.md) |
-| Pin / unpin contact key | UI scaffolded, disabled (awaits core support) | [`docs-fix/06-pin-unpin-ui.md`](./docs-fix/06-pin-unpin-ui.md) |
+| Capability                                                      | Status                                        | Spec                                                                                                                                                     |
+| --------------------------------------------------------------- | --------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Feature flag `enableKeyManagement`                              | shipped                                       | [`docs-fix/01-feature-flag.md`](./docs-fix/01-feature-flag.md)                                                                                           |
+| Account key info display (fingerprint, email, copy button)      | shipped                                       | [`docs-fix/04-account-key-info.md`](./docs-fix/04-account-key-info.md)                                                                                   |
+| Contact key list (lazy-loaded) + detail view                    | shipped                                       | [`docs-fix/05-contact-key-info.md`](./docs-fix/05-contact-key-info.md)                                                                                   |
+| Import self key (with preflight warning dialog)                 | shipped                                       | [`docs-fix/08-enable-import-key.md`](./docs-fix/08-enable-import-key.md), [`docs-fix/11-import-key-preflight.md`](./docs-fix/11-import-key-preflight.md) |
+| Export self key (multi-step warnings, browser download fan-out) | shipped                                       | [`docs-fix/10-export-self-key.md`](./docs-fix/10-export-self-key.md)                                                                                     |
+| Pin / unpin contact key                                         | UI scaffolded, disabled (awaits core support) | [`docs-fix/06-pin-unpin-ui.md`](./docs-fix/06-pin-unpin-ui.md)                                                                                           |
 
 See [`docs-fix/00-overview.md`](./docs-fix/00-overview.md) for the cross-task
 index and [`docs-fix/codex-proposal-review.md`](./docs-fix/codex-proposal-review.md)
@@ -220,10 +220,10 @@ signed and re-signed with `Entitlements.dev.plist` per
 
 **Tag suffix convention** (used by the workflow's prerelease detection):
 
-| Tag pattern | Treated as |
-|---|---|
-| `r404r-vMAJOR.MINOR.PATCH` (e.g. `r404r-v2.49.1`) | stable release |
-| `r404r-vMAJOR.MINOR.PATCH-anything` (e.g. `r404r-v2.49.1-beta01`, `r404r-v2.49.1-mod02`) | prerelease |
+| Tag pattern                                                                              | Treated as     |
+| ---------------------------------------------------------------------------------------- | -------------- |
+| `r404r-vMAJOR.MINOR.PATCH` (e.g. `r404r-v2.49.1`)                                        | stable release |
+| `r404r-vMAJOR.MINOR.PATCH-anything` (e.g. `r404r-v2.49.1-beta01`, `r404r-v2.49.1-mod02`) | prerelease     |
 
 Releases appear at `https://github.com/r404r/deltachat-desktop/releases`
 roughly 30–45 minutes after `git push --tags` (Tauri builds dominate the

@@ -11,18 +11,18 @@ don't. The fork also adds **one** of its own workflow file
 
 ## Summary table
 
-| Workflow file | Triggers | Works on fork? | Action |
-|---|---|---|---|
-| `test.yml` | push everywhere | ❌ **broken** — runs `pnpm run build` at root; no such script | **Disable via UI** (see "test.yml" below) |
-| `e2e.yml` | push main, PR | ❌ missing secrets / vars | **Disable via UI** (see "e2e.yml" below) |
-| `build-preview.yml` | PR | ⚠️ runs 3× matrix (mac/linux/win) per PR; upload step gated | Consider disabling if you don't use `#public-preview` |
-| `delete-preview.yml` | PR closed | ⚠️ needs SSH secrets to `download.delta.chat` | Only runs with `#public-preview` in PR body; likely leave as-is |
-| `basic-tests.yml` | push main, PR | ✅ | — |
-| `build-tauri-preview.yml` | PR on `packages/target-tauri/**` | ✅ | — |
-| `build-tauri-release.yml` | push tag `v*` | ✅ but produces only Linux+Windows artifacts (no Release object) | Triggers on upstream-style tags; ignore unless you also want loose artifacts. |
-| `build-windows-appx.yml` | push any tag | ✅ | Note: also fires on `r404r-v*` tags. Consider disabling if you don't ship to Windows Store. |
-| `rust-tauri-lint.yml` | PR on `packages/target-tauri/**` | ✅ | — |
-| `r404r-release.yml` (fork-only, `r404r-main`) | push tag `r404r-v*` | ✅ — built specifically for this fork | See "Fork release workflow" below. |
+| Workflow file                                 | Triggers                         | Works on fork?                                                   | Action                                                                                      |
+| --------------------------------------------- | -------------------------------- | ---------------------------------------------------------------- | ------------------------------------------------------------------------------------------- |
+| `test.yml`                                    | push everywhere                  | ❌ **broken** — runs `pnpm run build` at root; no such script    | **Disable via UI** (see "test.yml" below)                                                   |
+| `e2e.yml`                                     | push main, PR                    | ❌ missing secrets / vars                                        | **Disable via UI** (see "e2e.yml" below)                                                    |
+| `build-preview.yml`                           | PR                               | ⚠️ runs 3× matrix (mac/linux/win) per PR; upload step gated      | Consider disabling if you don't use `#public-preview`                                       |
+| `delete-preview.yml`                          | PR closed                        | ⚠️ needs SSH secrets to `download.delta.chat`                    | Only runs with `#public-preview` in PR body; likely leave as-is                             |
+| `basic-tests.yml`                             | push main, PR                    | ✅                                                               | —                                                                                           |
+| `build-tauri-preview.yml`                     | PR on `packages/target-tauri/**` | ✅                                                               | —                                                                                           |
+| `build-tauri-release.yml`                     | push tag `v*`                    | ✅ but produces only Linux+Windows artifacts (no Release object) | Triggers on upstream-style tags; ignore unless you also want loose artifacts.               |
+| `build-windows-appx.yml`                      | push any tag                     | ✅                                                               | Note: also fires on `r404r-v*` tags. Consider disabling if you don't ship to Windows Store. |
+| `rust-tauri-lint.yml`                         | PR on `packages/target-tauri/**` | ✅                                                               | —                                                                                           |
+| `r404r-release.yml` (fork-only, `r404r-main`) | push tag `r404r-v*`              | ✅ — built specifically for this fork                            | See "Fork release workflow" below.                                                          |
 
 "Works on fork" means: runs to green without manual GitHub repo configuration
 (secrets / variables / enabling / disabling).
@@ -71,7 +71,7 @@ stopping the broken runs.
 **Why not fix the file?** Two reasons:
 
 1. On `main` we want zero drift from upstream so `git diff main
-   deltachat/deltachat-desktop/main` stays empty (see `README.r404r.md`
+deltachat/deltachat-desktop/main` stays empty (see `README.r404r.md`
    "Why this works" section).
 2. Fixing only on `r404r-main` wouldn't help: the workflow re-runs on every
    push to `main` as well.
@@ -84,9 +84,9 @@ has:
 
 ```yaml
 env:
-  DC_CHATMAIL_DOMAIN:    ${{ vars.DC_CHATMAIL_DOMAIN }}
-  DC_MAIL_SERVER:        ${{ vars.CI_MAIL_SERVER }}
-  DC_MAIL_SERVER_TOKEN:  ${{ secrets.CI_MAIL_SERVER_TOKEN }}
+  DC_CHATMAIL_DOMAIN: ${{ vars.DC_CHATMAIL_DOMAIN }}
+  DC_MAIL_SERVER: ${{ vars.CI_MAIL_SERVER }}
+  DC_MAIL_SERVER_TOKEN: ${{ secrets.CI_MAIL_SERVER_TOKEN }}
 ```
 
 The `CI_MAIL_SERVER_TOKEN` secret in particular hands out access to a Delta
@@ -168,13 +168,13 @@ purpose-built release pipeline. Triggered by `r404r-v*` tag pushes.
 
 **Build matrix (5 jobs in parallel):**
 
-| Job | Runner | Output |
-|---|---|---|
-| `electron-mac` | `macos-latest` (arm64) | `DeltaChat-<ver>-arm64.dmg` |
-| `electron-linux` | `ubuntu-22.04` | `DeltaChat-<ver>.AppImage` |
-| `tauri-mac` | `macos-latest` (arm64) | `deltachat-tauri_<ver>_aarch64.dmg` |
-| `tauri-linux` | `ubuntu-22.04` | `.deb` + `.rpm` + `.AppImage` |
-| `tauri-windows` | `windows-latest` | `.msi` + `.exe` (NSIS) |
+| Job              | Runner                 | Output                              |
+| ---------------- | ---------------------- | ----------------------------------- |
+| `electron-mac`   | `macos-latest` (arm64) | `DeltaChat-<ver>-arm64.dmg`         |
+| `electron-linux` | `ubuntu-22.04`         | `DeltaChat-<ver>.AppImage`          |
+| `tauri-mac`      | `macos-latest` (arm64) | `deltachat-tauri_<ver>_aarch64.dmg` |
+| `tauri-linux`    | `ubuntu-22.04`         | `.deb` + `.rpm` + `.AppImage`       |
+| `tauri-windows`  | `windows-latest`       | `.msi` + `.exe` (NSIS)              |
 
 **Final job (`release`):**
 
@@ -183,7 +183,7 @@ purpose-built release pipeline. Triggered by `r404r-v*` tag pushes.
    matches `r404r-vMAJOR.MINOR.PATCH$` exactly; everything else is
    prerelease).
 3. Generates a changelog by walking `git log <previous r404r-v*
-   tag>..<this tag>` (or, if this is the first such tag, walks back 50
+tag>..<this tag>` (or, if this is the first such tag, walks back 50
    commits).
 4. Notes the upstream merge-base commit so consumers can tell which
    upstream baseline this fork build sits on.

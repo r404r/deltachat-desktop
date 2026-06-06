@@ -75,9 +75,7 @@ export default function ContactKeyDetail({ contactId }: Props) {
             color: '#fff',
           }}
         >
-          {keyInfo.isEncrypted
-            ? tx('messages_are_e2ee')
-            : tx('unencrypted')}
+          {keyInfo.isEncrypted ? tx('messages_are_e2ee') : tx('unencrypted')}
         </span>
       </div>
 

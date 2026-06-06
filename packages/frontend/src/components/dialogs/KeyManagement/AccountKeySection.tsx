@@ -16,7 +16,10 @@ import ConfirmationDialog from '../ConfirmationDialog'
 import CannotReplaceKeyDialog from './CannotReplaceKeyDialog'
 import { runtime } from '@deltachat-desktop/runtime-interface'
 import { unknownErrorToString } from '@deltachat-desktop/shared/unknownErrorToString'
-import { LastUsedSlot, rememberLastUsedPath } from '../../../utils/lastUsedPaths'
+import {
+  LastUsedSlot,
+  rememberLastUsedPath,
+} from '../../../utils/lastUsedPaths'
 import type { RuntimeOpenDialogOptions } from '@deltachat-desktop/shared/shared-types'
 import type { DcEventType } from '@deltachat/jsonrpc-client'
 import { basename, dirname } from 'path'
@@ -47,9 +50,7 @@ export default function AccountKeySection() {
     <div>
       <h4>{tx('key_management_my_keys')}</h4>
       {error ? (
-        <p style={{ color: 'var(--colorDanger)' }}>
-          {tx('error_x', error)}
-        </p>
+        <p style={{ color: 'var(--colorDanger)' }}>{tx('error_x', error)}</p>
       ) : !keyInfo ? (
         <p style={{ color: 'var(--textSecondary)' }}>{tx('loading')}</p>
       ) : (
@@ -245,9 +246,7 @@ function ImportKeyButton({ onImported }: { onImported: () => void }) {
         color: 'var(--textPrimary)',
       }}
     >
-      {importing
-        ? tx('loading')
-        : tx('key_management_import_key')}
+      {importing ? tx('loading') : tx('key_management_import_key')}
     </button>
   )
 }

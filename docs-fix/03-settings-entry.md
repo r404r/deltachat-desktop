@@ -12,6 +12,7 @@ management dialog. Only visible when `enableKeyManagement` feature flag is on.
 `packages/frontend/src/components/Settings/KeyManagement.tsx`
 
 Top-level key management component with two sections:
+
 - **My Keys** — shows account key fingerprint
 - **Contact Keys** — button to open contact key list
 
@@ -24,11 +25,13 @@ Add a `SettingsButton` (conditionally rendered when `enableKeyManagement` is tru
 that navigates to key management view or opens a dialog.
 
 ```tsx
-{desktopSettings.enableKeyManagement && (
-  <SettingsButton onClick={() => openDialog(KeyManagementDialog)}>
-    {tx('key_management')}
-  </SettingsButton>
-)}
+{
+  desktopSettings.enableKeyManagement && (
+    <SettingsButton onClick={() => openDialog(KeyManagementDialog)}>
+      {tx('key_management')}
+    </SettingsButton>
+  )
+}
 ```
 
 ### 3. Create `KeyManagementDialog.tsx`
@@ -36,6 +39,7 @@ that navigates to key management view or opens a dialog.
 `packages/frontend/src/components/dialogs/KeyManagement/index.tsx`
 
 Dialog wrapper using the standard Dialog components:
+
 - `Dialog` + `DialogHeader` + `DialogBody` + `DialogContent`
 - Contains the `KeyManagement` settings component
 
