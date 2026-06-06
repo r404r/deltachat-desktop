@@ -27,6 +27,7 @@ selection algorithms in this repo.
 ### 2. Missing RPC APIs
 
 These APIs do not exist in the current core:
+
 - `get_account_key_info`
 - `get_contact_key_info`
 - `list_contact_key_history`
@@ -40,6 +41,7 @@ do not exist.
 ### 3. Existing capabilities underutilized
 
 The proposal ignores existing APIs:
+
 - `getContactEncryptionInfo(accountId, contactId)` — returns encryption text
   with fingerprint info
 - `getChatEncryptionInfo(accountId, chatId)` — returns chat encryption details
@@ -55,6 +57,7 @@ changes. True Phase 1 should use existing APIs for read-only inspection.
 ## Revised Approach
 
 ### Desktop Phase 1 (no core changes needed)
+
 - Feature flag
 - Type definitions for future APIs
 - Read-only key inspection using existing `getContactEncryptionInfo`
@@ -62,16 +65,19 @@ changes. True Phase 1 should use existing APIs for read-only inspection.
 - Contact key list and detail views
 
 ### Desktop Phase 2 (needs core API stubs)
+
 - Pin/unpin UI with stub implementations
 - Import key UI with stub implementation
 - Prepare for core API integration
 
 ### Core Phase (separate repo)
+
 - Implement `manual_key_overrides` table
 - Implement `resolve_encryption_key` algorithm
 - Add new JSON-RPC endpoints
 - Add new events
 
 ### Integration Phase
+
 - Connect Desktop stubs to real core APIs
 - End-to-end testing

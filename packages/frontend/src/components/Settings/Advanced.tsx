@@ -1,6 +1,5 @@
 import React, { useEffect, useState, useCallback } from 'react'
 
-import type { SettingsStoreState } from '../../stores/settings'
 import { ExperimentalFeatures } from './ExperimentalFeatures'
 import KeyManagementDialog from '../dialogs/KeyManagement'
 import SettingsHeading from './SettingsHeading'
@@ -19,17 +18,18 @@ import TransportsDialog from '../dialogs/Transports'
 import { LogDialog } from '../dialogs/Log'
 import { DialogProps } from '../../contexts/DialogContext'
 import { getLogger } from '../../../../shared/logger'
+import { useSettingsStore } from '../../stores/settings'
 
 type Props = {
-  settingsStore: SettingsStoreState
   onClose: DialogProps['onClose']
 }
 
 const log = getLogger('renderer/settings/advanced')
 
-export default function Advanced({ onClose, settingsStore }: Props) {
+export default function Advanced({ onClose }: Props) {
   const tx = useTranslationFunction()
   const { openDialog } = useDialog()
+  const settingsStore = useSettingsStore()[0]
   const openProxySettings = () => {
     openDialog(ProxyConfiguration, {
       accountId: selectedAccountId(),
@@ -99,19 +99,19 @@ export default function Advanced({ onClose, settingsStore }: Props) {
       <SettingsHeading>{tx('pref_experimental_features')}</SettingsHeading>
       <ExperimentalFeatures />
 
-      {settingsStore.desktopSettings.enableKeyManagement && (
-          <>
-            <SettingsSeparator />
-            <SettingsHeading>{tx('key_management')}</SettingsHeading>
-            <SettingsButton
-              onClick={() => {
-                openDialog(KeyManagementDialog)
-              }}
-            >
-              {tx('key_management')}
-            </SettingsButton>
-          </>
-        )}
+      {settingsStore?.desktopSettings.enableKeyManagement && (
+        <>
+          <SettingsSeparator />
+          <SettingsHeading>{tx('key_management')}</SettingsHeading>
+          <SettingsButton
+            onClick={() => {
+              openDialog(KeyManagementDialog)
+            }}
+          >
+            {tx('key_management')}
+          </SettingsButton>
+        </>
+      )}
 
       {runtime.getRuntimeInfo().target !== 'browser' && (
         <>
@@ -119,8 +119,6 @@ export default function Advanced({ onClose, settingsStore }: Props) {
           <SettingsAutoStart />
         </>
       )}
-
-      {/* Legacy Options removed: forked core no longer supports mvbox_move/only_fetch_mvbox */}
     </>
   )
 }

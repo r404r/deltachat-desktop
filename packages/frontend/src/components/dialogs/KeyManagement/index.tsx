@@ -1,9 +1,6 @@
 import React, { useState } from 'react'
 
-import Dialog, {
-  DialogBody,
-  DialogContent,
-} from '../../Dialog'
+import Dialog, { DialogBody, DialogContent } from '../../Dialog'
 import DialogHeader from '../../Dialog/DialogHeader'
 import useTranslationFunction from '../../../hooks/useTranslationFunction'
 
@@ -66,11 +63,7 @@ export default function KeyManagementDialog({ onClose }: DialogProps) {
   )
 }
 
-function MainView({
-  onViewContactKeys,
-}: {
-  onViewContactKeys: () => void
-}) {
+function MainView({ onViewContactKeys }: { onViewContactKeys: () => void }) {
   const tx = useTranslationFunction()
 
   return (

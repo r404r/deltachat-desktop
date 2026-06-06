@@ -39,6 +39,7 @@ Watch mode only hot-reloads frontend code. Main process changes require `pnpm -w
 ## Architecture
 
 **Monorepo packages** (`packages/`):
+
 - `frontend/` - React 19 UI shared by all targets
 - `runtime/` - Abstract runtime interface (`runtime.ts`) with per-target implementations
 - `shared/` - Shared types and utilities

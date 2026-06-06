@@ -2,12 +2,12 @@
 
 ## Decision Summary (user-approved)
 
-| Decision | Choice |
-|---|---|
-| Plan | B — multi-step warnings matching import flow |
-| Button position | Next to Import Key in `AccountKeySection` |
-| Export content | Private + public key (core default, unencrypted) |
-| Browser temp file | Warn user in UI (no auto-cleanup) |
+| Decision          | Choice                                           |
+| ----------------- | ------------------------------------------------ |
+| Plan              | B — multi-step warnings matching import flow     |
+| Button position   | Next to Import Key in `AccountKeySection`        |
+| Export content    | Private + public key (core default, unencrypted) |
+| Browser temp file | Warn user in UI (no auto-cleanup)                |
 
 ## Background
 
@@ -44,6 +44,7 @@ export async function exportSelfSecretKey(
 ### 2. `ExportKeyButton` component inside `AccountKeySection.tsx`
 
 Multi-step flow:
+
 1. Risk acknowledgement dialog (UNENCRYPTED warning + danger confirm)
 2. Directory picker (`properties: ['openDirectory', 'createDirectory']`)
    - Browser: `destination = '<BROWSER>'` special placeholder
@@ -56,6 +57,7 @@ Multi-step flow:
 ### 3. Event handling
 
 Listen on `BackendRemote.getContextEvents(accountId)` for:
+
 - `ImexFileWritten` — collect each written file path
 - Fire off emitter handler in finally
 

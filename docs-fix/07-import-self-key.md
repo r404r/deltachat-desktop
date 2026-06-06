@@ -17,6 +17,7 @@ This is a sensitive operation requiring clear warnings and confirmation.
 `packages/frontend/src/components/dialogs/KeyManagement/ImportKeyDialog.tsx`
 
 Multi-step flow:
+
 1. **File selection** — use runtime file picker (`runtime.showOpenFileDialog`)
 2. **Preview** — show key fingerprint and email from the file
 3. **Warning** — explain consequences (replaces current key, affects all conversations)
@@ -25,6 +26,7 @@ Multi-step flow:
 ### 3. Stub behavior
 
 Until core provides `import_self_secret_key` RPC:
+
 - File selection works (to validate the UI flow)
 - After file selection, show "Import not yet supported by core" message
 - No actual key import occurs

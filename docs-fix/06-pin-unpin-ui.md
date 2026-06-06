@@ -19,6 +19,7 @@ the RPC adapter which currently stubs the operation (until core supports it).
 `packages/frontend/src/components/dialogs/KeyManagement/PinKeyConfirmDialog.tsx`
 
 Confirmation dialog explaining:
+
 - What pinning means (forces use of this specific key)
 - That auto key selection will be overridden
 - Confirm / Cancel buttons
@@ -26,6 +27,7 @@ Confirmation dialog explaining:
 ### 3. Status display
 
 In `ContactKeyDetail`, show key trust level:
+
 - `Verified` — SecureJoin verified
 - `Pinned` — manually pinned by user
 - `Opportunistic` — auto-detected via Autocrypt
@@ -33,6 +35,7 @@ In `ContactKeyDetail`, show key trust level:
 ### 4. Stub behavior
 
 Until core supports pin/unpin:
+
 - Buttons are rendered but show "Not yet available" toast on click
 - Or buttons are disabled with tooltip explaining core support needed
 

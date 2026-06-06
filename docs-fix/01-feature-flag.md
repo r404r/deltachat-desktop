@@ -36,7 +36,9 @@ In `_locales/_untranslated_en.json`:
 ```json
 {
   "key_management": { "message": "Key Management" },
-  "key_management_desc": { "message": "View and manage encryption keys for your account and contacts" }
+  "key_management_desc": {
+    "message": "View and manage encryption keys for your account and contacts"
+  }
 }
 ```
 

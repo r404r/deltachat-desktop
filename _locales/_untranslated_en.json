@@ -205,5 +205,143 @@
   },
   "paste_in_qr_scanner": {
     "message": "Click to paste it in QR scanner"
+  },
+  "messages_are_e2ee": {
+    "message": "Messages are end-to-end encrypted."
+  },
+  "warning": {
+    "message": "Warning"
+  },
+  "data_found_other_installation_message": {
+    "message": "Your profiles from another Delta Chat installation are not accessible - different installations store their data in separate locations.\n\nTo keep existing profiles:\n1. Quit now\n2. Open the other Delta Chat - if needed, reinstall it from %1$s\n3. Back up each profile at \"Settings/Chats\"\n4. Relaunch this version\n5. Restore the backups using \"I already have a profile\"\n\nContinue without your previous profiles?"
+  },
+  "remove_quote": {
+    "message": "Remove Quote"
+  },
+  "remove_attachment": {
+    "message": "Remove Attachment"
+  },
+  "key_management": {
+    "message": "Key Management"
+  },
+  "key_management_desc": {
+    "message": "View and manage encryption keys for your account and contacts"
+  },
+  "key_management_my_keys": {
+    "message": "My Keys"
+  },
+  "key_management_contact_keys": {
+    "message": "Contact Keys"
+  },
+  "key_management_view_contact_keys": {
+    "message": "View Contact Keys"
+  },
+  "key_management_copy_fingerprint": {
+    "message": "Copy Fingerprint"
+  },
+  "key_management_no_contacts": {
+    "message": "No contacts found"
+  },
+  "unencrypted": {
+    "message": "Not encrypted"
+  },
+  "load_more_contacts": {
+    "message": "Load more…"
+  },
+  "key_management_pin_key": {
+    "message": "Pin Key"
+  },
+  "key_management_unpin_key": {
+    "message": "Unpin Key"
+  },
+  "key_management_pin_desc": {
+    "message": "Force use of this specific key for encryption (not yet supported by core)"
+  },
+  "key_management_unpin_desc": {
+    "message": "Remove manual key override and restore automatic key selection (not yet supported by core)"
+  },
+  "key_management_import_key": {
+    "message": "Import Key"
+  },
+  "key_management_import_desc": {
+    "message": "Replace the current account key with an imported PGP private key (experimental)"
+  },
+  "key_management_import_warning_header": {
+    "message": "Warning: Key Import Risks"
+  },
+  "key_management_import_warning_body": {
+    "message": "Importing a private key is destructive and experimental. Please read carefully:\n\n• Your current account key will be REPLACED.\n• Verified (green checkmark) groups will break and show 'non-verified encryption' warnings.\n• Only ASCII-armored PGP keys (.asc) without a passphrase are supported.\n• Only RSA or Ed25519 keys are guaranteed to work.\n• Future Delta Chat updates may not migrate imported keys correctly.\n• This feature was removed from the official client for these reasons.\n\nOnly proceed if you understand the consequences."
+  },
+  "key_management_import_warning_continue": {
+    "message": "I understand, continue"
+  },
+  "key_management_import_confirm_header": {
+    "message": "Replace Account Key?"
+  },
+  "key_management_import_confirm_body": {
+    "message": "Import key from:\n%1$s\n\nThis will REPLACE your current account key. This action cannot be undone."
+  },
+  "key_management_import_confirm_action": {
+    "message": "Replace Key"
+  },
+  "key_management_import_success": {
+    "message": "Key imported successfully"
+  },
+  "key_management_cannot_replace_header": {
+    "message": "Cannot Replace Existing Key"
+  },
+  "key_management_cannot_replace_body": {
+    "message": "This account already has an encryption key, and Delta Chat Core does not allow replacing it.\n\nReason: changing the key would break verified groups and encrypted conversations you are already part of. The underlying protocols (Autocrypt / SecureJoin) have no way to tell peers that your key changed.\n\nTo use a custom PGP key:\n\n1. Create a new profile (below)\n2. Import the key BEFORE logging in\n3. Then configure the email transport\n\nMake sure the key's email matches the address you will log in with."
+  },
+  "key_management_cannot_replace_current": {
+    "message": "Current key fingerprint on this account:"
+  },
+  "key_management_cannot_replace_add_account": {
+    "message": "Add New Profile"
+  },
+  "key_management_export_key": {
+    "message": "Export Key"
+  },
+  "key_management_export_desc": {
+    "message": "Export the account's private and public keys as PGP .asc files (experimental)"
+  },
+  "key_management_export_warning_header": {
+    "message": "Warning: Exporting Private Key"
+  },
+  "key_management_export_warning_body": {
+    "message": "Exporting your private key has serious risks. Please read carefully:\n\n• The exported .asc files are NOT encrypted — anyone with access to them can decrypt your messages (past and future).\n• There is no revocation — once a copy leaves your device you cannot take it back.\n• File permissions are not enforced; store on an encrypted disk or password manager.\n• In browser mode the files are written to a server-side directory and kept briefly after download; do not leave them there.\n\nOnly continue if you understand the consequences."
+  },
+  "key_management_export_warning_continue": {
+    "message": "I understand, continue"
+  },
+  "key_management_export_confirm_header": {
+    "message": "Export Account Keys?"
+  },
+  "key_management_export_confirm_body": {
+    "message": "Export keys to:\n%1$s\n\nMultiple .asc files will be written. Files are UNENCRYPTED."
+  },
+  "key_management_export_confirm_action": {
+    "message": "Export Keys"
+  },
+  "key_management_export_browser_note": {
+    "message": "<browser download>"
+  },
+  "key_management_export_success_electron": {
+    "message": "Keys exported to: %1$s"
+  },
+  "key_management_export_success_browser_file": {
+    "message": "A key file is ready to download:\n%1$s"
+  },
+  "key_management_export_partial_header": {
+    "message": "Partial Export Failed"
+  },
+  "key_management_export_partial_browser_file": {
+    "message": "The export failed, but a key file was already written to the server:\n%1$s\n\nDownload it now? (Clicking download will also trigger server-side cleanup 10s after download completes.)"
+  },
+  "key_management_export_success_browser_empty": {
+    "message": "Export finished, but no files were reported. Check logs."
+  },
+  "key_management_no_fingerprint": {
+    "message": "No fingerprint available"
   }
 }

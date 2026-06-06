@@ -3,6 +3,7 @@
 ## Objective
 
 Show encryption key information for contacts. Two views:
+
 1. Contact list — shows contacts with their encryption status
 2. Contact detail — shows key details for a selected contact
 
@@ -35,6 +36,7 @@ Show encryption key information for contacts. Two views:
 ### 3. Navigation
 
 From `KeyManagementDialog`:
+
 - "View Contact Keys" button opens `ContactKeyList` as a sub-view
 - Contact list items open `ContactKeyDetail`
 - Use dialog header back button for navigation between views
@@ -42,6 +44,7 @@ From `KeyManagementDialog`:
 ## UI Layout
 
 ### Contact List View
+
 ```
 ┌─ Contact Keys ─────────────────────────┐
 │ ← Back                                 │
@@ -54,6 +57,7 @@ From `KeyManagementDialog`:
 ```
 
 ### Contact Detail View
+
 ```
 ┌─ Alice ────────────────────────────────┐
 │ ← Back                                 │

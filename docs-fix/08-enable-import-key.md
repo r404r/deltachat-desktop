@@ -44,6 +44,7 @@ Signature changes from `keyData: string` to `path: string` (core takes file path
 ### 2. Create `ImportKeyDialog` component
 
 Multi-step flow:
+
 1. **Warning screen** — lists all 5 constraints above, user must click "I understand"
 2. **File selection** — native file picker with `.asc` filter
 3. **Final confirmation** — shows selected file path, explains replacement is destructive
@@ -52,6 +53,7 @@ Multi-step flow:
 ### 3. Enable the button
 
 In `AccountKeySection.tsx`:
+
 - Remove the `disabled` attribute
 - Set `coreSupportsImport = true`
 - Wire up `onClick` to open `ImportKeyDialog`

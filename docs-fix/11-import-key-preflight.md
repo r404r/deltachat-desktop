@@ -7,7 +7,7 @@ Core v2.49.0 intentionally disallows replacing an existing account key.
 - PR [chatmail/core#6574](https://github.com/chatmail/core/pull/6574)
   "fix: make it impossible to overwrite default key" (merged 2025-02-26).
 - `src/key.rs::store_self_keypair` does a plain `INSERT INTO config
-  (keyname, value) VALUES ('key_id', ?)` against a UNIQUE column. If the
+(keyname, value) VALUES ('key_id', ?)` against a UNIQUE column. If the
   account already has `key_id`, SQLite aborts with
   `UNIQUE constraint failed: config.keyname` (error 2067).
 - The whole operation runs in a transaction, so the previous key is
@@ -15,6 +15,7 @@ Core v2.49.0 intentionally disallows replacing an existing account key.
   `load_self_secret_key == old_key`).
 
 The underlying reasons (from PR description + interface#80):
+
 - Replacing a key breaks verified/SecureJoin groups the user is already in
 - Autocrypt/SecureJoin has no key rotation protocol; peers can't be told
 - External keys use algorithms core hasn't audited
@@ -51,6 +52,7 @@ if (existing.fingerprint) {
 A new dialog (not a ConfirmationDialog — we want 3 buttons + custom layout).
 
 Content:
+
 - Header: "Cannot Replace Existing Key"
 - Body:
   - State the fact (account has a key, shows fingerprint)
@@ -87,11 +89,11 @@ the user to verify manually.
 ## Acceptance Criteria
 
 - [ ] Clicking Import Key on a configured account shows the
-  "Cannot Replace" dialog, never reaches the RPC call
+      "Cannot Replace" dialog, never reaches the RPC call
 - [ ] Dialog clearly explains WHY (not just "not allowed")
 - [ ] "Add New Account" button navigates to the add-account flow
 - [ ] On a newly-created unconfigured account, import flow still works
-  end-to-end (existing behavior)
+      end-to-end (existing behavior)
 - [ ] No change to the UNIQUE constraint toast for accounts that DO
-  somehow reach core (they shouldn't, but if they do the toast still
-  fires as a safety net)
+      somehow reach core (they shouldn't, but if they do the toast still
+      fires as a safety net)

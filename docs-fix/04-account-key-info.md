@@ -12,6 +12,7 @@ Key Management dialog's "My Keys" section.
 `packages/frontend/src/components/dialogs/KeyManagement/AccountKeySection.tsx`
 
 Fetches and displays account key info:
+
 - Uses `getContactEncryptionInfo(accountId, DC_CONTACT_ID_SELF)` (contact ID 1
   is self) to get encryption info text
 - Parses fingerprint from the text response
