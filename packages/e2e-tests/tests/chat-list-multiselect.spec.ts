@@ -6,6 +6,7 @@ import {
   reloadPage,
   test,
   createNDummyChats,
+  createDummyChat,
 } from '../playwright-helper'
 
 test.describe.configure({
@@ -172,6 +173,74 @@ test.describe('Shift + Click', () => {
     await page.keyboard.press('Shift+ArrowUp')
     // This is the topmost chat: do nothing.
     await expectSelectedChats([9, 8, 7])
+  })
+
+  test("doesn't break if the item at the start of the selection gets removed", async () => {
+    const chatName = 'Chat to be removed'
+    await createDummyChat(page, chatName)
+    const chat = chatList.getByRole('tab', { name: chatName })
+    await chat.click()
+    await expect(selectedChats).toContainText([chatName])
+
+    await chat.click({ button: 'right' })
+    await page.getByRole('menuitem', { name: 'Leave' }).click()
+    await page
+      .getByRole('dialog')
+      .getByRole('button', { name: 'Delete' })
+      .click()
+    await expectSelectedChats([])
+
+    await getChat(3).click({ modifiers: ['Shift'] })
+    await expectSelectedChats([3])
+  })
+})
+
+test.describe('Escape unselects chats', () => {
+  test('if multiple are selected', async () => {
+    await getChat(7).click()
+    await expectSelectedChats([7])
+    await getChat(7).focus()
+    await page.keyboard.press('Shift+ArrowDown')
+    await page.keyboard.press('Shift+ArrowDown')
+    await expectSelectedChats([7, 6, 5])
+    await page.keyboard.press('Escape')
+    await expectSelectedChats([])
+    await page.keyboard.press('Escape')
+    await expectSelectedChats([])
+
+    await getChat(7).click()
+    await getChat(3).click({
+      modifiers: ['ControlOrMeta'],
+    })
+    await expectSelectedChats([7, 3])
+    await getChat(9).focus()
+    await page.keyboard.press('Escape')
+    await expectSelectedChats([])
+  })
+  // This behavior is perhaps not very useful
+  // for people who don't use multiselect often,
+  // but I can come up with at least one example
+  // where not behaving this way could be problematic:
+  // user trying to unselect all chats with Escape
+  // while they're scrolled way below the active chat:
+  // then they would not be able to see that Escape
+  // didn't actually unselect all chats but left just one (the active one).
+  test('if only the active is selected', async () => {
+    await getChat(7).click()
+    await expectSelectedChats([7])
+    await getChat(7).focus()
+    await expect(getChat(7)).toBeFocused()
+    await page.keyboard.press('Escape')
+    await expectSelectedChats([])
+
+    await getChat(5).click()
+    await expectSelectedChats([5])
+    await getChat(5).focus()
+    await page.keyboard.press('ArrowDown')
+    await page.keyboard.press('ArrowDown')
+    await expect(getChat(3)).toBeFocused()
+    await page.keyboard.press('Escape')
+    await expectSelectedChats([])
   })
 })
 

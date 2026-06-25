@@ -10,6 +10,7 @@ import {
   deleteChat,
   makeDummyContactInviteLink,
   selectChat as selectChatByName,
+  sendMessage,
 } from '../playwright-helper'
 
 test.describe.configure({
@@ -61,7 +62,15 @@ async function testDraftIsEmpty() {
   await expect(composerSection.locator('.upper-bar')).toBeEmpty()
 }
 
+// Maybe it would be more proper to have properly-skoped `afterEach`,
+// but this works.
+let skipDraftClear = false
 test.afterEach(async () => {
+  if (skipDraftClear) {
+    skipDraftClear = false // Don't skip for the next test
+    return
+  }
+
   for (let i = 1; i <= numDummyChats; i++) {
     await selectChat(i)
     // Just send a/the message to make sure the draft is cleared.
@@ -102,6 +111,44 @@ async function typeText(text: string) {
   // This might indicate a bug in our app, actually.
   await expect(textarea).toHaveText(text)
 }
+
+test("doesn't send empty message", async () => {
+  await createDummyChat(page, 'empty message test')
+  await selectChatByName(page, 'empty message test')
+  await textarea.fill('123')
+  await page.getByRole('button', { name: 'Send' }).click()
+  const messages = page
+    .getByRole('list', { name: 'Messages' })
+    .getByRole('listitem')
+    .filter({ hasNotText: 'Messages are end-to-end encrypted' })
+    .filter({ hasNotText: 'Others will only see this group after you sent a' })
+    .filter({ hasNotText: 'Today' })
+  await expect(messages).toHaveCount(1)
+
+  await textarea.fill('     ')
+  await textarea.press('ControlOrMeta+Enter')
+  await textarea.press('ControlOrMeta+Enter')
+  await textarea.press('ControlOrMeta+Enter')
+  await page.getByRole('button', { name: 'Send' }).click()
+  await page.getByRole('button', { name: 'Send' }).click()
+  await page.getByRole('button', { name: 'Send' }).click()
+  await expect(textarea).toHaveText('     ')
+  await expect(messages).toHaveCount(1)
+
+  await textarea.fill('\n')
+  await textarea.press('ControlOrMeta+Enter')
+  await page.getByRole('button', { name: 'Send' }).click()
+  await expect(textarea).toHaveText('\n')
+  await expect(messages).toHaveCount(1)
+
+  await textarea.fill('\na')
+  await textarea.press('ControlOrMeta+Enter')
+  await expect(textarea).toBeEmpty()
+  await expect(messages).toHaveCount(2)
+
+  // Clean up
+  await deleteChat(page, 'empty message test')
+})
 
 test("doesn't send the same message twice on multiple clicks", async () => {
   await selectChat(1)
@@ -499,6 +546,17 @@ test('gets focused when selecting a chat', async () => {
   await expect(textarea).toBeFocused()
 })
 
+test('gets focused after clicking/touching send message button', async () => {
+  await selectChat(1)
+
+  const msg = 'Msg' + Math.random()
+  await textarea.fill(msg)
+  await page.getByRole('button', { name: 'Send' }).focus()
+  await page.getByRole('button', { name: 'Send' }).click()
+
+  await expect(textarea).toBeFocused()
+})
+
 test.describe('Ctrl + Up shortcut', () => {
   test.describe.configure({
     mode: 'serial',
@@ -698,6 +756,78 @@ test.describe('Ctrl + Up shortcut', () => {
     await expect(
       page.getByLabel('Messages').getByRole('listitem').filter({ hasText: msg })
     ).toContainText(getMessageText(8))
+  })
+})
+
+test.describe('edit message', () => {
+  const textareaEdit = () => page.locator('#composer-textarea-edit')
+  const textareaNonEdit = () => page.locator('#composer-textarea-non-edit')
+  const editMessageSection = () =>
+    page.getByRole('region', { name: 'Edit Message' })
+
+  test.beforeAll(async () => {
+    await createDummyChat(page, 'Chat for ArrowUp tests')
+
+    await sendMessage(page, 'Chat for ArrowUp tests', 'M 1')
+    await sendMessage(page, 'Chat for ArrowUp tests', 'M 2')
+    await sendMessage(page, 'Chat for ArrowUp tests', 'M 3')
+  })
+  test.afterEach(async () => {
+    skipDraftClear = true
+  })
+  test.afterAll(async () => {
+    await deleteChat(page, 'Chat for ArrowUp tests')
+  })
+
+  test('enter edit mode with ArrowUp', async () => {
+    await textarea.focus()
+    await expect(textarea).toBeEmpty()
+
+    await page.keyboard.press('ArrowUp')
+
+    await expect(textarea).toHaveText('M 3')
+    await expect(editMessageSection()).toContainText('Edit Message')
+    await expect(editMessageSection()).toContainText('M 3')
+    await expect(
+      page.getByRole('button', { name: 'Add Attachment' })
+    ).not.toBeVisible()
+    await expect(textareaEdit()).toBeFocused()
+  })
+  test('exit edit mode with Escape', async () => {
+    await page.keyboard.press('Escape')
+
+    await expect(textarea).toBeEmpty()
+    await expect(composerSection).not.toContainText('Edit Message')
+    await expect(composerSection).not.toContainText('M 3')
+    await expect(
+      composerSection.getByRole('button', { name: 'Add Attachment' })
+    ).toBeVisible()
+    await expect(textareaNonEdit()).toBeFocused()
+  })
+  test("don't enter edit mode on ArrowUp if input is not empty", async () => {
+    await expect(textareaNonEdit()).toBeEmpty()
+
+    // Check that normally we can enter the edit mode.
+    await page.keyboard.press('ArrowUp')
+    await expect(textareaEdit()).toHaveText('M 3')
+    await expect(textareaEdit()).toBeFocused()
+    await page.keyboard.press('Escape')
+
+    await textareaNonEdit().fill('123')
+    await page.keyboard.press('ArrowUp')
+    await expect(textareaNonEdit()).toHaveText('123')
+    await expect(composerSection).not.toContainText('Edit Message')
+    await page.keyboard.press('ArrowUp')
+    await page.keyboard.press('ArrowUp')
+    await expect(textareaNonEdit()).toHaveText('123')
+
+    // All-whitespace is also considered non-empty.
+    // Here ArrowUp is supposed to move the cursor and not enter the edit mode.
+    await textareaNonEdit().fill('\n\n\n\n\n')
+    await page.keyboard.press('ArrowUp')
+    await page.keyboard.press('ArrowUp')
+    await expect(textareaNonEdit()).toHaveText('\n\n\n\n\n')
+    await expect(composerSection).not.toContainText('Edit Message')
   })
 })
 

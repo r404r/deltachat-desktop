@@ -102,7 +102,6 @@ const Composer = forwardRef<
   const { openDialog } = useDialog()
   const { sendMessage } = useMessage()
   const { unselectChat } = useChat()
-  const { smallScreenMode } = useContext(ScreenContext)
 
   // The philosophy of the editing mode is as follows.
   // The edit mode can be thought of as a dialog,
@@ -222,10 +221,16 @@ const Composer = forwardRef<
     messageEditing.isEditingModeActive || draftIsLoading
       ? null
       : async () => {
+          // Focus message input in case the message was sent
+          // with the "Send" button touch / mouse click and not Ctrl + Enter.
+          setTimeout(() => {
+            regularMessageInputRef.current?.focus()
+          })
+
           if (chatId === null) {
             throw new Error('chat id is undefined')
           }
-          if (!(draftState.text.length > 0) && !draftState.file) {
+          if (!(draftState.text.trim().length > 0) && !draftState.file) {
             log.debug(`Empty message: don't send it...`)
             return
           }
@@ -368,17 +373,18 @@ const Composer = forwardRef<
         if (handled) {
           // after all cases above you want to focus composer input again
           setTimeout(() => {
+            // Only one of these is actually rendered at any given moment.
             regularMessageInputRef.current?.focus()
+            editMessageInputRef.current?.focus()
           })
         } else {
-          // No picker/edit mode/quote to close
-          if (smallScreenMode) {
-            // In small screen mode, unselect the chat to go back to chatlist
-            ActionEmitter.emitAction(KeybindAction.Chat_Unselect)
-          } else {
-            // Focus the chatlist item to enable arrow key navigation between chats
-            ActionEmitter.emitAction(KeybindAction.ChatList_FocusItems)
-          }
+          // No picker/edit mode/quote to close.
+          // Unselecting the chat goes back to chatlist in small screen mode.
+          // But it's also good in "regular" mode.
+          ActionEmitter.emitAction(KeybindAction.Chat_Unselect)
+          // Focus the chatlist item to enable arrow key navigation between chats
+          // TODO fix: doesn't work in small screen mode.
+          ActionEmitter.emitAction(KeybindAction.ChatList_FocusItems)
         }
         ev.stopPropagation()
       }
@@ -397,7 +403,7 @@ const Composer = forwardRef<
     shiftPressed,
     messageEditing,
     regularMessageInputRef,
-    smallScreenMode,
+    editMessageInputRef,
     showEmojiPicker,
     showAppPicker,
     draftState.quote,
@@ -471,7 +477,10 @@ const Composer = forwardRef<
           appInfo.cache_relname,
           response.blob
         )
+
         setShowAppPicker(false)
+        setTimeout(() => focusMessageInput())
+
         await addFileToDraft(path, appInfo.cache_relname, 'File')
         await runtime.removeTempFile(path)
       }
@@ -527,12 +536,15 @@ const Composer = forwardRef<
 
   const settingsStore = useSettingsStore()[0]
 
-  useLayoutEffect(() => {
-    // focus composer on chat change
+  const focusMessageInput = useCallback(() => {
     // Only one of these is actually rendered at any given moment.
     regularMessageInputRef.current?.focus()
     editMessageInputRef.current?.focus()
-  }, [chatId, editMessageInputRef, regularMessageInputRef])
+  }, [editMessageInputRef, regularMessageInputRef])
+  useLayoutEffect(() => {
+    // focus composer on chat change
+    focusMessageInput()
+  }, [chatId, focusMessageInput])
 
   const ariaSendShortcut: string = useMemo(() => {
     if (settingsStore == undefined) {
@@ -712,6 +724,7 @@ const Composer = forwardRef<
           {!messageEditing.isEditingModeActive && !recording && (
             <MenuAttachment
               addFileToDraft={addFileToDraft}
+              focusMessageInput={focusMessageInput}
               showAppPicker={setShowAppPicker}
               selectedChat={selectedChat}
             />
@@ -807,6 +820,7 @@ const Composer = forwardRef<
               recording={recording}
               setRecording={setRecording}
               saveVoiceAsDraft={saveVoiceAsDraft}
+              focusMessageInput={focusMessageInput}
               onError={onAudioError}
             />
           )}

@@ -398,6 +398,7 @@ test('add app from picker to chat', async () => {
   await page.getByTestId('add-app-to-chat').click()
   const appDraft = page.locator('.attachment-quote-section .text-part')
   await expect(appDraft).toContainText(appName)
+  await expect(page.locator('.create-or-edit-message-input')).toBeFocused()
   await page.locator('button.send-button').click()
   const webxdcMessage = page.locator('.msg-body .webxdc')
   await expect(webxdcMessage).toContainText(appName)
@@ -421,6 +422,12 @@ test('add app from picker to chat', async () => {
 })
 
 test('recent apps context menu', async () => {
+  const userB = existingProfiles[1]
+  await page
+    .locator('.chat-list .chat-list-item')
+    .filter({ hasText: userB.name })
+    .click()
+
   await page
     .getByTestId('last-used-apps')
     .getByRole('button')
@@ -462,6 +469,20 @@ test("closing context menu with Escape doesn't close dialog", async () => {
   await expect(page.getByRole('dialog')).toBeVisible()
   await page.keyboard.press('Escape')
   await expect(page.getByRole('dialog')).not.toBeVisible()
+})
+
+test('Escape closes the chat', async () => {
+  await page.getByLabel('Chats').getByRole('tab').first().click()
+  await expect(
+    page.locator('textarea.create-or-edit-message-input')
+  ).toBeFocused()
+  await page.keyboard.press('Escape')
+  await expect(
+    page.locator('textarea.create-or-edit-message-input')
+  ).not.toBeVisible()
+  await expect(
+    page.getByLabel('Chats').getByRole('tab', { selected: true })
+  ).toHaveCount(0)
 })
 
 test('correct handling of changed profile displaynames', async () => {
