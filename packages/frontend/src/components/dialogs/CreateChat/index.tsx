@@ -66,7 +66,9 @@ import { I18nContext } from '../../../contexts/I18nContext'
 import { SCAN_CONTEXT_TYPE } from '../../../hooks/useProcessQr'
 import { IMAGE_EXTENSIONS } from '@deltachat-desktop/shared/constants'
 
-const enum GroupType {
+// Exported (and a regular `enum` rather than `const enum`) so that callers like
+// the command palette can open `CreateGroup` directly with a `groupType`.
+export enum GroupType {
   /**
    * Regular group, chat.
    * @see {@link BackendRemote.rpc.createGroupChat}.
@@ -766,7 +768,7 @@ type CreateBroadcastListProps = {
   onClose: DialogProps['onClose']
 }
 
-function CreateBroadcastList(props: CreateBroadcastListProps) {
+export function CreateBroadcastList(props: CreateBroadcastListProps) {
   const { onFinish, onClose } = props
   const tx = useTranslationFunction()
 
@@ -887,7 +889,7 @@ export const ChatSettingsSetNameAndProfileImage = ({
       inputLabel = tx('subject')
       break
     case GroupType.BROADCAST_LIST:
-      inputLabel = tx('name_desktop')
+      inputLabel = tx('channel_name')
       break
     default: {
       inputLabel = tx('group_name')

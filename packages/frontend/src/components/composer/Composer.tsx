@@ -13,7 +13,7 @@ import { extension } from 'mime-types'
 
 import MenuAttachment from './menuAttachment'
 import ComposerMessageInput from './ComposerMessageInput'
-import { getLogger } from '../../../../shared/logger'
+import { getLogger } from '@deltachat-desktop/shared/logger'
 import { EmojiAndStickerPicker } from './EmojiAndStickerPicker'
 import { Quote } from '../message/Message'
 import { DraftAttachment } from '../attachment/messageAttachment'
@@ -35,7 +35,7 @@ import useKeyBindingAction from '../../hooks/useKeyBindingAction'
 import { CloseButton } from '../Dialog'
 import { enterKeySendsKeyboardShortcuts } from '../KeyboardShortcutHint'
 import { AppPicker } from '../AppPicker'
-import { AppInfo, AppStoreUrl } from '../AppPicker'
+import { AppInfo } from '../AppPicker'
 import OutsideClickHelper from '../OutsideClickHelper'
 import { useHasChanged2 } from '../../hooks/useHasChanged'
 import { ScreenContext } from '../../contexts/ScreenContext'
@@ -65,7 +65,7 @@ const Composer = forwardRef<
     updateDraftText: (text: string, InputChatId: number) => void
     addFileToDraft: (
       file: string,
-      fileName: string,
+      fileName: string | null,
       viewType: T.Viewtype
     ) => Promise<void>
     removeFile: () => void
@@ -442,9 +442,8 @@ const Composer = forwardRef<
 
   const onAppSelected = messageEditing.isEditingModeActive
     ? null
-    : async (appInfo: AppInfo) => {
+    : async (appInfo: AppInfo, downloadUrl: string) => {
         log.debug('App selected', appInfo)
-        const downloadUrl = AppStoreUrl + appInfo.cache_relname
         const responseP = BackendRemote.rpc.getHttpResponse(
           selectedAccountId(),
           downloadUrl
@@ -627,7 +626,14 @@ const Composer = forwardRef<
           // (`id='chat-section-heading'`) is probably enough.
         }
       >
-        <div className='upper-bar'>
+        <section
+          aria-live='polite'
+          // Announce quote / editing / attachment _removals_
+          // as well as text changes and node insertions.
+          aria-relevant='all'
+          aria-busy={draftIsLoading}
+          className='upper-bar'
+        >
           {!messageEditing.isEditingModeActive ? (
             <>
               {draftState.quote !== null && (
@@ -635,11 +641,22 @@ const Composer = forwardRef<
                   className='attachment-quote-section is-quote'
                   aria-label={tx('menu_reply')}
                 >
-                  {/* Check that this is a "full" quote.
-                  TODO it would be nice to show a placeholder otherwise. */}
-                  {'text' in draftState.quote && (
-                    <Quote quote={draftState.quote} tabIndex={0} />
-                  )}
+                  <div
+                    // When changing the quoted message, e.g. with the Ctrl + Up
+                    // shortcut, we should read the author's name
+                    // even if it didn't change.
+                    //
+                    // Note that `aria-atomic` doesn't appear to work,
+                    // at least with NVDA, when it's a _descendant_ of the
+                    // `aria-live` element.
+                    aria-atomic='true'
+                  >
+                    {/* Check that this is a "full" quote.
+                    TODO it would be nice to show a placeholder otherwise. */}
+                    {'text' in draftState.quote && (
+                      <Quote quote={draftState.quote} tabIndex={0} />
+                    )}
+                  </div>
                   <CloseButton
                     onClick={removeQuote}
                     aria-label={tx('remove_quote')}
@@ -719,7 +736,7 @@ const Composer = forwardRef<
               />
             </div>
           )}
-        </div>
+        </section>
         <div className='lower-bar'>
           {!messageEditing.isEditingModeActive && !recording && (
             <MenuAttachment

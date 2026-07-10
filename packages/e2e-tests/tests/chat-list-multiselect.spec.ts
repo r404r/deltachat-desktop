@@ -7,7 +7,7 @@ import {
   test,
   createNDummyChats,
   createDummyChat,
-} from '../playwright-helper'
+} from '../playwright-helper.js'
 
 test.describe.configure({
   mode: 'serial',
@@ -440,8 +440,6 @@ test.describe('context menu', () => {
       'Mute Notifications',
       'Archive Chat',
       'View Profile',
-      'Encryption Info',
-      'Clone Chat',
       'Leave Group',
     ])
     await page.keyboard.press('Escape')

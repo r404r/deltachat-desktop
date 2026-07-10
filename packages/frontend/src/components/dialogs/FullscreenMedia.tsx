@@ -7,8 +7,8 @@ import { IconButton } from '../Icon'
 import { onDownload } from '../message/messageFunctions'
 import { runtime } from '@deltachat-desktop/runtime-interface'
 
-import { getLogger } from '../../../../shared/logger'
-import { gitHubIssuesUrl } from '../../../../shared/constants'
+import { getLogger } from '@deltachat-desktop/shared/logger'
+import { gitHubIssuesUrl } from '@deltachat-desktop/shared/constants'
 import { useInitEffect } from '../helpers/hooks'
 import { BackendRemote, onDCEvent, Type } from '../../backend-com'
 import { selectedAccountId } from '../../ScreenController'
@@ -291,14 +291,14 @@ export default function FullscreenMedia(props: Props & DialogProps) {
             <IconButton
               onClick={onDownload.bind(null, msg)}
               icon='download'
-              size={32}
+              size={26}
               coloring='fullscreenControls'
               aria-label={tx('save')}
             />
             <IconButton
               onClick={onClose}
               icon='cross'
-              size={32}
+              size={26}
               coloring='fullscreenControls'
               aria-label={tx('close')}
             />

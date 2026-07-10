@@ -11,7 +11,8 @@ import {
   makeDummyContactInviteLink,
   selectChat as selectChatByName,
   sendMessage,
-} from '../playwright-helper'
+  getChat,
+} from '../playwright-helper.js'
 
 test.describe.configure({
   mode: 'serial',
@@ -415,34 +416,34 @@ test.describe('draft', () => {
       await replaceDraftDialog.getByRole('button', { name: 'Cancel' }).click()
     }
 
+    // If there is a file but no text, it's safe to set the text.
+    await expect(textarea).toBeFocused()
+    await textarea.clear()
+    await testDraftIsEmpty()
+    await attachFile()
+    await commandSuggestion.click()
+    await testDraftHasFile()
+    await expect(textarea).toHaveText('/someBotCommand')
+
     const somePriorDraftText =
       'Draft text before bot command has been clicked' + Math.random()
-    await expect(textarea).toBeFocused()
     await textarea.fill(somePriorDraftText)
     await clickCommandAndCancel()
     await expect(textarea).toHaveText(somePriorDraftText)
-
-    await textarea.clear()
-    await testDraftIsEmpty()
-    // It probably doesn't make senese to warn when there is no text
-    // but only a file, but let's test for this.
-    await attachFile()
-    await clickCommandAndCancel()
-    await testDraftHasFile()
-    await expect(textarea).toBeEmpty()
 
     await selectChat(2)
     await expect(textarea).toBeEmpty()
     await selectChat(1)
     await clickCommandAndCancel()
     await testDraftHasFile()
-    await expect(textarea).toBeEmpty()
+    await expect(textarea).toHaveText(somePriorDraftText)
 
     await commandSuggestion.click()
     await replaceDraftDialog
       .getByRole('button', { name: 'Replace Draft' })
       .click()
     await expect(textarea).toHaveText('/someBotCommand')
+    await getRemoveQuoteOrFileButton(composerSection).click()
     await textarea.clear()
     await testDraftIsEmpty()
   })
@@ -468,7 +469,7 @@ test.describe('draft', () => {
       .click()
 
     const shareProfile = async () => {
-      await chatList.getByText(dummyContactName).click({ button: 'right' })
+      await getChat(page, dummyContactName).click({ button: 'right' })
       await page.getByRole('menuitem', { name: 'View Profile' }).click()
       await page
         .getByRole('dialog')
@@ -492,10 +493,18 @@ test.describe('draft', () => {
     }
 
     await selectChat(1)
-    await attachFile()
     const somePriorDraftText = 'Some prior draft text' + Math.random()
     await expect(textarea).toBeFocused()
     await textarea.fill(somePriorDraftText)
+    // Can add a file to draft if already have text but no file.
+    await shareProfile()
+    await expect(
+      composerSection.getByRole('region', { name: 'Attachment' })
+    ).toContainText(dummyContactName)
+    await expect(textarea).toHaveText(somePriorDraftText)
+
+    await getRemoveQuoteOrFileButton(composerSection).click()
+    await attachFile()
     await tryShareProfileAndCancel()
     const myName = 'Alice'
     await expect(
@@ -504,16 +513,14 @@ test.describe('draft', () => {
     await expect(composerSection).not.toContainText(dummyContactName)
     await expect(textarea).toHaveText(somePriorDraftText)
 
-    await getRemoveQuoteOrFileButton(composerSection).click()
-    // Again, it probably doesn't make sense to replace the whole draft
-    // if we only need to attach a file (contact), but let's test.
-    await tryShareProfileAndCancel()
-    await expect(textarea).toHaveText(somePriorDraftText)
-
     await selectChat(2)
     await expect(textarea).toBeEmpty()
     await selectChat(1)
     await tryShareProfileAndCancel()
+    await expect(
+      composerSection.getByRole('region', { name: 'Attachment' })
+    ).toContainText(myName)
+    await expect(composerSection).not.toContainText(dummyContactName)
     await expect(textarea).toHaveText(somePriorDraftText)
 
     await shareProfile()
@@ -524,9 +531,10 @@ test.describe('draft', () => {
       composerSection.getByRole('region', { name: 'Attachment' })
     ).not.toContainText(myName)
     await expect(composerSection).toContainText(dummyContactName)
-    await expect(textarea).not.toHaveText(somePriorDraftText)
+    await expect(textarea).toHaveText(somePriorDraftText)
 
     await getRemoveQuoteOrFileButton(composerSection).click()
+    await textarea.clear()
     await testDraftIsEmpty()
   })
 })

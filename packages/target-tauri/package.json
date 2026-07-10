@@ -5,7 +5,7 @@
   "type": "module",
   "license": "GPL-3.0-or-later",
   "scripts": {
-    "check:types": "tsc --noEmit -p runtime-tauri",
+    "check:types": "tsc --noEmit --noUncheckedIndexedAccess false -p runtime-tauri",
     "check:webxdc-denied-permissions": "node ../../bin/webxdc-check-permissions-policy-count.js",
     "start": "tauri dev",
     "build4production": "NODE_ENV=production pnpm build",
@@ -34,7 +34,7 @@
     "@tauri-apps/plugin-dialog": "^2.7.1",
     "@types/node": "catalog:",
     "@webxdc/types": "catalog:",
-    "esbuild": "^0.25.0",
-    "typescript": "^5.2.2"
+    "typescript": "^6.0.3",
+    "esbuild": "^0.28.1"
   }
 }

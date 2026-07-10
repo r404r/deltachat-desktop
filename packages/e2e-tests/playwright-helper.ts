@@ -6,7 +6,7 @@ import {
   Page,
 } from '@playwright/test'
 import path from 'path'
-import { loadEnv } from './load-env'
+import { loadEnv } from './load-env.js'
 
 loadEnv()
 
@@ -160,7 +160,11 @@ export async function createUser(
 }
 
 export const getUser = (index: number, existingProfiles: User[]) => {
-  if (!existingProfiles || existingProfiles.length < index + 1) {
+  if (
+    !existingProfiles ||
+    existingProfiles.length < index + 1 ||
+    existingProfiles[index] == undefined
+  ) {
     throw new Error(
       `Not enough profiles for test! Found ${existingProfiles?.length}`
     )
@@ -457,11 +461,22 @@ export async function createDummyChat(page: Page, chatName: string) {
   await page.getByRole('textbox', { name: 'Group Name' }).fill(chatName)
   await page.getByTestId('group-create-button').click()
 }
-export async function deleteChat(page: Page, chatName: string | RegExp) {
-  await page
+/**
+ * This RegExp ensures that we don't select by draft or last message text.
+ * `\w` is for the avatar initial.
+ */
+export const makeChatNameRegex = (chatName: string) =>
+  new RegExp(`^\\w?${chatName}`)
+export function getChat(page: Page, chatName: string | RegExp) {
+  return page
     .getByLabel('Chats')
-    .getByRole('tab', { name: chatName })
-    .click({ button: 'right' })
+    .getByRole('tablist')
+    .getByRole('tab', {
+      name: chatName instanceof RegExp ? chatName : makeChatNameRegex(chatName),
+    })
+}
+export async function deleteChat(page: Page, chatName: string | RegExp) {
+  await getChat(page, chatName).click({ button: 'right' })
   await page.getByRole('menuitem', { name: /.*(Delete|Leave).*/ }).click()
   await page.getByRole('button', { name: 'Delete' }).click()
 }
@@ -490,7 +505,7 @@ export async function selectChat(
   options?: { dontWaitForLoaded?: boolean }
 ) {
   const chatList = page.getByLabel('Chats').getByRole('tablist')
-  await chatList.getByRole('tab', { name: chatName }).click()
+  await getChat(page, chatName).click()
 
   if (options?.dontWaitForLoaded) {
     return

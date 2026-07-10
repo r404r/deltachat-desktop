@@ -31,5 +31,8 @@ export function getDefaultState(): DesktopSettingsType {
     autostart: true,
     autostartElectron: false,
     enableKeyManagement: false,
+    appStoreBaseUrl: undefined,
   }
 }
+
+export const defaultAppStoreBaseUrl = 'https://apps.testrun.org/'
