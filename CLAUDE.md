@@ -64,3 +64,43 @@ Watch mode only hot-reloads frontend code. Main process changes require `pnpm -w
 - **CI**: PRs require changelog entry (skip with `#skip-changelog` in description). Add `#public-preview` to PR description to publish preview builds.
 - **SCSS**: See `docs/STYLES.md` for CSS conventions.
 - **Feature docs**: Place design docs, specs, and task tracking for new features in `docs-fix/`.
+
+## Fork maintenance (r404r)
+
+This is a fork of `deltachat/deltachat-desktop` (remote `upstream`). The fork carries an
+experimental **key management** feature (PGP key import/export/view UI) gated behind
+`desktopSettings.enableKeyManagement`.
+
+### Key management surface (check after every upstream merge)
+
+- `packages/frontend/src/components/dialogs/KeyManagement/` — dialog components
+- `packages/frontend/src/components/Settings/Advanced.tsx` — gated entry point (`enableKeyManagement` check)
+- `packages/frontend/src/components/Settings/ExperimentalFeatures.tsx` — toggle (`DesktopSettingsSwitch`)
+- `packages/shared/shared-types.d.ts` + `packages/shared/state.ts` — flag type + default
+- `_locales/_untranslated_en.json` — `key_management_*` strings
+
+Verify after merging: gate chain intact, every `tx()` key used by these components exists,
+`BackendRemote.rpc.*` methods still exist in the pinned `@deltachat/jsonrpc-client`, and no
+duplicate keys in `_untranslated_en.json`.
+
+### Upstream merge checklist
+
+1. `git fetch upstream && git merge upstream/main` — conflicts cluster in the key management
+   surface above plus `pnpm-workspace.yaml` / `packages/target-tauri/package.json`.
+2. **Check `pnpm-workspace.yaml` for duplicate YAML keys** — git auto-merge has produced a
+   duplicated `supportedArchitectures` block that breaks pnpm entirely (duplicated mapping key).
+3. pnpm config lives in `pnpm-workspace.yaml`, NOT `.npmrc` (pnpm ≥11 ignores `.npmrc` for
+   `shellEmulator`, `virtualStoreDirMaxLength`, etc.). `shellEmulator: true` is required or
+   `NODE_ENV=production …` scripts break on the Windows CI runner.
+4. Non-interactive `pnpm install` needs `CI=true` when pnpm wants to purge `node_modules`
+   (e.g. after a pnpm major bump); a frozen-lockfile "overrides mismatch" error means local
+   `overrides` diverged from the lockfile — prefer matching upstream over lockfile churn.
+5. Run `pnpm -w check` and `pnpm -w test` before tagging.
+
+### Release
+
+Push an annotated tag matching `r404r-v*` to trigger `.github/workflows/r404r-release.yml`
+(5 build jobs + GitHub Release). The workflow uses the tag name (`github.ref_name`) for
+version info and artifact names; `package.json` version may stay at the upstream base
+version — use a `-N` suffix (e.g. `r404r-v2.53.1-2`) for rebuilds of the same base.
+Branch pushes to `r404r-main` trigger nothing; only tags do.
