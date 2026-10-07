@@ -121,11 +121,39 @@
     <string name="this_month">Dieser Monat</string>
     <string name="last_week">Letzte Woche</string>
     <string name="last_month">Letzter Monat</string>
-    <!-- Refers to the time a contact was last seen. Shown below contact name in the profile. The placeholder will be replaced by date or time, resulting in "Last seen at 12:13 AM" or "Last seen Nov 12" -->
+    <!-- deprecated -->
     <string name="last_seen_at">Zuletzt gesehen %1$s</string>
-    <!-- Refers to the time a contact was last seen. Shown below contact name in the profile. The placeholder will be replaced by a relative point in time as "3 minutes ago" (see https://momentjs.com for more examples and languages) -->
+    <!-- deprecated -->
     <string name="last_seen_relative">Zuletzt gesehen %1$s</string>
+    <!-- deprecated -->
     <string name="last_seen_unknown">Zuletzt gesehen: Unbekannt</string>
+
+    <!-- A contact was seen recently. The string is at places with few space, so stay as short as possible. -->
+    <string name="seen_recently">Kürzlich gesehen</string>
+    <!-- A contact was seen today. The string is at places with few space, so stay as short as possible. -->
+    <string name="seen_today">Heute gesehen</string>
+    <!-- A contact was seen yesterday. The string is at places with few space, so stay as short as possible. -->
+    <string name="seen_yesterday">Gestern gesehen</string>
+    <!-- A contact was seen within a week. The string is at places with few space, so stay as short as possible. -->
+    <string name="seen_within_week">Innerhalb einer Woche gesehen</string>
+    <!-- A contact was seen within a month. The string is at places with few space, so stay as short as possible. -->
+    <string name="seen_within_month">Innerhalb eines Monats gesehen</string>
+    <!-- A contact was seen a number of month ago. The string is at places with few space, so stay as short as possible. -->
+    <plurals name="seen_n_months_ago">
+        <item quantity="one">Vor %d Monat gesehen</item>
+        <item quantity="other">Vor %d Monaten gesehen</item>
+    </plurals>
+    <!-- A contact was seen a long time ago, more than a year. The string is at places with few space, so stay as short as possible. -->
+    <string name="seen_long_ago">Vor langer Zeit gesehen</string>
+    <!-- A contact was never seen (as added by others to a group or created by a vcard). The string is at places with few space, so stay as short as possible. -->
+    <string name="never_seen">Nie gesehen</string>
+
+    <!-- deprecated -->
+    <plurals name="seen_n_years_ago">
+        <item quantity="one">Vor %d Jahr gesehen</item>
+        <item quantity="other">Vor %d Jahren gesehen</item>
+    </plurals>
+
     <!-- Call duration as shown in the call bubbles. There is some risk to mix with the sending time, so the word "Duration" may be helpful. Might also be "Duration: %d minutes", "%d-minute duration", "%d-minute length" or "%d-minute call" -->
     <plurals name="call_duration_minutes">
         <item quantity="one">Dauer: %d Minute</item>
@@ -204,6 +232,9 @@
     <string name="contact">Kontakt</string>
     <string name="bot">Bot</string>
     <string name="camera">Kamera</string>
+    <string name="front_camera">Frontkamera</string>
+    <string name="back_camera">Rückkamera</string>
+    <string name="microphone">Mikrofon</string>
     <!-- As in "start a video recording" or "take a photo"; eg. the description of the "shutter button" in cameras -->
     <string name="capture">Aufnehmen</string>
     <!-- Switch eg. from front to back camera -->
@@ -238,6 +269,7 @@
     <!-- short for "Browse through the App Picker/Store/Catalogue"; could also be translated as "Discover" or "Search" -->
     <string name="browse">Entdecken</string>
     <string name="unknown">Unbekannt</string>
+    <string name="unnamed">Unbenannt</string>
 
     <string name="green">Grün</string>
     <string name="red">Rot</string>
@@ -247,6 +279,9 @@
     <string name="purple">Lila</string>
     <string name="magenta">Magenta</string>
     <string name="white">Weiß</string>
+
+    <!-- Used to display some progress in percent. Placeholder will be replaced by a number, resulting in eg. "50%", which may be translated to "50 %" in French or "%50" in Turkish.  -->
+    <string name="progress_percent">%1$d%%</string>
 
     <string name="zoom">Zoom</string>
     <string name="extra_small">Extraklein</string>
@@ -288,6 +323,7 @@
     <string name="menu_send">Senden</string>
     <string name="menu_toggle_keyboard">Emojis einblenden</string>
     <string name="menu_edit_group">Gruppe bearbeiten</string>
+    <!-- deprecated: "Edit Group" dialog usually also contains the "Group Description" field, use global_menu_edit_desktop instead -->
     <string name="menu_group_name_and_image">Gruppenname und -bild</string>
     <string name="menu_show_global_map">Alle Standorte</string>
     <string name="menu_archive_chat">Chat archivieren</string>
@@ -370,6 +406,8 @@
     <string name="unpin_chat">Chat loslösen</string>
     <!-- Verb "to pin", making something sticky, not a noun or abbreviation for "pin number". -->
     <string name="pin">Anheften</string>
+    <!-- Adj. of "pin", describing a state of being pinned. -->
+    <string name="pinned">Angeheftet</string>
     <!-- Opposite of "Pin chat", removing the sticky-state from a chat. -->
     <string name="unpin">Loslösen</string>
     <string name="ConversationFragment_quoted_message_not_found">Originalnachricht nicht gefunden</string>
@@ -435,14 +473,17 @@
     <string name="canceled_call">Abgebrochener Anruf</string>
     <string name="missed_call">Verpasster Anruf</string>
     <string name="already_in_call">Bereits im Anruf</string>
+    <string name="call_back">Zurückrufen</string>
     <string name="call_answered_elsewhere">Anruf auf einem anderen Gerät beantwortet</string>
     <string name="call_requires_camera_permission">Kamerazugriff für Videoanrufe erforderlich</string>
     <string name="call_requires_mic_permission">Mikrofonzugriff für Anrufe erforderlich</string>
+    <string name="call_grant_mic_permission">Tippen für Mikrofonzugriff</string>
     <string name="call_requires_connection">Anruf kann nicht gestartet werden. Stelle sicher, dass dein Gerät mit dem Internet verbunden ist, und versuche es erneut.</string>
     <!-- Used e.g. in a notifications to describe an ongoing call. "Call" is a noun here, in the meaning of "This is the call with ..." where the placeholder is replaced by the name of the contact. -->
     <string name="call_with">Anruf mit %1$s</string>
     <!-- Use e.g. in a notifications during ringing. Placeholder is relaced by the name of the contact being called. -->
     <string name="calling_person">%1$s anrufen…</string>
+    <string name="audio_output">Audioausgang</string>
 
     <!-- get confirmations -->
     <!-- confirmation for leaving groups or channels. If a subject is needed, "Are you sure you want to leave the chat?" would work as well -->
@@ -497,6 +538,10 @@
     <plurals name="chat_n_new_messages">
         <item quantity="one">%d neue Nachricht</item>
         <item quantity="other">%d neue Nachrichten</item>
+    </plurals>
+    <plurals name="chat_n_unread_messages">
+        <item quantity="one">%1$d ungelesene Nachricht</item>
+        <item quantity="other">%1$d ungelesene Nachrichten</item>
     </plurals>
     <!-- The placeholder will be replaced by the name of the recipient in a one-to-one chat. -->
     <string name="chat_new_one_to_one_hint">Sende eine Nachricht an %1$s.</string>
@@ -555,6 +600,7 @@
     <string name="search_in">In \"%1$s\" suchen</string>
     <string name="search_files">Dateien suchen</string>
     <string name="search_explain">Suche nach Chats, Kontakten und Nachrichten</string>
+    <!-- deprecated, there is not much point to repeat the query, use emoji_search_results, or no headline at all -->
     <string name="search_result_for_x">Ergebnis für \"%1$s\"</string>
     <string name="search_no_result_for_x">Keine Ergebnisse für \"%s\" gefunden.</string>
     <!-- Adjective, as in "Show Unread Messages" -->
@@ -653,16 +699,18 @@
     <!-- Instant onboarding title (there is not more to do than to set name and avatar) -->
     <string name="instant_onboarding_title">Dein Profil</string>
     <!-- The placeholder will be replaced by the default onboarding server -->
+    <!-- deprecated -->
     <string name="instant_onboarding_agree_default2">Datenschutzerklärung für %1$s</string>
     <!-- The placeholder will be replaced by instance name, the whole text will link to the instance page -->
+    <!-- deprecated -->
     <string name="instant_onboarding_agree_instance">Infos zu Profilen auf %1$s</string>
     <!-- Confirmation button on the instant onboarding screen -->
     <string name="instant_onboarding_create">Einverstanden &amp; Profil erstellen</string>
     <!-- Secondary, link-like button to open a page with other possible instances -->
     <string name="instant_onboarding_show_more_instances">Anderen Server verwenden</string>
     <string name="instant_onboarding_other_server">Chatmail-Server anzeigen</string>
-    <!-- Hint about what happens when "Create Profile" button in pressed; the placeholder will be replaced by the group name -->
-    <string name="instant_onboarding_group_info">Erstelle ein Profil, um der Gruppe \"%1$s\" beizutreten.</string>
+    <!-- Hint about what happens when "Create Profile" button in pressed; the placeholder will be replaced by the group or channel name -->
+    <string name="instant_onboarding_group_info">Erstelle ein Profil, um \"%1$s\" beizutreten.</string>
     <!-- Hint about what happens when "Create Profile" button in pressed; the placeholder will be replaced by contact name -->
     <string name="instant_onboarding_contact_info">Erstelle ein Profil, um mit %1$s zu chatten.</string>
     <!-- Question shown when another user's QR code is scanned from onboarding screen -->
@@ -670,10 +718,16 @@
     <!-- Question shown when group's/channel's QR code is scanned from onboarding screen -->
     <string name="instant_onboarding_confirm_group">Ein neues Profil erstellen und \"%1$s\" beitreten?</string>
 
+    <string name="team">Team</string>
+    <string name="team_profile">Teamprofil</string>
+    <string name="team_profile_explain">Ein „Teamprofil“ wird gemeinsam von einer Gruppe oder einer Organisation verwaltet.\n\n⚠️ Teamprofil-Funktionen sind experimentell und können sich ändern.</string>
+    <string name="team_name">Teamname</string>
+    <string name="create_team_profile">Teamprofil erstellen</string>
+
     <string name="welcome_chat_over_email">Sicherer dezentraler Chat</string>
     <string name="scan_invitation_code">Einladungscode scannen</string>
     <string name="login_title">Login</string>
-    <string name="login_advanced_hint">Für fortgeschrittene Benutzer:\n\nVerwende keine Adresse, die du bereits in einer anderen App nutzt.</string>
+    <string name="login_advanced_hint">Für fortgeschrittene Benutzer.\n\nVerwende keine Adresse, die du bereits in einer anderen App nutzt.</string>
     <string name="login_inbox">Posteingang</string>
     <string name="login_imap_login">IMAP-Anmeldename</string>
     <string name="login_imap_server">IMAP-Server</string>
@@ -705,16 +759,21 @@
     <string name="add_transport">Relay hinzufügen</string>
     <string name="remove_transport">Relay entfernen</string>
     <string name="edit_transport">Relay bearbeiten</string>
+    <!-- deprecated -->
     <string name="used_for_sending">Zum Senden verwendet</string>
+    <!-- deprecated -->
     <string name="hide_from_contacts">Vor Kontakten verstecken</string>
+    <!-- deprecated -->
     <string name="hidden_from_contacts">Vor Kontakten versteckt</string>
     <string name="enforce_e2ee">Verschlüsselung für alle Relays erzwingen</string>
     <!-- Hint for the list of relays -->
-    <string name="transport_list_hint">Nachrichten werden auf allen Relays empfangen.\n\n⚠️ Wenn Sie hier Änderungen vornehmen, stellen Sie sicher, dass auf allen Ihren Geräten mindestens Version 2.47.0 installiert ist. Andernfalls könnten auf älteren Versionen Nachrichten verloren gehen.</string>
+    <string name="transport_list_hint">Relais werden zum Senden und Empfangen von Nachrichten verwendet. Mehrere Relays erhöhen die Zuverlässigkeit.</string>
     <!-- shown if a QR code was scanned that can be used as a relay -->
     <string name="confirm_add_transport">Relay hinzufügen?</string>
     <string name="invalid_transport_qr">Der gescannte QR-Code enthält keine gültiges Relay.</string>
     <!-- placeholder will be replaced by a relay server name -->
+    <string name="confirm_remove_relay_x">Relay \"%1$s\" entfernen?</string>
+    <!-- deprecated -->
     <string name="confirm_remove_or_hide_transport_x">Relay \"%1$s\" entfernen?\n\nKontakte, die nur dieses Relay kennen, erreichen dich möglicherweise erst wieder, wenn du ihnen erneut eine Nachricht schickst.\n\nIm Zweifelsfall, verstecke das Relay anstelle es zu löschen.</string>
     <string name="login_certificate_checks">Zertifikatsüberprüfung</string>
     <string name="login_error_mail">Bitte eine gültige E-Mail-Adresse eingeben</string>
@@ -724,7 +783,7 @@
     <string name="import_backup_title">Wiederherstellen aus Backup</string>
     <string name="import_backup_ask">Backup \"%1$s\" gefunden.\n\nDieses einlesen und alle Daten und Einstellungen daraus verwenden?</string>
     <string name="import_backup_no_backup_found">Kein Backup gefunden.\n\nKopiere das Backup nach \"%1$s\" und versuche es erneut.</string>
-    <!-- %1$s will be replaced by the failing address -->
+    <!-- deprecated, %1$s will be replaced by the failing address -->
     <string name="login_error_cannot_login">Login als \"%1$s\" nicht möglich. Bitte Adresse und Passwort auf Richtigkeit überprüfen.</string>
     <!-- TLS certificate checks -->
     <string name="accept_invalid_certificates">Ungültige Zertifikate akzeptieren</string>
@@ -752,6 +811,7 @@
     <!-- first placeholder is replaced by the number of files (always 2 or more); second placeholder is replaced by a chat name -->
     <string name="ask_send_files_to_chat">%1$d Dateien an \"%2$s\" senden?</string>
     <string name="ask_send_files_to_selected_chats">%1$d Datei(en) an %2$d Chats senden?</string>
+    <!-- deprecated -->
     <string name="videos_sent_without_recoding">(Videos werden als große Originaldateien versandt. Um Videos als kleinere Dateien zu versenden, hänge sie einzeln an)</string>
     <string name="share_text_multiple_chats">Den folgenden Text an %1$d Chats senden?\n\n\"%2$s\"</string>
     <string name="share_abort">Teilen aufgrund fehlender Berechtigungen abgebrochen.</string>
@@ -943,16 +1003,22 @@
     <string name="chat_description_changed_by_other">Chat-Beschreibung geändert von %1$s.</string>
     <!-- %1$s will be replaced by name of the contact added to the group -->
     <string name="member_x_added">%1$s hinzugefügt.</string>
+    <string name="member_you_added">Du wurdest hinzugefügt.</string>
     <!-- %1$s will be replaced by name of the contact added to the group -->
     <string name="add_member_by_you">%1$s hinzugefügt.</string>
     <!-- %1$s will be replaced by name of the contact added to the group, %2$s will be replaced by name of the contact who did the action -->
     <string name="add_member_by_other">%1$s hinzugefügt von %2$s.</string>
+    <!-- %1$s will be replaced by name of the contact who did the action -->
+    <string name="add_you_by_other">Du wurdest von %1$s hinzugefügt.</string>
     <!-- %1$s will be replaced by name of the contact removed from the group -->
     <string name="remove_member_by_you">Du hast %1$s entfernt.</string>
     <!-- %1$s will be replaced by name of the contact removed from the group, %2$s will be replaced by name of the contact who did the action -->
     <string name="remove_member_by_other">%1$s entfernt von %2$s.</string>
+    <!-- %1$s will be replaced by name of the contact who did the action -->
+    <string name="remove_you_by_other">Du wurdest von %1$s entfernt.</string>
     <!-- %1$s will be replaced by name of the contact removed from the group; this string is used when it's unclear who did the action -->
     <string name="member_x_removed">%1$s entfernt.</string>
+    <string name="member_you_removed">Du wurdest entfernt.</string>
     <!-- "left" in the meaning of "exited". -->
     <string name="group_left_by_you">Du hast die Gruppe verlassen.</string>
     <!-- "left" in the meaning of "exited". -->
@@ -1028,10 +1094,13 @@
     <string name="qrscan_failed">QR-Code kann nicht dekodiert werden.</string>
     <string name="qrscan_ask_join_group">Der Gruppe \"%1$s\" beitreten?</string>
     <string name="qrscan_ask_join_channel">Dem Kanal \"%1$s\" beitreten?</string>
+    <!-- deprecated -->
     <string name="qrscan_fingerprint_mismatch">Der gescannte Fingerabdruck stimmt nicht mit dem zuletzt für %1$s gesehenen Fingerabdruck überein.</string>
+    <!-- deprecated -->
     <string name="qrscan_no_addr_found">Dieser QR-Code enthält einen Fingerabdruck, aber keine Adresse.\n\nFür eine Out-of-Band-Verifizierung bitte zuerst eine verschlüsselte Verbindung zur EmpfängerIn herstellen.</string>
     <string name="qrscan_contains_text">Gescannter QR-Code text:\n\n%1$s</string>
     <string name="qrscan_contains_url">Gescannter QR-Code URL:\n\n%1$s</string>
+    <!-- deprecated -->
     <string name="qrscan_fingerprint_label">Fingerabdruck</string>
     <string name="withdraw_verifycontact_explain">Dieser QR-Code kann von anderen gescannt werden, um dich zu kontaktieren.\n\nDu kannst den QR-Code zurücksetzen; der bestehende QR-Code oder Einladungslink wird dann nicht mehr funktionieren.</string>
     <string name="withdraw_verifygroup_explain">Dieser QR-Code kann von anderen gescannt werden, um der Gruppe \"%1$s\" beizutreten.\n\nDu kannst den QR-Code zurücksetzen; der bestehende QR-Code oder Einladungslink wird dann nicht mehr funktionieren.</string>
@@ -1057,6 +1126,8 @@
     <string name="qraccount_qr_code_cannot_be_used">Der eingescannte QR-Code kann nicht dazu verwendet werden, eine neues Profil zu erstellen.</string>
     <!-- the placeholder will be replaced by the address of the profile -->
     <string name="qrlogin_ask_login">Bei \"%1$s\" anmelden?</string>
+    <!-- the placeholder will be replaced by a domain that is preferred for relaying messages. smth as "Using foo.example.org" -->
+    <string name="relay_login_hint">%1$s verwenden</string>
     <!-- first placeholder will be replaced by name of the inviter, second placeholder will be replaced by the name of the inviter. -->
     <string name="secure_join_started">%1$s hat dich zu dieser Gruppe eingeladen.\n\nWarte auf die Antwort des Gerätes von %2$s…</string>
     <!-- first placeholder will be replaced by name of the inviter, second placeholder will be replaced by the name of the inviter. -->
@@ -1067,8 +1138,11 @@
     <string name="contact_verified">%1$s eingeführt.</string>
     <string name="contact_blocked">Du hast den Kontakt blockiert</string>
     <!-- Shown in contact profile. The placeholder will be replaced by the name of the contact that introduced the contact. -->
+    <!-- deprecated -->
     <string name="verified_by">Eingeführt von %1$s</string>
+    <!-- deprecated -->
     <string name="verified_by_you">Durch mich eingeführt</string>
+    <!-- deprecated -->
     <string name="verified_by_unknown">Eingeführt</string>
     <string name="mailto_dialog_header_select_chat">Wähle den Chat, an den die Nachricht gesendet werden soll</string>
     <!-- first placeholder is the name of the chat -->
@@ -1106,6 +1180,7 @@
     <string name="perm_explain_access_to_storage_denied">Um Dateien zu empfangen oder zu versenden, bitte in den System-Einstellungen Delta Chat den Zugriff auf den Speicher erlauben.</string>
     <string name="perm_explain_access_to_location_denied">Um einen Standort anzuhängen, bitte in den Systemeinstellungen DeltaChat den Zugriff auf \"Standort\" erlauben.</string>
     <string name="perm_explain_access_to_notifications_denied">Um Benachrichtigungen zu erhalten, öffne \"Systemeinstellungen / Apps / Delta Chat\" und aktiviere \"Benachrichtigungen\".</string>
+    <string name="perm_explain_local_network_denied">Delta Chat benötigt die \"Geräte in der Nähe\"-Berechtigung, um eine Verbindung zu Geräten im lokalen Netzwerk herzustellen. Sie können diese unter \"Apps /  Delta Chat / Berechtigungen\" vergeben.</string>
 
     <!-- ImageEditorHud -->
     <string name="ImageEditorHud_draw_anywhere_to_blur">Zeichne zum Verwischen in beliebige Bereiche</string>
@@ -1240,11 +1315,22 @@
     <string name="pref_reliable_service">Hintergrundverbindung erzwingen</string>
     <string name="pref_reliable_service_explain">Verursacht eine permanente Benachrichtigung</string>
 
-    <string name="pref_background_notifications_rationale">Um die Verbindung aufrechtzuerhalten und Nachrichten im Hintergrund zu empfangen, ignorieren im nächsten Schritt die \"Akku-Optimierungen\".\n\nDelta Chat verbraucht nur minimale Ressourcen und achtet darauf, den Akku zu schonen.</string>
+    <string name="pref_background_notifications_rationale">Um die Verbindung aufrechtzuerhalten und Nachrichten im Hintergrund zu empfangen, ignoriere im nächsten Schritt die \"Akku-Optimierungen\".\n\nDelta Chat verbraucht nur minimale Ressourcen und achtet darauf, den Akku zu schonen.</string>
     <!-- disabling "Reliable service" will hide a the maybe annoying permanent-notification with the drawback that new-message-notifications get potentially unreliable -->
     <string name="perm_enable_bg_reminder_title">Tippen hier, um Nachrichten zu empfangen, während Delta Chat im Hintergrund läuft.</string>
     <string name="perm_enable_bg_already_done">Du hast Delta Chat bereits erlaubt, Nachrichten im Hintergrund zu empfangen.\n\nFalls keine Nachrichten eingehen, überprüfe bitte auch die Systemeinstellungen.</string>
 
     <!-- device messages for updates -->
-    <string name="update_2_0">Was ist neu?\n\n💯 Die Ende-zu-Ende-Verschlüsselung ist jetzt dauerhaft. Vorhängeschlösser 🔒 gibt es nicht mehr!\n\n✉️ Klassische E-Mails ohne Ende-zu-Ende-Verschlüsselung sind mit einem Umschlag-Symbol gekennzeichnet\n\n😻 Neues, verbessertes Profil für alle Kontakte\n\n🔲 Neue Schaltfläche für den schnellen Zugriff auf Apps, die in einem Chat verwendet werden\n\n❤️ Bitte spende und hilf uns, unabhängig zu bleiben und weiterhin Verbesserungen zu bringen: %1$s</string>
+    <string name="update_2_6">Was gibt es neues?\n\n🌐 Nachrichten werden jetzt intelligenter übertragen: Dank mehrerer Relais hält der Ausfall eines Relais deine Nachrichten nicht mehr auf\n\n📞 Anrufe sind nicht mehr im Testmodus\n\n📢 Kanäle sind gekommen, um zu bleiben - jetzt sogar mit Reaktionen\n\n ✍️ Füge eine Chat-Beschreibung hinzu, damit niemand im Unklaren bleibt\n\n👌 Gesendete Bilder sehen jetzt besser aus\n\n🔵 Markiere Chats als ungelesen, damit du sie nicht vergisst</string>
+    <string name="update_2_6_android_additions">🐇 Sprachmitteilungen schneller und automatisch abspielen\n\nEndlich: Wir haben einen einfachen Sticker-Picker!</string>
+    <string name="update_2_6_desktop_additions">🐇 Sprachmitteilungen schneller und automatisch abspielen\n\n✅ Mehrere Nachrichten zum Weiterleiten oder Löschen auswählen\n\nEndlich: Wir haben einen einfachen Sticker-Picker!</string>
+    <string name="update_2_6_ios_additions">🎤 Sprachmitteilungen im Hintergrund abspielen</string>
+    <string name="update_2_6_end">Spende, damit wir unabhängig bleiben und weiterhin Verbesserungen vornehmen können ❤️ https://delta.chat/donate</string>
+
+    <!-- The placeholder will be replaced by a version name, e.g. "v2.50.0" -->
+    <string name="update_available_msg">🎉 Neue Version %1$s verfügbar. Tippe auf diese Nachricht, um das Update zu installieren und die neuen Funktionen zu nutzen.</string>
+    <!-- The placeholder will be replaced by a version name, e.g. "Downloading v2.50.0 …" -->
+    <string name="update_downloading">Lade %1$s herunter …</string>
+    <string name="update_now">Jetzt aktualisieren</string>
+    <string name="update_install_permission_explain">Um das Update zu installieren, erlaube Delta Chat bitte zunächst in den Systemeinstellungen, Apps zu installieren.</string>
 </resources>

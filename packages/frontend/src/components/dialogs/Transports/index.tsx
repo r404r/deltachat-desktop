@@ -1,27 +1,24 @@
 import React, { useCallback, useEffect, useState } from 'react'
 import { DialogProps } from '../../../contexts/DialogContext'
-import Dialog, {
-  DialogBody,
-  DialogHeader,
-  DialogFooter,
-  FooterActions,
-  FooterActionButton,
-  DialogContent,
-} from '../../Dialog'
+import Dialog, { DialogBody, DialogHeader, DialogFooter } from '../../Dialog'
 import { BackendRemote, onDCEvent } from '../../../backend-com'
 
 import useTranslationFunction from '../../../hooks/useTranslationFunction'
 import useAlertDialog from '../../../hooks/dialog/useAlertDialog'
 import BasicQrScanner from '../BasicScanner'
-import EditAccountAndPasswordDialog from '../EditAccountAndPasswordDialog'
+import EditTransportDialog from '../EditTransportDialog'
 import Button from '../../Button'
 
 import styles from './styles.module.scss'
 
-import { T } from '@deltachat/jsonrpc-client'
 import classNames from 'classnames'
 import useDialog from '../../../hooks/dialog/useDialog'
 import useAddTransportDialog from '../../../hooks/dialog/useAddTransportDialog'
+import useConfirmationDialog from '../../../hooks/dialog/useConfirmationDialog'
+
+type Transport = Awaited<
+  ReturnType<typeof BackendRemote.rpc.listTransports>
+>[number]
 
 /**
  * Dialog for transports configuration
@@ -29,34 +26,22 @@ import useAddTransportDialog from '../../../hooks/dialog/useAddTransportDialog'
 export default function TransportsDialog(
   props: DialogProps & {
     accountId: number
-    newTransport?: string
   }
 ) {
   const tx = useTranslationFunction()
+  const openConfirmationDialog = useConfirmationDialog()
   const openAlertDialog = useAlertDialog()
   const { accountId, onClose } = props
   const addTransportDialog = useAddTransportDialog()
 
   // used in  new transport form
-  const [transports, setTransports] = useState<
-    (T.TransportListEntry & { isDefault: boolean })[]
-  >([])
+  const [transports, setTransports] = useState<Transport[]>([])
 
   const getTransports = useCallback(() => {
     const fetchTransports = async () => {
-      const configuredAddress = await BackendRemote.rpc.getConfig(
-        accountId,
-        'configured_addr'
-      )
-      const transports = await BackendRemote.rpc.listTransportsEx(accountId)
-      setTransports(
-        transports.map(t => ({
-          ...t,
-          isDefault: t.param.addr === configuredAddress,
-        }))
-      )
+      const transports = await BackendRemote.rpc.listTransports(accountId)
+      setTransports(transports)
     }
-
     fetchTransports()
   }, [accountId])
 
@@ -68,31 +53,7 @@ export default function TransportsDialog(
     })
   }, [accountId, getTransports])
 
-  const changeDefaultTransport = useCallback(
-    async (transport: T.TransportListEntry) => {
-      // optimistically update UI
-      setTransports(prev =>
-        prev.map(t => ({
-          ...t,
-          isDefault: t.param.addr === transport.param.addr,
-        }))
-      )
-      await BackendRemote.rpc.setConfig(
-        accountId,
-        'configured_addr',
-        transport.param.addr
-      )
-      // now load transports again to be sure
-      getTransports()
-    },
-    [accountId, getTransports]
-  )
-
   const openQrScanner = useCallback(async () => {
-    const multiDeviceMode = await BackendRemote.rpc.getConfig(
-      accountId,
-      'bcc_self'
-    )
     openDialog(BasicQrScanner, {
       onSuccess: async (result: string) => {
         const qr = await BackendRemote.rpc.checkQr(accountId, result)
@@ -100,8 +61,7 @@ export default function TransportsDialog(
           const transportAdded = await addTransportDialog(
             accountId,
             result,
-            qr.kind === 'account' ? qr.domain : qr.address,
-            multiDeviceMode === '1'
+            qr.kind === 'account' ? qr.domain : qr.address
           )
           if (transportAdded) {
             // refresh transport list
@@ -128,20 +88,26 @@ export default function TransportsDialog(
   }, [getTransports])
 
   const deleteTransport = useCallback(
-    (transport: T.TransportListEntry) => {
-      openDialog(RemoveOrHideTransportDialog, {
-        accountId,
-        transport,
-        onAction: () => getTransports(),
+    async (transport: Transport) => {
+      const userConfirmed = await openConfirmationDialog({
+        confirmLabel: tx('remove_transport'),
+        message: tx('confirm_remove_relay_x', transport.addr),
+        isConfirmDanger: true,
       })
+      if (!userConfirmed) {
+        return
+      }
+
+      await BackendRemote.rpc.deleteTransport(accountId, transport.addr)
+      getTransports()
     },
-    [accountId, getTransports, openDialog]
+    [accountId, getTransports, openConfirmationDialog, tx]
   )
 
   const editTransport = useCallback(
-    (transport: T.TransportListEntry) => {
-      openDialog(EditAccountAndPasswordDialog, {
-        addr: transport.param.addr,
+    (transport: Transport) => {
+      openDialog(EditTransportDialog, {
+        addr: transport.addr,
       })
     },
     [openDialog]
@@ -164,39 +130,12 @@ export default function TransportsDialog(
         <div className={styles.container}>
           <div className={styles.transportList}>
             {transports.map((transport, index) => (
-              <div className={styles.transportRow} key={transport.param.addr}>
-                <div
-                  onClick={() => changeDefaultTransport(transport)}
-                  className={styles.transportItem}
-                >
-                  <span className={styles.transportRadioButton}>
-                    <input
-                      id={`transport-${index}`}
-                      name='transport-selection'
-                      type='radio'
-                      value={transport.param.addr}
-                      checked={transport.isDefault}
-                      className={styles.radioButton}
-                      aria-labelledby={`transport-label-${index}`}
-                      readOnly
-                    />
-                  </span>
+              <div className={styles.transportRow} key={transport.addr}>
+                <div className={styles.transportItem}>
                   <label id={`transport-label-${index}`}>
-                    <strong>{transport.param.addr.split('@')[1]}</strong>
+                    <strong>{transport.addr.split('@')[1]}</strong>
                     <br />
-                    {transport.param.addr.split('@')[0]}
-                    {transport.isDefault && (
-                      <>
-                        {' · '}
-                        {tx('used_for_sending')}
-                      </>
-                    )}
-                    {transport.isUnpublished && (
-                      <>
-                        {' · '}
-                        {tx('hidden_from_contacts')}
-                      </>
-                    )}
+                    {transport.addr.split('@')[0]}
                   </label>
                 </div>
                 <div>
@@ -216,7 +155,7 @@ export default function TransportsDialog(
                       aria-hidden='true'
                     />
                   </Button>
-                  {!transport.isDefault && (
+                  {transports.length > 1 && (
                     <Button
                       onClick={() => deleteTransport(transport)}
                       aria-label={`${tx('delete')}`}
@@ -250,63 +189,6 @@ export default function TransportsDialog(
         >
           {tx('add_transport')}
         </Button>
-      </DialogFooter>
-    </Dialog>
-  )
-}
-
-/**
- * Dialog shown when removing a transport,
- * offering to hide it from contacts as an alternative.
- */
-function RemoveOrHideTransportDialog(
-  props: DialogProps & {
-    accountId: number
-    transport: T.TransportListEntry
-    onAction: () => void
-  }
-) {
-  const tx = useTranslationFunction()
-  const { onClose, accountId, transport, onAction } = props
-
-  const hideFromContacts = useCallback(async () => {
-    await BackendRemote.rpc.setTransportUnpublished(
-      accountId,
-      transport.param.addr,
-      true
-    )
-    onAction()
-    onClose()
-  }, [accountId, transport.param.addr, onAction, onClose])
-
-  const removeTransport = useCallback(async () => {
-    await BackendRemote.rpc.deleteTransport(accountId, transport.param.addr)
-    onAction()
-    onClose()
-  }, [accountId, transport.param.addr, onAction, onClose])
-
-  return (
-    <Dialog onClose={onClose}>
-      <DialogHeader title={tx('remove_transport')} onClose={onClose} />
-      <DialogBody>
-        <DialogContent>
-          <p style={{ whiteSpace: 'pre-line' }}>
-            {tx('confirm_remove_or_hide_transport_x', transport.param.addr)}
-          </p>
-        </DialogContent>
-      </DialogBody>
-      <DialogFooter>
-        <FooterActions align='spaceBetween'>
-          <FooterActionButton onClick={onClose}>
-            {tx('cancel')}
-          </FooterActionButton>
-          <FooterActionButton onClick={hideFromContacts}>
-            {tx('hide_from_contacts')}
-          </FooterActionButton>
-          <FooterActionButton styling='danger' onClick={removeTransport}>
-            {tx('remove_transport')}
-          </FooterActionButton>
-        </FooterActions>
       </DialogFooter>
     </Dialog>
   )

@@ -12,7 +12,11 @@ import { getLogsPath } from './application-constants.js'
 import { LogHandler } from '@deltachat-desktop/shared/log-handler.js'
 import * as mainWindow from './windows/main.js'
 import { DesktopSettings } from './desktop_settings.js'
-import { getCurrentLocaleDate, tx } from './load-translations.js'
+import {
+  getCurrentLocaleDate,
+  getPreferredSystemLanguage,
+  tx,
+} from './load-translations.js'
 import { mapPackagePath } from './isAppx.js'
 import { quitDeltaChat } from './tray.js'
 import { getLocaleDirectoryPath } from './getLocaleDirectory.js'
@@ -57,6 +61,8 @@ export function refresh() {
   const menu = Menu.buildFromTemplate(template)
   const item = getMenuItem(menu, tx('global_menu_view_floatontop_desktop'))
   if (item) item.checked = mainWindow.isAlwaysOnTop()
+  const hideMenuItem = getMenuItem(menu, tx('pref_hide_menu_bar'))
+  if (hideMenuItem) hideMenuItem.checked = mainWindow.isHideMenuBar()
   const isMac = process.platform === 'darwin'
   if (isMac === true) {
     Menu.setApplicationMenu(menu)
@@ -77,17 +83,29 @@ interface rawMenuItem extends Electron.MenuItemConstructorOptions {
 
 function getAvailableLanguages(): Electron.MenuItemConstructorOptions[] {
   const { locale: currentLocale } = getCurrentLocaleDate()
-  return languages.map(({ locale, name }) => {
-    return {
-      label: name,
+  return [
+    {
+      label: tx('pref_system_default'),
       type: 'radio',
-      checked: locale === currentLocale,
+      checked: DesktopSettings.state.locale == null,
       click: () => {
-        DesktopSettings.update({ locale })
-        mainWindow.chooseLanguage(locale)
+        DesktopSettings.update({ locale: null })
+        mainWindow.chooseLanguage(getPreferredSystemLanguage())
       },
-    }
-  })
+    },
+    ...languages.map(({ locale, name }) => {
+      return {
+        label: name,
+        type: 'radio',
+        checked:
+          locale === currentLocale && DesktopSettings.state.locale != null,
+        click: () => {
+          DesktopSettings.update({ locale })
+          mainWindow.chooseLanguage(locale)
+        },
+      } as const
+    }),
+  ]
 }
 
 export function getAppMenu(
@@ -330,7 +348,7 @@ function getMenuTemplate(
         },
         {
           accelerator: 'CmdOrCtrl+0',
-          label: `${tx('reset')}`,
+          label: tx('reset'),
           role: 'resetZoom',
         },
         {
@@ -343,6 +361,16 @@ function getMenuTemplate(
         },
         {
           type: 'separator',
+        },
+        {
+          label: tx('pref_hide_menu_bar'),
+          type: 'checkbox',
+          visible: process.platform !== 'darwin',
+          click: () => mainWindow.toggleHideMenuBar(),
+        },
+        {
+          type: 'separator',
+          visible: process.platform !== 'darwin',
         },
         {
           role: 'togglefullscreen',

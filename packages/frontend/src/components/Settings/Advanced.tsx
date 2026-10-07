@@ -18,7 +18,7 @@ import TransportsDialog from '../dialogs/Transports'
 import { LogDialog } from '../dialogs/Log'
 import { DialogProps } from '../../contexts/DialogContext'
 import { getLogger } from '@deltachat-desktop/shared/logger'
-import { useSettingsStore } from '../../stores/settings'
+import { useDesktopSettingsStore } from '../../stores/settings'
 
 type Props = {
   onClose: DialogProps['onClose']
@@ -29,7 +29,7 @@ const log = getLogger('renderer/settings/advanced')
 export default function Advanced({ onClose }: Props) {
   const tx = useTranslationFunction()
   const { openDialog } = useDialog()
-  const settingsStore = useSettingsStore()[0]
+  const desktopSettingsStore = useDesktopSettingsStore()[0]
   const openProxySettings = () => {
     openDialog(ProxyConfiguration, {
       accountId: selectedAccountId(),
@@ -99,7 +99,7 @@ export default function Advanced({ onClose }: Props) {
       <SettingsHeading>{tx('pref_experimental_features')}</SettingsHeading>
       <ExperimentalFeatures />
 
-      {settingsStore?.desktopSettings.enableKeyManagement && (
+      {desktopSettingsStore?.enableKeyManagement && (
         <>
           <SettingsSeparator />
           <SettingsHeading>{tx('key_management')}</SettingsHeading>

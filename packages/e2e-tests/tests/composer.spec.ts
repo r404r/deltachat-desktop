@@ -593,6 +593,11 @@ test.describe('Ctrl + Up shortcut', () => {
   // A little stupid, but works I guess.
   test.beforeEach(async () => {
     await selectChatByName(page, chatName)
+    // Wait for the messages to be loaded:
+    // the shortcut does nothing as long as they aren't.
+    await expect(
+      page.getByLabel('Messages').getByText(getMessageText(numMessages - 1))
+    ).toBeVisible()
   })
 
   async function up() {
@@ -836,6 +841,44 @@ test.describe('edit message', () => {
     await page.keyboard.press('ArrowUp')
     await expect(textareaNonEdit()).toHaveText('\n\n\n\n\n')
     await expect(composerSection).not.toContainText('Edit Message')
+
+    await textareaNonEdit().clear()
+  })
+  test('text cursor is placed at the end', async () => {
+    await textarea.focus()
+    await page.keyboard.press('ArrowUp')
+    await expect(textareaEdit()).toHaveText('M 3')
+    await expect(textareaEdit()).toBeFocused()
+
+    await page.keyboard.press('Backspace')
+    await page.keyboard.press('Backspace')
+    await expect(textareaEdit()).toHaveText('M')
+
+    await page.keyboard.press('Escape')
+  })
+  test('shows a toast when trying to save an empty edit', async () => {
+    await textarea.focus()
+    await page.keyboard.press('ArrowUp')
+    await expect(textareaEdit()).toHaveText('M 3')
+
+    await textareaEdit().fill('')
+    await page.keyboard.press('ControlOrMeta+Enter')
+
+    const toast = page.getByRole('status').getByText('Please enter a message.')
+    await expect(toast).toBeVisible()
+
+    // Trying again doesn't stack up a second toast with the same text.
+    await page.keyboard.press('ControlOrMeta+Enter')
+    await expect(toast).toHaveCount(1)
+
+    // We're still in the edit mode, with the input focused.
+    await expect(textareaEdit()).toBeFocused()
+    await expect(editMessageSection()).toContainText('Edit Message')
+
+    // The toast disappears on its own.
+    await expect(toast).not.toBeVisible({ timeout: 10_000 })
+
+    await page.keyboard.press('Escape')
   })
 })
 

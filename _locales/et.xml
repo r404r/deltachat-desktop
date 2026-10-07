@@ -121,11 +121,39 @@
     <string name="this_month">Sel kuul</string>
     <string name="last_week">Eelmisel nädalal</string>
     <string name="last_month">Eelmisel kuul</string>
-    <!-- Refers to the time a contact was last seen. Shown below contact name in the profile. The placeholder will be replaced by date or time, resulting in "Last seen at 12:13 AM" or "Last seen Nov 12" -->
+    <!-- deprecated -->
     <string name="last_seen_at">Viimati nähtud: %1$s</string>
-    <!-- Refers to the time a contact was last seen. Shown below contact name in the profile. The placeholder will be replaced by a relative point in time as "3 minutes ago" (see https://momentjs.com for more examples and languages) -->
+    <!-- deprecated -->
     <string name="last_seen_relative">Viimati nähtud: %1$s</string>
+    <!-- deprecated -->
     <string name="last_seen_unknown">Viimati nähtud: pole teada</string>
+
+    <!-- A contact was seen recently. The string is at places with few space, so stay as short as possible. -->
+    <string name="seen_recently">Nähtud hiljuti</string>
+    <!-- A contact was seen today. The string is at places with few space, so stay as short as possible. -->
+    <string name="seen_today">Nähtud täna</string>
+    <!-- A contact was seen yesterday. The string is at places with few space, so stay as short as possible. -->
+    <string name="seen_yesterday">Nähtud eile</string>
+    <!-- A contact was seen within a week. The string is at places with few space, so stay as short as possible. -->
+    <string name="seen_within_week">Nähtud viimase nädala jooksul</string>
+    <!-- A contact was seen within a month. The string is at places with few space, so stay as short as possible. -->
+    <string name="seen_within_month">Nähtud viimase kuu jooksul</string>
+    <!-- A contact was seen a number of month ago. The string is at places with few space, so stay as short as possible. -->
+    <plurals name="seen_n_months_ago">
+        <item quantity="one">Nähtud %d kuu tagasi</item>
+        <item quantity="other">Nähtud %d kuud tagasi</item>
+    </plurals>
+    <!-- A contact was seen a long time ago, more than a year. The string is at places with few space, so stay as short as possible. -->
+    <string name="seen_long_ago">Nähtud õige ammu</string>
+    <!-- A contact was never seen (as added by others to a group or created by a vcard). The string is at places with few space, so stay as short as possible. -->
+    <string name="never_seen">Pole iialgi nähtud</string>
+
+    <!-- deprecated -->
+    <plurals name="seen_n_years_ago">
+        <item quantity="one">Nähtud %d aasta tagasi</item>
+        <item quantity="other">Nähtud %d aastat tagasi</item>
+    </plurals>
+
     <!-- Call duration as shown in the call bubbles. There is some risk to mix with the sending time, so the word "Duration" may be helpful. Might also be "Duration: %d minutes", "%d-minute duration", "%d-minute length" or "%d-minute call" -->
     <plurals name="call_duration_minutes">
         <item quantity="one">kestusega %d minut</item>
@@ -204,6 +232,9 @@
     <string name="contact">Kontakt</string>
     <string name="bot">Robot</string>
     <string name="camera">Kaamera</string>
+    <string name="front_camera">Eeskaamera</string>
+    <string name="back_camera">Tagakaamera</string>
+    <string name="microphone">Mikrofon</string>
     <!-- As in "start a video recording" or "take a photo"; eg. the description of the "shutter button" in cameras -->
     <string name="capture">Salvesta pilt või video</string>
     <!-- Switch eg. from front to back camera -->
@@ -238,6 +269,7 @@
     <!-- short for "Browse through the App Picker/Store/Catalogue"; could also be translated as "Discover" or "Search" -->
     <string name="browse">Sirvi</string>
     <string name="unknown">Teadmata</string>
+    <string name="unnamed">Ilma nimeta</string>
 
     <string name="green">Roheline</string>
     <string name="red">Punane</string>
@@ -247,6 +279,9 @@
     <string name="purple">Purpurpunane</string>
     <string name="magenta">Fuksiapunane</string>
     <string name="white">Valge</string>
+
+    <!-- Used to display some progress in percent. Placeholder will be replaced by a number, resulting in eg. "50%", which may be translated to "50 %" in French or "%50" in Turkish.  -->
+    <string name="progress_percent">%1$d%%</string>
 
     <string name="zoom">Suumitase</string>
     <string name="extra_small">Eriti väike</string>
@@ -288,6 +323,7 @@
     <string name="menu_send">Saada</string>
     <string name="menu_toggle_keyboard">Lülita emojide klahvistik sisse/välja</string>
     <string name="menu_edit_group">Muuda gruppi</string>
+    <!-- deprecated: "Edit Group" dialog usually also contains the "Group Description" field, use global_menu_edit_desktop instead -->
     <string name="menu_group_name_and_image">Grupi nimi ja pilt</string>
     <string name="menu_show_global_map">Kõik asukohad</string>
     <string name="menu_archive_chat">Tõsta vestlus arhiivi</string>
@@ -370,6 +406,8 @@
     <string name="unpin_chat">Lõpeta vestluse esiletõstmine</string>
     <!-- Verb "to pin", making something sticky, not a noun or abbreviation for "pin number". -->
     <string name="pin">Tõste esile</string>
+    <!-- Adj. of "pin", describing a state of being pinned. -->
+    <string name="pinned">Esiletõstetud</string>
     <!-- Opposite of "Pin chat", removing the sticky-state from a chat. -->
     <string name="unpin">Lõpeta esiletõstmine</string>
     <string name="ConversationFragment_quoted_message_not_found">Algset sõnumit ei leidu</string>
@@ -435,14 +473,17 @@
     <string name="canceled_call">katkestatud kõne</string>
     <string name="missed_call">Märkamata kõne</string>
     <string name="already_in_call">Kõne  juba on pooleli</string>
+    <string name="call_back">Helista tagasi</string>
     <string name="call_answered_elsewhere">Kõne on vastatud muus seadmes</string>
     <string name="call_requires_camera_permission">Videokõnede tegemiseks peab rakendusel olema õigus kasutada kaamerat</string>
     <string name="call_requires_mic_permission">Helistamiseks peab rakendusel olema õigus kasutada mikrofoni</string>
+    <string name="call_grant_mic_permission">Klõpsa lubamaks mikrofoni kasutamist</string>
     <string name="call_requires_connection">Helistamine (kõne algatamine) ei õnnestu. Palun kontrolli, et sinu nutiseadme internetiühendus toimib ja proovi uuesti.</string>
     <!-- Used e.g. in a notifications to describe an ongoing call. "Call" is a noun here, in the meaning of "This is the call with ..." where the placeholder is replaced by the name of the contact. -->
     <string name="call_with">Kõne kasutajaga %1$s</string>
     <!-- Use e.g. in a notifications during ringing. Placeholder is relaced by the name of the contact being called. -->
     <string name="calling_person">Helistan kasutajale %1$s…</string>
+    <string name="audio_output">Heliväljund</string>
 
     <!-- get confirmations -->
     <!-- confirmation for leaving groups or channels. If a subject is needed, "Are you sure you want to leave the chat?" would work as well -->
@@ -497,6 +538,10 @@
     <plurals name="chat_n_new_messages">
         <item quantity="one">%d uus sõnum</item>
         <item quantity="other">%d uut sõnumit</item>
+    </plurals>
+    <plurals name="chat_n_unread_messages">
+        <item quantity="one">%1$d lugemata sõnum</item>
+        <item quantity="other">%1$d lugemata sõnumit</item>
     </plurals>
     <!-- The placeholder will be replaced by the name of the recipient in a one-to-one chat. -->
     <string name="chat_new_one_to_one_hint">Saada sõnum kasutajale %1$s.</string>
@@ -555,6 +600,7 @@
     <string name="search_in">Otsi vestlusest „%1$s“</string>
     <string name="search_files">Otsi failidest</string>
     <string name="search_explain">Otsi vestlusi, kontakte või sõnumeid</string>
+    <!-- deprecated, there is not much point to repeat the query, use emoji_search_results, or no headline at all -->
     <string name="search_result_for_x">Otsingutulemused märksõnale „%1$s“</string>
     <string name="search_no_result_for_x">„%s“ otsingul pole tulemusi</string>
     <!-- Adjective, as in "Show Unread Messages" -->
@@ -653,15 +699,17 @@
     <!-- Instant onboarding title (there is not more to do than to set name and avatar) -->
     <string name="instant_onboarding_title">Sinu profiil</string>
     <!-- The placeholder will be replaced by the default onboarding server -->
+    <!-- deprecated -->
     <string name="instant_onboarding_agree_default2">%1$s teenuse privaatsusreeglid</string>
     <!-- The placeholder will be replaced by instance name, the whole text will link to the instance page -->
+    <!-- deprecated -->
     <string name="instant_onboarding_agree_instance">Teave %1$s teenuse profiilide kohta</string>
     <!-- Confirmation button on the instant onboarding screen -->
     <string name="instant_onboarding_create">Nõustun ja alustan profiili loomist</string>
     <!-- Secondary, link-like button to open a page with other possible instances -->
     <string name="instant_onboarding_show_more_instances">Kasuta muud serverid</string>
     <string name="instant_onboarding_other_server">Edastusserverite loend</string>
-    <!-- Hint about what happens when "Create Profile" button in pressed; the placeholder will be replaced by the group name -->
+    <!-- Hint about what happens when "Create Profile" button in pressed; the placeholder will be replaced by the group or channel name -->
     <string name="instant_onboarding_group_info">„%1$s“ grupiga liitumiseks loo profiil.</string>
     <!-- Hint about what happens when "Create Profile" button in pressed; the placeholder will be replaced by contact name -->
     <string name="instant_onboarding_contact_info">„%1$s“ kasutajaga vestlemiseks loo profiil.</string>
@@ -669,6 +717,12 @@
     <string name="instant_onboarding_confirm_contact">Kas sa soovid luua uue profiili ja alustada vestlemist %1$s kasutajaga?</string>
     <!-- Question shown when group's/channel's QR code is scanned from onboarding screen -->
     <string name="instant_onboarding_confirm_group">Kas sa soovid luua uue profiili ja liituda „%1$s“ grupiga?</string>
+
+    <string name="team">Tiim</string>
+    <string name="team_profile">Tiimiprofiil</string>
+    <string name="team_profile_explain">Tiimiprofiili hallatakse üheskoos kasutajate grupi või organisatsiooni poolt.\n\n⚠️Selline võimalus on veel katsetamisjärgus ja võib tulevikus muutuda.</string>
+    <string name="team_name">Tiimi nimi</string>
+    <string name="create_team_profile">Loo tiimiprofiil</string>
 
     <string name="welcome_chat_over_email">Turvaline hajutatud vestluslahendus</string>
     <string name="scan_invitation_code">Skaneeri kutsekoodi</string>
@@ -705,16 +759,21 @@
     <string name="add_transport">Lisa alusühendus</string>
     <string name="remove_transport">Eemalda alusühendus</string>
     <string name="edit_transport">Muuda alusühendust</string>
+    <!-- deprecated -->
     <string name="used_for_sending">Kasutatud saatmiseks</string>
+    <!-- deprecated -->
     <string name="hide_from_contacts">Peida kontaktidest</string>
+    <!-- deprecated -->
     <string name="hidden_from_contacts">Peidetud kontaktidest</string>
     <string name="enforce_e2ee">Kasuta kõikide alusühenduste (edastusserverite) puhul krüptimist</string>
     <!-- Hint for the list of relays -->
-    <string name="transport_list_hint">Sõnumid saavad kõik alusühendused (edastusserverid).\n\n⚠️ Kui muudad siin midagi, siis palun kontrolli, et kõikides sinu seadmetes on kasutusel vähemalt versioon 2.47.0. Vastasel juhul võivad vanema tarkvaraga seadmetes jääda sõnumid saabumata.</string>
+    <string name="transport_list_hint">Alusühendused (edastusserverid) on kasutusel sõnumite saatmiseks ja vastuvõtmiseks. Sinu ühendus on töökindlam, kui neid on enam, kui üks.</string>
     <!-- shown if a QR code was scanned that can be used as a relay -->
     <string name="confirm_add_transport">Kas lisad selle alusühenduse (edastusserveri)?</string>
     <string name="invalid_transport_qr">Skaneeritud QR-koodis pole korrektset alusühendust (edastusserverid)</string>
     <!-- placeholder will be replaced by a relay server name -->
+    <string name="confirm_remove_relay_x">Kas eemaldad alusühenduse (edastusserveri) „%1$s“?</string>
+    <!-- deprecated -->
     <string name="confirm_remove_or_hide_transport_x">Kas eemaldad alusühenduse (edastusserveri) „%1$s“?\n\nKui mõni kontakt teab vaid seda ühendusviisi, siis ta ei pruugi sind kätte saada enne, kui oled talle uuesti kirjutanud.\n\nKui kahtled, siis eemakdamise asemel pigem peida see alusühendus (edastusserver).</string>
     <string name="login_certificate_checks">Sertifikaadikontrollid</string>
     <string name="login_error_mail">Palun sisesta korrektne e-posti aadress</string>
@@ -724,7 +783,7 @@
     <string name="import_backup_title">Taasta varukoopiast</string>
     <string name="import_backup_ask">Asukohas „%1$s“ on olemas varukoopia.\n\nKas sa soovid ta importida ning kasutada kõiki seal leiduvaid andmeid ja seadistusi?</string>
     <string name="import_backup_no_backup_found">Varukoopiaid ei leidu.\n\nKopeeri varukoopia siia: „%1$s“ ning proovi uuesti.</string>
-    <!-- %1$s will be replaced by the failing address -->
+    <!-- deprecated, %1$s will be replaced by the failing address -->
     <string name="login_error_cannot_login">E-posti aadressiga „%1$s“ ei õnnestu sisse logida. Palun kontrolli, kas aadress ja salasõna on õiged.</string>
     <!-- TLS certificate checks -->
     <string name="accept_invalid_certificates">Luba kasutada vigaseid sertifikaate</string>
@@ -752,6 +811,7 @@
     <!-- first placeholder is replaced by the number of files (always 2 or more); second placeholder is replaced by a chat name -->
     <string name="ask_send_files_to_chat">Kas saadad %1$d faili „%2$s“ vestlusesse?</string>
     <string name="ask_send_files_to_selected_chats">Kas saadad %1$d faili „%2$d“ vestlusesse?</string>
+    <!-- deprecated -->
     <string name="videos_sent_without_recoding">(Videod saadetakse algupäraste suurte failidena. Videote mahu vähendamiseks lisa nad manustena ükshaaval)</string>
     <string name="share_text_multiple_chats">Kas saadad selle teksti %1$d vestlusesse?\n\n„%2$s“</string>
     <string name="share_abort">Puuduvate õiguste tõttu on jagamine katkestatud.</string>
@@ -943,16 +1003,22 @@
     <string name="chat_description_changed_by_other">%1$s muutis vestluse kirjeldust.</string>
     <!-- %1$s will be replaced by name of the contact added to the group -->
     <string name="member_x_added">Lisandus uus liige: %1$s.</string>
+    <string name="member_you_added">Sa oled lisatud.</string>
     <!-- %1$s will be replaced by name of the contact added to the group -->
     <string name="add_member_by_you">Sina lisasid uue liikme: %1$s.</string>
     <!-- %1$s will be replaced by name of the contact added to the group, %2$s will be replaced by name of the contact who did the action -->
     <string name="add_member_by_other">%2$s lisas uue liikme: %1$s.</string>
+    <!-- %1$s will be replaced by name of the contact who did the action -->
+    <string name="add_you_by_other">%1$s lisas sinu.</string>
     <!-- %1$s will be replaced by name of the contact removed from the group -->
     <string name="remove_member_by_you">Sina eemaldasid liikme: %1$s.</string>
     <!-- %1$s will be replaced by name of the contact removed from the group, %2$s will be replaced by name of the contact who did the action -->
     <string name="remove_member_by_other">%2$s eemaldas liikme: %1$s.</string>
+    <!-- %1$s will be replaced by name of the contact who did the action -->
+    <string name="remove_you_by_other">%1$s eemaldas sinu.</string>
     <!-- %1$s will be replaced by name of the contact removed from the group; this string is used when it's unclear who did the action -->
     <string name="member_x_removed">Grupi liige „%1$s“ on eemaldatud.</string>
+    <string name="member_you_removed">Sa oled eemaldatud.</string>
     <!-- "left" in the meaning of "exited". -->
     <string name="group_left_by_you">Sa lahkusid grupist.</string>
     <!-- "left" in the meaning of "exited". -->
@@ -1028,10 +1094,13 @@
     <string name="qrscan_failed">QR-koodi dekodeerimine ei õnnestunud</string>
     <string name="qrscan_ask_join_group">Kas soovid liituda „%1$s“ grupiga?</string>
     <string name="qrscan_ask_join_channel">Kas sa soovid liituda „%1$s“ kanaliga?</string>
+    <!-- deprecated -->
     <string name="qrscan_fingerprint_mismatch">Skaneeritud sõrmejälg ei vasta %1$s viimati nähtud sõrmejäljele.</string>
+    <!-- deprecated -->
     <string name="qrscan_no_addr_found">Selles QR-koois on sõrmejälg, kuid pole aadressi.\n\nTavakanalivälise verifitseerimise jaoks palun esmalt loo teise osapoolega krüptitud ühendus.</string>
     <string name="qrscan_contains_text">Skaneeritud QR-koodi tekst:\n\n%1$s</string>
     <string name="qrscan_contains_url">Skaneeritud QR-koodi võrguaadress:\n\n%1$s</string>
+    <!-- deprecated -->
     <string name="qrscan_fingerprint_label">Sõrmejälg</string>
     <string name="withdraw_verifycontact_explain">Seda QR-koodi saavad teised skaneerida nii sinuga suhtlema hakata\n\nKui sa ta lähtestad, siis ei QR-kood ega kutse link pole enam kasutatavad.</string>
     <string name="withdraw_verifygroup_explain">Seda QR-koodi saab kasutada „%1$s“ grupiga liitumiseks.\n\nKui sa ta lähtestad, siis ei QR-kood ega kutse link pole enam kasutatavad.</string>
@@ -1057,6 +1126,8 @@
     <string name="qraccount_qr_code_cannot_be_used">Selle skaneeritud QR-koodi abil ei saa uut profiili kasutusele võtta.</string>
     <!-- the placeholder will be replaced by the address of the profile -->
     <string name="qrlogin_ask_login">Kas logid sisse „%1$s“ profiili?</string>
+    <!-- the placeholder will be replaced by a domain that is preferred for relaying messages. smth as "Using foo.example.org" -->
+    <string name="relay_login_hint">Kasutusel on: %1$s</string>
     <!-- first placeholder will be replaced by name of the inviter, second placeholder will be replaced by the name of the inviter. -->
     <string name="secure_join_started">%1$s kutsus sind liituma selle grupiga.\n\nOotan vastust kasutaja %2$s seadmest…</string>
     <!-- first placeholder will be replaced by name of the inviter, second placeholder will be replaced by the name of the inviter. -->
@@ -1067,8 +1138,11 @@
     <string name="contact_verified">%1$s lisas vestlusesse.</string>
     <string name="contact_blocked">Sina blokeerisid selle kontakti</string>
     <!-- Shown in contact profile. The placeholder will be replaced by the name of the contact that introduced the contact. -->
+    <!-- deprecated -->
     <string name="verified_by">%1$s lisas kontakti vestlusesse</string>
+    <!-- deprecated -->
     <string name="verified_by_you">Mina lisasin kontakti vestlusesse</string>
+    <!-- deprecated -->
     <string name="verified_by_unknown">Vestlusesse lisatud</string>
     <string name="mailto_dialog_header_select_chat">Vali vestlus, kuhu soovid sõnumi saata</string>
     <!-- first placeholder is the name of the chat -->
@@ -1106,6 +1180,7 @@
     <string name="perm_explain_access_to_storage_denied">Failide saatmiseks ja vastuvõtmiseks ava rakenduse seadistused, sealt „Õigused“ / „Load“ ning luba „Mäluruum“.</string>
     <string name="perm_explain_access_to_location_denied">Asukoha tuvastamiseks ava rakenduse seadistused, sealt „Õigused“ / „Load“ ning luba „Asukoht“.</string>
     <string name="perm_explain_access_to_notifications_denied">Teavituste saamiseks ava rakenduse seadistused, sealt „Õigused“ / „Load“ ning luba „Märguanded“.</string>
+    <string name="perm_explain_local_network_denied">Ühendamaks seadmetega kohtvõrgus vajab Delta Chat õigust „Seadmed läheduses“. Saad seda seadistada siit: „Rakendused“ → „Delta Chat“ → „Õigused“.</string>
 
     <!-- ImageEditorHud -->
     <string name="ImageEditorHud_draw_anywhere_to_blur">Hägustamiseks joonista kusagil</string>
@@ -1246,5 +1321,16 @@
     <string name="perm_enable_bg_already_done">Sa juba oled Delta Chatil lubanud laadida sõnumeid taustal.\n\nKui see siiski ei toimi, siis palun kontrolli rakenduse õigusi süsteemi seadistustest.</string>
 
     <!-- device messages for updates -->
-    <string name="update_2_0">Mida on meil uut?\n\n💯 Läbiv krüptimine on töökindel ja seda nüüd igaveseks. Tabalukud 🔒 on läinud!\n\n✉️ Klassikalised e-kirjad, kus läbiv krüptimine on puudu, on märgitud ümbriku ikooniga\n\n😻 Uus ja tõhusam profiilivaade kõikide sinu kontaktide jaoks\n\n🔲 Uus nupp kiireks ligipääsuks vestluses kasutatavate rakendusteni\n\n❤️ Palun toeta meie arendust rahaliselt - nii saame jääda sõltumatuteks ja jätkata selle rakenduse täiustamist: %1$s</string>
+    <string name="update_2_6">Vaata, mida meil on uut!\n\n🌐 Sinu sõnumid liiguvad nutikamalt: kui kasutusel on mitu edastusserverit, siis ühe kadumine ei peata liiklust\n\n📞 Kõned pole enam katselised\n\n📢 Kanalid on siin ja edaspidi - sealhulgas reageerimise võimalusega\n\n✍️ Vestlustele saad lisada kirjelduse ja kõigil on pilt selgem\n\n👌 Saadetud pildid näevad nüüd välja selgemad\n\n🔵 Saad vestlusi märkida mitteloetuks ja see aitab sul asju meelde jätta</string>
+    <string name="update_2_6_android_additions">🐇 Häälsõnumite kiirkuulamine ja automaatne esitus\n\nLõpuks ometi: meil on nüüd kasutusel lihtne kleepsuvalija!</string>
+    <string name="update_2_6_desktop_additions">🐇 Häälsõnumite kiirkuulamine ja automaatne esitus\n\n⏯️ Uus pleier\n\n✅ Mitme sõnumi valimise võimalus edastamiseks või kustutamiseks\n\nLõpuks ometi: meil on nüüd kasutusel lihtne kleepsuvalija!</string>
+    <string name="update_2_6_ios_additions">🎤 Esita häälsõnumeid taustal</string>
+    <string name="update_2_6_end">Palun aita meil jääda sõltuvatuks ning jätkata rakenduse arendamist ja täiendamist ❤️ https://delta.chat/donate</string>
+
+    <!-- The placeholder will be replaced by a version name, e.g. "v2.50.0" -->
+    <string name="update_available_msg">🎉 Saadaval on uus versioon %1$s. Uuendamiseks klõpsa seda sõnumit ja naudi uuenenud rakendust</string>
+    <!-- The placeholder will be replaced by a version name, e.g. "Downloading v2.50.0 …" -->
+    <string name="update_downloading">%1$s on allalaadimisel…</string>
+    <string name="update_now">Uuenda kohe</string>
+    <string name="update_install_permission_explain">Et uuenduse paigaldamine oleks võimalik, luba palun esmalt süsteemi seadistustest Delta Chatil pakendusi paigaldada.</string>
 </resources>

@@ -114,11 +114,13 @@
     <string name="this_month">本月</string>
     <string name="last_week">上週</string>
     <string name="last_month">上個月</string>
-    <!-- Refers to the time a contact was last seen. Shown below contact name in the profile. The placeholder will be replaced by date or time, resulting in "Last seen at 12:13 AM" or "Last seen Nov 12" -->
+    <!-- deprecated -->
     <string name="last_seen_at">最後上線時間：%1$s</string>
-    <!-- Refers to the time a contact was last seen. Shown below contact name in the profile. The placeholder will be replaced by a relative point in time as "3 minutes ago" (see https://momentjs.com for more examples and languages) -->
+    <!-- deprecated -->
     <string name="last_seen_relative">最後上線時間：%1$s</string>
+    <!-- deprecated -->
     <string name="last_seen_unknown">最後上線時間：未知</string>
+
     <!-- Call duration as shown in the call bubbles. There is some risk to mix with the sending time, so the word "Duration" may be helpful. Might also be "Duration: %d minutes", "%d-minute duration", "%d-minute length" or "%d-minute call" -->
     <plurals name="call_duration_minutes">
         <item quantity="other">持續時間%d分鐘</item>
@@ -219,7 +221,6 @@
     <!-- short for "Browse through the App Picker/Store/Catalogue"; could also be translated as "Discover" or "Search" -->
     <string name="browse">瀏覽</string>
     <string name="unknown">未知</string>
-
     <string name="green">綠色</string>
     <string name="red">紅色</string>
     <string name="blue">藍色</string>
@@ -268,6 +269,7 @@
     <string name="menu_send">送出</string>
     <string name="menu_toggle_keyboard">切換表情符號鍵盤</string>
     <string name="menu_edit_group">編輯群組</string>
+    <!-- deprecated: "Edit Group" dialog usually also contains the "Group Description" field, use global_menu_edit_desktop instead -->
     <string name="menu_group_name_and_image">群組名稱及圖片</string>
     <string name="menu_show_global_map">顯示所有地點</string>
     <string name="menu_archive_chat">封存對話</string>
@@ -604,15 +606,17 @@
     <!-- Instant onboarding title (there is not more to do than to set name and avatar) -->
     <string name="instant_onboarding_title">你的個人檔案</string>
     <!-- The placeholder will be replaced by the default onboarding server -->
+    <!-- deprecated -->
     <string name="instant_onboarding_agree_default2">%1$s的隱私政策</string>
     <!-- The placeholder will be replaced by instance name, the whole text will link to the instance page -->
+    <!-- deprecated -->
     <string name="instant_onboarding_agree_instance">關於%1$s上的個人資料</string>
     <!-- Confirmation button on the instant onboarding screen -->
     <string name="instant_onboarding_create">同意並創建賬戶</string>
     <!-- Secondary, link-like button to open a page with other possible instances -->
     <string name="instant_onboarding_show_more_instances">使用其他伺服器</string>
     <string name="instant_onboarding_other_server">列出 Chatmail 伺服器</string>
-    <!-- Hint about what happens when "Create Profile" button in pressed; the placeholder will be replaced by the group name -->
+    <!-- Hint about what happens when "Create Profile" button in pressed; the placeholder will be replaced by the group or channel name -->
     <string name="instant_onboarding_group_info">創建個人資料以加入群組 “%1$s ”</string>
     <!-- Hint about what happens when "Create Profile" button in pressed; the placeholder will be replaced by contact name -->
     <string name="instant_onboarding_contact_info">創建要與%1$s聊天的個人資料。</string>
@@ -655,13 +659,16 @@
     <string name="add_transport">新增中繼伺服器</string>
     <string name="remove_transport">移除中繼伺服器</string>
     <string name="edit_transport">編輯中繼伺服器</string>
+    <!-- deprecated -->
     <string name="used_for_sending">用于发送</string>
+    <!-- deprecated -->
     <string name="hide_from_contacts">对联系人隐藏</string>
+    <!-- deprecated -->
     <string name="hidden_from_contacts">已对联系人隐藏</string>
     <!-- shown if a QR code was scanned that can be used as a relay -->
     <string name="confirm_add_transport">新增這個中繼伺服器？</string>
     <string name="invalid_transport_qr">掃描的 QR 碼不包含有效的中繼伺服器。</string>
-    <!-- placeholder will be replaced by a relay server name -->
+    <!-- deprecated -->
     <string name="confirm_remove_or_hide_transport_x">移除中继“%1$s”？\n\n仅知道此中继的联系人可能无法联系到您，直到您再次发送消息。\n\n如有疑问，请将其隐藏而非移除。</string>
     <string name="login_certificate_checks">憑證檢查</string>
     <string name="login_error_mail">請輸入有效的電子郵件位址</string>
@@ -671,7 +678,7 @@
     <string name="import_backup_title">匯入備份</string>
     <string name="import_backup_ask">在 「%1$s 」找到備份\n\n你要匯入備份，並使用原來的資料和設定嗎?</string>
     <string name="import_backup_no_backup_found">找不到備份\n\n請把備份複製到「%1$s」然後再試一次，或是按「開始傳送訊息」進行標準設定。</string>
-    <!-- %1$s will be replaced by the failing address -->
+    <!-- deprecated, %1$s will be replaced by the failing address -->
     <string name="login_error_cannot_login">無法登入 %1$s。請確定 email 帳號和密碼是否正確。 </string>
     <!-- TLS certificate checks -->
     <string name="accept_invalid_certificates">接受無效證書</string>
@@ -699,6 +706,7 @@
     <!-- first placeholder is replaced by the number of files (always 2 or more); second placeholder is replaced by a chat name -->
     <string name="ask_send_files_to_chat">將%1$d個檔案傳送到「%2$s」？？</string>
     <string name="ask_send_files_to_selected_chats">將%1$d個檔案發送到%2$d個聊天？</string>
+    <!-- deprecated -->
     <string name="videos_sent_without_recoding">（影片以原始大檔的形式發送。要將影片作為較小的檔案發送，請單獨附加它們）</string>
     <string name="share_text_multiple_chats">將此文本發送到%1$d個聊天？\n\n 「%2$s」</string>
     <string name="share_abort">共享失敗。權限不足。</string>
@@ -969,10 +977,13 @@
     <string name="qrscan_failed">QR 碼無法識別</string>
     <string name="qrscan_ask_join_group">你要參加群組 「%1$s」嗎?</string>
     <string name="qrscan_ask_join_channel">是否加入頻道“%1$s”？</string>
+    <!-- deprecated -->
     <string name="qrscan_fingerprint_mismatch">掃描的指紋與的最後一次看到%1$s的指紋不匹配。</string>
+    <!-- deprecated -->
     <string name="qrscan_no_addr_found">此 QR 碼包含指紋，但不包含電子郵件位址。\n\n要進行帶外驗證，請先與收件者建立加密連接。</string>
     <string name="qrscan_contains_text">掃描的 QR 碼文本：\n\n%1$s</string>
     <string name="qrscan_contains_url">掃描的 QR 碼 URL：\n\n%1$s</string>
+    <!-- deprecated -->
     <string name="qrscan_fingerprint_label">指紋</string>
     <string name="withdraw_verifycontact_explain">其他人可以掃描此QR碼與您聯絡。您可以在此處停用QR碼，然後再次掃描以重新啟動它。</string>
     <string name="withdraw_verifygroup_explain">其他人可以掃描此 QR 碼以加入群組「%1$s」。\n\n您可以在此處停用 QR 碼，然後再次掃描以重新啟動它。</string>
@@ -1008,8 +1019,11 @@
     <string name="contact_verified">%1$s已介紹。</string>
     <string name="contact_blocked">你已封鎖該聯絡人</string>
     <!-- Shown in contact profile. The placeholder will be replaced by the name of the contact that introduced the contact. -->
+    <!-- deprecated -->
     <string name="verified_by">由%1$s介紹</string>
+    <!-- deprecated -->
     <string name="verified_by_you">由我介紹</string>
+    <!-- deprecated -->
     <string name="verified_by_unknown">已驗證</string>
     <string name="mailto_dialog_header_select_chat">選擇要將消息發送到的聊天</string>
     <!-- first placeholder is the name of the chat -->
@@ -1040,7 +1054,6 @@
     <string name="perm_explain_access_to_storage_denied">要接收或發送文件，請轉到應用程式設定，選擇「存取權」，然後啟用「存儲」。</string>
     <string name="perm_explain_access_to_location_denied">要附加位置，請轉到應用程式設定，選擇「存取權」，然後啟用「位置」。</string>
     <string name="perm_explain_access_to_notifications_denied">要接收通知，請轉到「系統設定/應用程式/Delta Chat」並啟用「通知」。</string>
-
     <!-- ImageEditorHud -->
     <string name="ImageEditorHud_draw_anywhere_to_blur">在任意位置繪製以進行模糊處理</string>
     <string name="ImageEditorHud_add_text">新增文字</string>
@@ -1167,6 +1180,4 @@
     <string name="perm_enable_bg_reminder_title">點擊此處可在 Delta Chat 處於後台時接收訊息。</string>
     <string name="perm_enable_bg_already_done">您已經允許 Delta Chat 在後台接收訊息。\n\n如果消息仍未在後台到達，請同時檢查您的系統設定。</string>
 
-    <!-- device messages for updates -->
-    <string name="update_2_0">新版變化？ 💯 端對端加密現在可靠且永久有效。鎖頭圖標🔒已經消失！\n\n✉️ 沒有端對端加密的傳統電子郵件會以信件符號✉️標示\n\n😻 為你的所有聯絡人提供全新增強的個人資料頁面\n\n🔲 新按鈕可快速存取聊天中使用的應用程式\n\n❤️ 請捐款以幫助我們保持獨立並持續提供改進：%1$s</string>
-</resources>
+    </resources>

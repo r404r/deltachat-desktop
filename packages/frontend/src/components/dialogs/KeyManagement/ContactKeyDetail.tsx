@@ -6,7 +6,6 @@ import { getContactKeyInfo } from '../../../backend/key-management'
 import type { ContactKeyInfo } from '../../../backend/key-management'
 import { unknownErrorToString } from '@deltachat-desktop/shared/unknownErrorToString'
 import { runtime } from '@deltachat-desktop/runtime-interface'
-import { InlineVerifiedIcon } from '../../VerifiedIcon'
 // Pin/unpin stubs are defined in backend/key-management.ts but not yet
 // supported by core. Buttons are rendered disabled until core provides
 // the pin_contact_key / unpin_contact_key RPC endpoints.
@@ -49,7 +48,6 @@ export default function ContactKeyDetail({ contactId }: Props) {
           <span style={{ fontWeight: 600, fontSize: '16px' }}>
             {keyInfo.displayName}
           </span>
-          {keyInfo.isVerified && <InlineVerifiedIcon />}
         </div>
         <span
           style={{

@@ -54,11 +54,19 @@ export interface Runtime {
     sentTime: string,
     content: string
   ): void
+
   getDesktopSettings(): Promise<DesktopSettingsType>
   setDesktopSetting(
     key: keyof DesktopSettingsType,
     value: string | number | boolean | undefined
   ): Promise<void>
+  onDesktopSettingChanged:
+    | (<T extends keyof DesktopSettingsType>(
+        key: T,
+        value: DesktopSettingsType[T]
+      ) => void)
+    | undefined
+
   /**
    * initializes runtime stuff
    * - sets the LogHandler
@@ -153,6 +161,9 @@ export interface Runtime {
   restartApp(): void
 
   // translations
+  /**
+   * @param locale when `undefined`, get the current locale.
+   */
   getLocaleData(locale?: string): Promise<LocaleData>
   setLocale(locale: string): Promise<void>
 

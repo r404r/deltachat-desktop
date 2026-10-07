@@ -121,11 +121,13 @@
     <string name="this_month">Tento měsíc</string>
     <string name="last_week">Minulý týden</string>
     <string name="last_month">Minulý měsíc</string>
-    <!-- Refers to the time a contact was last seen. Shown below contact name in the profile. The placeholder will be replaced by date or time, resulting in "Last seen at 12:13 AM" or "Last seen Nov 12" -->
+    <!-- deprecated -->
     <string name="last_seen_at">Naposledy viděni v %1$s</string>
-    <!-- Refers to the time a contact was last seen. Shown below contact name in the profile. The placeholder will be replaced by a relative point in time as "3 minutes ago" (see https://momentjs.com for more examples and languages) -->
+    <!-- deprecated -->
     <string name="last_seen_relative">Naposledy viděni %1$s</string>
+    <!-- deprecated -->
     <string name="last_seen_unknown">Naposledy viděno: Neznámý</string>
+
     <!-- Call duration as shown in the call bubbles. There is some risk to mix with the sending time, so the word "Duration" may be helpful. Might also be "Duration: %d minutes", "%d-minute duration", "%d-minute length" or "%d-minute call" -->
     <plurals name="call_duration_minutes">
         <item quantity="one">%d minutové trvání</item>
@@ -256,7 +258,6 @@
     <!-- short for "Browse through the App Picker/Store/Catalogue"; could also be translated as "Discover" or "Search" -->
     <string name="browse">Procházet</string>
     <string name="unknown">Neznámá</string>
-
     <string name="green">Zelená</string>
     <string name="red">Červená</string>
     <string name="blue">Modrá</string>
@@ -301,6 +302,7 @@
     <string name="menu_send">Odeslat</string>
     <string name="menu_toggle_keyboard">Přepnout emoji klávesnici</string>
     <string name="menu_edit_group">Upravit skupinu</string>
+    <!-- deprecated: "Edit Group" dialog usually also contains the "Group Description" field, use global_menu_edit_desktop instead -->
     <string name="menu_group_name_and_image">Název a obrázek skupiny</string>
     <string name="menu_show_global_map">Všechny polohy</string>
     <string name="menu_archive_chat">Archivovat chat</string>
@@ -632,15 +634,17 @@
     <!-- Instant onboarding title (there is not more to do than to set name and avatar) -->
     <string name="instant_onboarding_title">Váš profil</string>
     <!-- The placeholder will be replaced by the default onboarding server -->
+    <!-- deprecated -->
     <string name="instant_onboarding_agree_default2">Zásady ochrany osobních údajů pro %1$s</string>
     <!-- The placeholder will be replaced by instance name, the whole text will link to the instance page -->
+    <!-- deprecated -->
     <string name="instant_onboarding_agree_instance">O profilech na %1$s</string>
     <!-- Confirmation button on the instant onboarding screen -->
     <string name="instant_onboarding_create">Souhlasím, vytvořit profil</string>
     <!-- Secondary, link-like button to open a page with other possible instances -->
     <string name="instant_onboarding_show_more_instances">Použít jiný server</string>
     <string name="instant_onboarding_other_server">Seznam chatmail serverů</string>
-    <!-- Hint about what happens when "Create Profile" button in pressed; the placeholder will be replaced by the group name -->
+    <!-- Hint about what happens when "Create Profile" button in pressed; the placeholder will be replaced by the group or channel name -->
     <string name="instant_onboarding_group_info">Založit profil k připojení ke skupině \"%1$s\".</string>
     <!-- Hint about what happens when "Create Profile" button in pressed; the placeholder will be replaced by contact name -->
     <string name="instant_onboarding_contact_info">Založit profil k chatování s uživatelem %1$s.</string>
@@ -694,7 +698,7 @@
     <string name="import_backup_title">Obnovit ze zálohy</string>
     <string name="import_backup_ask">Záloha nalezena v \"%1$s\"\n\nPřejete si soubor načíst a použít všechna jeho data a nastavení?</string>
     <string name="import_backup_no_backup_found">Žádná záloha nebyla nalezena. \n\nZkopírujte zálohu do \"%1$s\" a zkuste to znovu.</string>
-    <!-- %1$s will be replaced by the failing address -->
+    <!-- deprecated, %1$s will be replaced by the failing address -->
     <string name="login_error_cannot_login">Přihlášení jako \"%1$s\" selhalo. Zkontrolujte si prosím ještě jednou e-mail a heslo.</string>
     <!-- TLS certificate checks -->
     <string name="accept_invalid_certificates">Přijmout neplatné certifikáty</string>
@@ -722,6 +726,7 @@
     <!-- first placeholder is replaced by the number of files (always 2 or more); second placeholder is replaced by a chat name -->
     <string name="ask_send_files_to_chat">Poslat %1$d soubory do chatu \"%2$s\"?</string>
     <string name="ask_send_files_to_selected_chats">Poslat %1$d soubor(y) do %2$d chatu?</string>
+    <!-- deprecated -->
     <string name="videos_sent_without_recoding">(Videa se posílají jako původní velké soubory. Pokud si přejete posílat videa jako menší soubory, přiložte je odděleně)</string>
     <string name="share_text_multiple_chats">Poslat tento text do %1$d chatů?\n\n\"%2$s\"</string>
     <string name="share_abort">Sdílení přerušeno kvůli chybějícím oprávnění.</string>
@@ -977,10 +982,13 @@
     <string name="qrscan_failed">QR kód nelze přečíst</string>
     <string name="qrscan_ask_join_group">Přejete si přidat ke skupině \"%1$s\"?</string>
     <string name="qrscan_ask_join_channel">Chcete se připojit ke kanálu \"%1$s\"?</string>
+    <!-- deprecated -->
     <string name="qrscan_fingerprint_mismatch">Rozpoznaný otisk uživatele %1$s neodpovídá jeho poslednímu otisku.</string>
+    <!-- deprecated -->
     <string name="qrscan_no_addr_found">Tento QR kód obsahuje otisk, ale žádný e-mail.\n\nK ověření nezávislou cestou nejprve vytvořte šifrované připojení k příjemci.</string>
     <string name="qrscan_contains_text">Text z QR kódu:\n\n%1$s</string>
     <string name="qrscan_contains_url">Adresa URL z QR kódu:\n\n%1$s</string>
+    <!-- deprecated -->
     <string name="qrscan_fingerprint_label">Otisk</string>
     <string name="withdraw_verifycontact_explain">Tento QR kód mohou ostatní uživatelé použít, aby vás kontaktovali.\n\nMůžete také vygenerovat nový, čímž dosavadní QR kód či odkaz s pozvánkou zneplatníte.</string>
     <string name="withdraw_verifygroup_explain">Tento QR kód mohou ostatní uživatelé použít k připojení ke skupině \"%1$s\".\n\nMůžete také vygenerovat nový, čímž dosavadní QR kód či odkaz s pozvánkou zneplatníte.</string>
@@ -1015,8 +1023,11 @@
     <string name="secure_join_wait">Navazování koncově šifrovaného spojení, prosím, čekejte...</string>
     <string name="contact_verified">Uživatel %1$s ověřen.</string>
     <!-- Shown in contact profile. The placeholder will be replaced by the name of the contact that introduced the contact. -->
+    <!-- deprecated -->
     <string name="verified_by">Ověřeni uživatelem %1$s.</string>
+    <!-- deprecated -->
     <string name="verified_by_you">Ověřeni mnou</string>
+    <!-- deprecated -->
     <string name="verified_by_unknown">Představeno</string>
     <string name="mailto_dialog_header_select_chat">Vyberte chat, do kterého chcete zprávu poslat</string>
     <!-- first placeholder is the name of the chat -->
@@ -1047,7 +1058,6 @@
     <string name="perm_explain_access_to_storage_denied">Pro příjem a posílání souborů přejděte do nastavení aplikace, vyberte \"Oprávnění\" a povolte oprávnění \"Fotky a videa\".</string>
     <string name="perm_explain_access_to_location_denied">Pro posílání polohy přejděte do nastavení aplikace, vyberte \"Oprávnění\" a povolte oprávnění \"Poloha\".</string>
     <string name="perm_explain_access_to_notifications_denied">Chcete-li dostávat oznámení, přejděte na „Nastavení systému / Aplikace / Delta Chat“ a povolte „Oznámení“.</string>
-
     <!-- ImageEditorHud -->
     <string name="ImageEditorHud_draw_anywhere_to_blur">Kreslením rozmazávejte</string>
     <string name="ImageEditorHud_add_text">Přidat text</string>
@@ -1174,6 +1184,4 @@
     <string name="perm_enable_bg_reminder_title">Stiskem nastavíte přijímání zpráv, když je aplikace Delta Chat na pozadí.</string>
     <string name="perm_enable_bg_already_done">Přijímání zpráv na pozadí jste již aplikaci Delta Chat povolili.\n\nV případě, že vám zprávy na pozadí stále nechodí, prosím zkontrolujte svá systémová nastavení.</string>
 
-    <!-- device messages for updates -->
-    <string name="update_2_0">Co je nového? \n\n💯 Koncové šifrování je nyní spolehlivé a navždy. Visací zámky 🔒 jsou pryč! \n\n✉️ Klasické e-maily bez koncového šifrování jsou označeny symbolem písmene \n\n😻 Nová vylepšená profilová obrazovka pro všechny kontakty \n\n🔲 Nové tlačítko pro rychlý přístup k aplikacím používaným v chatu \n\n❤️ Přispějte nám, abychom zůstali nezávislí a mohli pokračovat ve vylepšování: %1$s</string>
-</resources>
+    </resources>

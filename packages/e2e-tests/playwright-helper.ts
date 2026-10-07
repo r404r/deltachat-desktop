@@ -3,10 +3,13 @@ import {
   test as base,
   Browser,
   BrowserContext,
+  Locator,
   Page,
 } from '@playwright/test'
 import path from 'path'
+import https from 'https'
 import { loadEnv } from './load-env.js'
+import net from 'net'
 
 loadEnv()
 
@@ -38,6 +41,67 @@ export const chatmailServerDomain = process.env.DC_CHATMAIL_DOMAIN
     // without them having to specify this env variable in repository settings.
     'ci-chatmail.testrun.org'
 
+/**
+ * True if `host` is a bare IP address rather than a DNS name.
+ */
+export function isIpAddress(host: string): boolean {
+  return net.isIP(host) !== 0
+}
+
+/**
+ * Create an account on a (self-signed, IP-only) chatmail relay via its
+ * `POST /new` endpoint and return the `dclogin_url` it hands back
+ */
+export async function createAccountOnRelay(relayIp: string): Promise<string> {
+  const body = await new Promise<string>((resolve, reject) => {
+    const req = https.request(
+      {
+        method: 'POST',
+        host: relayIp,
+        path: '/new',
+        // LAN relays are self-signed and reachable only by IP.
+        rejectUnauthorized: false,
+      },
+      res => {
+        let data = ''
+        res.on('data', chunk => (data += chunk))
+        res.on('end', () => {
+          if (res.statusCode && res.statusCode >= 400) {
+            reject(
+              new Error(
+                `relay POST /new failed: ${res.statusCode} ${data.slice(0, 200)}`
+              )
+            )
+          } else {
+            resolve(data)
+          }
+        })
+      }
+    )
+    req.on('error', reject)
+    req.end()
+  })
+  let parsed: { email?: string; password?: string; dclogin_url?: string }
+  try {
+    parsed = JSON.parse(body)
+  } catch {
+    throw new Error(`unexpected /new response: ${body.slice(0, 200)}`)
+  }
+  if (parsed.dclogin_url) {
+    return parsed.dclogin_url
+  }
+  // Fallback for relays that return only credentials: build the DCLOGIN url
+  // ourselves, pinning imap/smtp to the relay IP and accepting its
+  // self-signed cert (`ic=3`).
+  if (parsed.email && parsed.password) {
+    const p = encodeURIComponent(parsed.password)
+    return `dclogin:${parsed.email}?p=${p}&v=1&ih=${relayIp}&sh=${relayIp}&ic=3`
+  }
+  throw new Error(
+    `relay /new response has neither dclogin_url nor email+password: ${body.slice(0, 200)}`
+  )
+}
+
 export const mailServerUrl = process.env.DC_MAIL_SERVER
 
 export const mailServerToken = process.env.DC_MAIL_SERVER_TOKEN
@@ -65,6 +129,19 @@ export const test = base.extend<TestOptions>({
   isChatmail: [true, { option: true }],
 })
 
+/**
+ * we skip tests that use instant onboarding against a self-signed relay
+ * because the DCACCOUNT mechanism does not work yet with self-signed relays
+ *
+ * https://github.com/chatmail/core/issues/8211
+ */
+export function skipOnIpRelay() {
+  test.skip(
+    isIpAddress(chatmailServerDomain),
+    'cannot onboard against a self-signed IP-only relay, see chatmail/core#8211'
+  )
+}
+
 const fixturesPath = path.join(import.meta.dirname, 'fixtures')
 
 export async function reloadPage(page: Page): Promise<void> {
@@ -90,6 +167,10 @@ export async function switchToProfile(
     1,
     { timeout: 10000 }
   )
+  // Move the pointer off the account item, otherwise its hover tooltip
+  // (AccountHoverInfo) stays open and intercepts clicks on elements
+  // underneath it, e.g. the qr-scan-button.
+  await page.mouse.move(0, 0)
 }
 
 /**
@@ -196,7 +277,14 @@ export async function createNewProfile(
     if (!chatmailServerDomain) {
       throw new Error('DC_CHATMAIL_DOMAIN env var not set, cannot run tests')
     }
-    dcAccountLink = `dcaccount:${chatmailServerDomain satisfies string}`
+    if (isIpAddress(chatmailServerDomain)) {
+      // A bare-IP relay can't be onboarded via DCACCOUNT (core would try the
+      // unresolvable `imap.<ip>`), so we create the account on the relay and
+      // use DCLOGIN url to create the profile
+      dcAccountLink = await createAccountOnRelay(chatmailServerDomain)
+    } else {
+      dcAccountLink = `dcaccount:${chatmailServerDomain satisfies string}`
+    }
   } else {
     if (!mailServerUrl || mailServerToken == undefined) {
       throw new Error(
@@ -313,6 +401,35 @@ export async function getProfile(
   }
 }
 
+/**
+ * Toggle the "Enforce Encryption for All Relays" setting
+ * Unencrypted ("New Email") chats can only be created when it is disabled.
+ */
+export async function setForceEncryption(
+  page: Page,
+  accountId: string,
+  enabled: boolean
+): Promise<void> {
+  await page.getByTestId(`account-item-${accountId}`).click({ button: 'right' })
+  await page.getByTestId('open-settings-menu-item').click()
+  await page.getByTestId('open-advanced-settings').click()
+  await page.getByTestId('open-transport-settings').click()
+  await page.getByLabel('Edit Relay').first().click()
+  await page.locator('#show-advanced-button').click()
+  const switchInput = page.getByRole('checkbox', {
+    name: 'Enforce Encryption for All Relays',
+  })
+  if ((await switchInput.isChecked()) !== enabled) {
+    await switchInput.press('Space')
+  }
+  await expect(switchInput).toBeChecked({ checked: enabled })
+  await page.getByTestId('ok').click()
+  // Wait for the re-configuration to finish and the edit dialog to close.
+  await expect(page.locator('#addr')).not.toBeVisible({ timeout: 60_000 })
+  await page.getByTestId('transports-settings-close').click()
+  await page.getByTestId('settings-advanced-close').click()
+}
+
 export async function createProfiles(
   number: number,
   existingProfiles: User[],
@@ -335,14 +452,12 @@ export async function createProfiles(
     await page.context().grantPermissions(['clipboard-read', 'clipboard-write'])
   }
   for (let n = 0; n < number; n++) {
-    if (!hasProfileWithName(userNames[n])) {
-      await createUser(
-        userNames[n],
-        page,
-        existingProfiles,
-        n === 0,
-        useChatmail
-      )
+    const name = userNames[n]
+    if (name == undefined) {
+      throw new Error('not enough userNames')
+    }
+    if (!hasProfileWithName(name)) {
+      await createUser(name, page, existingProfiles, n === 0, useChatmail)
     } else {
       console.log('User already exists')
     }
@@ -353,8 +468,7 @@ export async function deleteAllProfiles(
   page: Page,
   existingProfiles: User[]
 ): Promise<void> {
-  for (let i = 0; i < existingProfiles.length; i++) {
-    const profileToDelete = existingProfiles[i]
+  for (const profileToDelete of existingProfiles) {
     const deleted = await deleteProfile(page, profileToDelete.id)
     expect(deleted).toContain(profileToDelete.name)
     if (deleted) {
@@ -528,6 +642,15 @@ export async function selectChat(
       .filter({ has: page.getByRole('list', { name: 'Messages' }) })
       .getByRole('heading')
   ).toContainText(chatName)
+}
+
+export async function openReactionsBar(
+  page: Page,
+  message: Locator
+): Promise<Locator> {
+  await message.click({ button: 'right' })
+  await page.getByRole('menu').getByRole('menuitem', { name: 'React' }).click()
+  return page.getByRole('menu', { name: 'React' })
 }
 
 export const createChat = async (

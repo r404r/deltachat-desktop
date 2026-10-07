@@ -21,7 +21,6 @@ export function getDefaultState(): DesktopSettingsType {
     minimizeToTray: true,
     syncAllAccounts: true,
     lastSaveDialogLocation: undefined,
-    enableWebxdcDevTools: false,
     HTMLEmailAskForRemoteLoadingConfirmation: true,
     HTMLEmailAlwaysLoadRemoteContent: false,
     galleryImageKeepAspectRatio: false,
@@ -30,6 +29,7 @@ export function getDefaultState(): DesktopSettingsType {
     inChatSoundsVolume: 0.5,
     autostart: true,
     autostartElectron: false,
+    hideMenuBar: false,
     enableKeyManagement: false,
     appStoreBaseUrl: undefined,
   }

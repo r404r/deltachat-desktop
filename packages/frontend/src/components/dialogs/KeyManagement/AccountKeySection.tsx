@@ -3,6 +3,7 @@ import React, { useCallback, useEffect, useState } from 'react'
 import useTranslationFunction from '../../../hooks/useTranslationFunction'
 import useConfirmationDialog from '../../../hooks/dialog/useConfirmationDialog'
 import useDialog from '../../../hooks/dialog/useDialog'
+import useAlertDialog from '../../../hooks/dialog/useAlertDialog'
 import { selectedAccountId } from '../../../ScreenController'
 import { BackendRemote } from '../../../backend-com'
 import {
@@ -117,6 +118,7 @@ function ImportKeyButton({ onImported }: { onImported: () => void }) {
   const tx = useTranslationFunction()
   const openConfirmationDialog = useConfirmationDialog()
   const { openDialog } = useDialog()
+  const openAlertDialog = useAlertDialog()
   const [importing, setImporting] = useState(false)
 
   const handleImport = useCallback(async () => {
@@ -148,9 +150,8 @@ function ImportKeyButton({ onImported }: { onImported: () => void }) {
           try {
             await window.__addAndSelectAccount()
           } catch (err) {
-            window.__userFeedback({
-              type: 'error',
-              text: tx('error_x', unknownErrorToString(err)),
+            void openAlertDialog({
+              message: tx('error_x', unknownErrorToString(err)),
             })
           }
         },
@@ -214,22 +215,20 @@ function ImportKeyButton({ onImported }: { onImported: () => void }) {
     try {
       const result = await importSelfSecretKey(selectedAccountId(), filename)
       if (result.success) {
-        window.__userFeedback({
-          type: 'success',
-          text: tx('key_management_import_success'),
+        void openAlertDialog({
+          message: tx('key_management_import_success'),
         })
         onImported()
       } else {
-        window.__userFeedback({
-          type: 'error',
-          text: tx('error_x', result.error ?? 'unknown error'),
+        void openAlertDialog({
+          message: tx('error_x', result.error ?? 'unknown error'),
         })
       }
     } finally {
       setImporting(false)
       await cleanupTempFile()
     }
-  }, [openConfirmationDialog, openDialog, onImported, tx])
+  }, [openConfirmationDialog, openDialog, openAlertDialog, onImported, tx])
 
   return (
     <button
@@ -255,6 +254,7 @@ function ExportKeyButton() {
   const tx = useTranslationFunction()
   const openConfirmationDialog = useConfirmationDialog()
   const { openDialog } = useDialog()
+  const openAlertDialog = useAlertDialog()
   const [exporting, setExporting] = useState(false)
 
   const handleExport = useCallback(async () => {
@@ -331,9 +331,8 @@ function ExportKeyButton() {
 
       // Failure path.
       if (!result.success) {
-        window.__userFeedback({
-          type: 'error',
-          text: tx('error_x', result.error ?? 'unknown error'),
+        void openAlertDialog({
+          message: tx('error_x', result.error ?? 'unknown error'),
         })
 
         // Browser special case: if any `ImexFileWritten` events fired
@@ -382,9 +381,8 @@ function ExportKeyButton() {
 
       // Step 5: Success feedback — only now expose anything to the user.
       if (!isBrowser) {
-        window.__userFeedback({
-          type: 'success',
-          text: tx('key_management_export_success_electron', destination),
+        void openAlertDialog({
+          message: tx('key_management_export_success_electron', destination),
         })
         return
       }
@@ -393,9 +391,8 @@ function ExportKeyButton() {
         // Browser succeeded but we observed no file events in the grace
         // window; surface a hint so the user doesn't think it silently
         // failed.
-        window.__userFeedback({
-          type: 'success',
-          text: tx('key_management_export_success_browser_empty'),
+        void openAlertDialog({
+          message: tx('key_management_export_success_browser_empty'),
         })
         return
       }
@@ -419,7 +416,7 @@ function ExportKeyButton() {
       emitter.off('ImexFileWritten', onFileWritten)
       setExporting(false)
     }
-  }, [openConfirmationDialog, openDialog, tx])
+  }, [openConfirmationDialog, openDialog, openAlertDialog, tx])
 
   return (
     <button

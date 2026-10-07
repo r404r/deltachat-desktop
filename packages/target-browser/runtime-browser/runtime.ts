@@ -237,6 +237,7 @@ class BrowserRuntime implements Runtime {
     ).json()
 
     if (!locale) {
+      // TODO we're supposed to return the current locale instead.
       return {
         locale: 'en',
         messages: { ...messagesEnglish, ...untranslated },
@@ -281,6 +282,18 @@ class BrowserRuntime implements Runtime {
   setLocale(_locale: string): Promise<void> {
     throw new Error('Method not implemented.')
   }
+
+  async getDesktopSettings(): Promise<DesktopSettingsType> {
+    const request = await fetch('/backend-api/config')
+    if (!request.ok) {
+      throw new Error('getDesktopSettings request failed')
+    }
+    const config = await request.json()
+    if (config.locale === null) {
+      config.locale = navigator.language
+    }
+    return config
+  }
   async setDesktopSetting(
     key: keyof DesktopSettingsType,
     value: string | number | boolean | undefined
@@ -301,6 +314,13 @@ class BrowserRuntime implements Runtime {
       throw new Error('setDesktopSettings request failed')
     }
   }
+  onDesktopSettingChanged:
+    | (<T extends keyof DesktopSettingsType>(
+        key: T,
+        value: DesktopSettingsType[T]
+      ) => void)
+    | undefined
+
   async getAvailableThemes(): Promise<Theme[]> {
     return (await fetch('/themes.json')).json()
   }
@@ -441,7 +461,7 @@ class BrowserRuntime implements Runtime {
     }
 
     this.log.info('notify-icon', { icon }) // todo rm
-    const notification = new Notification(title, {
+    const notification = new Notification(title ?? '', {
       body,
       icon,
       tag: `${accountId}.${chatId}.${messageId}`,
@@ -513,17 +533,6 @@ class BrowserRuntime implements Runtime {
       throw new Error('this.runtime_info is not set')
     }
     return this.runtime_info
-  }
-  async getDesktopSettings(): Promise<DesktopSettingsType> {
-    const request = await fetch('/backend-api/config')
-    if (!request.ok) {
-      throw new Error('getDesktopSettings request failed')
-    }
-    const config = await request.json()
-    if (config.locale === null) {
-      config.locale = navigator.language
-    }
-    return config
   }
   getWebxdcIconURL(_accountId: number, _msgId: number): string {
     this.log.critical('getWebxdcIconURL Method not implemented.')

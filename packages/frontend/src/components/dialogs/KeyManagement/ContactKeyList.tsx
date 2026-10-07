@@ -5,7 +5,6 @@ import { selectedAccountId } from '../../../ScreenController'
 import { BackendRemote } from '../../../backend-com'
 import { unknownErrorToString } from '@deltachat-desktop/shared/unknownErrorToString'
 import type { T } from '@deltachat/jsonrpc-client'
-import { InlineVerifiedIcon } from '../../VerifiedIcon'
 
 type Props = {
   onSelectContact: (contactId: number) => void
@@ -120,7 +119,6 @@ export default function ContactKeyList({ onSelectContact }: Props) {
                     {contact.address}
                   </span>
                 </span>
-                {contact.isVerified && <InlineVerifiedIcon />}
               </button>
             </li>
           )

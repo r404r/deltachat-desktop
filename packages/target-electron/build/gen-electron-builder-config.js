@@ -29,16 +29,24 @@ const env = process.env
 /** @type {import('./types').DeepWriteable<import('electron-builder').Configuration>} */
 const build = {}
 build['appId'] = 'chat.delta.desktop.electron'
+
+// electron-builder names the linux executable and the installed desktop file
+// after this, and electron derives the window class (X11 WM_CLASS / Wayland
+// app_id) from `desktopName` below. All three need to match for desktop
+// environments to associate the running window with the launcher entry.
+// see https://github.com/deltachat/deltachat-desktop/issues/6505
+let appName = 'deltachat-desktop'
+
 build['extraMetadata'] = {
   //@ts-ignore
-  // restore old name before mono-repo
-  name: 'deltachat-desktop',
+  name: appName,
 }
 
 if (previewBuild) {
   build.appId = 'chat.delta.desktop.electron.dev'
+  appName = 'deltachat-desktop-dev'
   //@ts-ignore
-  build.extraMetadata.name = 'deltachat-desktop-dev'
+  build.extraMetadata.name = appName
   //@ts-ignore
   build.extraMetadata.productName = 'DeltaChat-DevBuild'
   const p = JSON.parse(
@@ -47,6 +55,9 @@ if (previewBuild) {
   //@ts-ignore
   build.extraMetadata.version = p.version + '-DevBuild'
 }
+
+//@ts-ignore
+build.extraMetadata.desktopName = `${appName}.desktop`
 
 build['protocols'] = [
   {
@@ -131,6 +142,16 @@ build['mas'] = {
   ],
 }
 
+// CFBundleVersion of the built .pkg. App Store Connect does not allow uploading
+// a build with the same CFBundleVersion as a previous build. So in case we need
+// to update a build that was not was released but uploaded before the Build number
+// needs to be different for the build even it is for the same version
+const appstoreBuildNumber =
+  env.APPSTORE_BUILD_NUMBER ||
+  new Date().toISOString().replace(/[-:T]/g, '').slice(0, 12) // YYYYMMDDHHmm, UTC
+//@ts-ignore
+build.mas.bundleVersion = appstoreBuildNumber
+
 build['dmg'] = {
   sign: false,
   contents: [
@@ -153,6 +174,11 @@ build['linux'] = {
     entry: {
       Comment: 'Decentralized Private Messenger (https://delta.chat)',
       Keywords: 'delta chat;chat;deltachat;messaging;messenger;privacy',
+      // must match the app_id electron derives from `desktopName`.
+      // electron-builder defaults this to `productName` ("DeltaChat"), which
+      // matches neither the app_id nor the name of the installed desktop file,
+      // so set it explicitly
+      StartupWMClass: appName,
     },
   },
   files: [...files, PREBUILD_FILTERS.NOT_MAC, PREBUILD_FILTERS.NOT_WINDOWS],
@@ -162,6 +188,12 @@ build['linux'] = {
 
 build['appImage'] = {
   artifactName: '${productName}-${version}-${arch}.${ext}',
+}
+
+// see https://www.electron.build/docs/appimage/#modern-toolset-103--static-runtime
+// can be removed once we use electron builder 27 (not released yet)!
+build['toolsets'] = {
+  appimage: '1.0.3',
 }
 
 build['deb'] = {

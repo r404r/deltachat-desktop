@@ -14,7 +14,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { useDebouncedCallback } from 'use-debounce'
 import { debounce } from 'debounce'
 import { getLogger } from '@deltachat-desktop/shared/logger'
-import { useSettingsStore } from './settings'
+import { useDesktopSettingsStore } from './settings'
 import { shouldShowOSNotificationForCurrentChat } from '../system-integration/notifications'
 
 const log = getLogger('messagelist')
@@ -96,14 +96,14 @@ export function useMessageList(
   // even though we only depend on `volume`,
   // but let's hope the React compiler will take care of this
   // when it's released.
-  const settingsStore = useSettingsStore()[0]
+  const desktopSettingsStore = useDesktopSettingsStore()[0]
 
   const incomingMessageAudioElement = useMemo(() => {
     const el = document.createElement('audio')
     el.src = './audio/sound_in.wav'
     return el
   }, [])
-  const volume = settingsStore?.desktopSettings.inChatSoundsVolume
+  const volume = desktopSettingsStore?.inChatSoundsVolume
   if (volume != null) {
     // Note that `volume` could be 0.
     // eslint-disable-next-line react-hooks/immutability
@@ -227,11 +227,35 @@ export class MessageListStore extends Store<MessageListState> {
     super(defaultState(), 'MessageListStore')
   }
 
+  private activeViewCache: {
+    items: T.MessageListItem[]
+    start: number
+    end: number
+    view: T.MessageListItem[]
+  } | null = null
+
+  /**
+   * Cache {@linkcode MessageListStore.activeView} and return the cached reference
+   * if nothing changed, so that it doesn't trigger `React.memo` to rerender.
+   */
   get activeView() {
+    const items = this.state.messageListItems
     const start = this.state.oldestFetchedMessageListItemIndex
     const end = this.state.newestFetchedMessageListItemIndex
-    const view = getView(this.state.messageListItems, start, end)
+
+    const cache = this.activeViewCache
+    if (
+      cache !== null &&
+      cache.items === items &&
+      cache.start === start &&
+      cache.end === end
+    ) {
+      return cache.view
+    }
+
+    const view = getView(items, start, end)
     // this.log.debug('get activeView', { end, start, view })
+    this.activeViewCache = { items, start, end, view }
     return view
   }
 
@@ -522,7 +546,8 @@ export class MessageListStore extends Store<MessageListState> {
               this.accountId,
               messageListItems,
               oldestFetchedMessageListItemIndex,
-              newestFetchedMessageListItemIndex
+              newestFetchedMessageListItemIndex,
+              {} // pass empty cache instead of `this.state.messageCache`
             ).catch(err => this.log.error('loadMessages failed', err))) || {}
         }
 
@@ -622,7 +647,8 @@ export class MessageListStore extends Store<MessageListState> {
               this.accountId,
               state.messageListItems,
               oldestFetchedMessageListItemIndex,
-              lastMessageIndex - 1
+              lastMessageIndex - 1,
+              this.state.messageCache
             ).catch(err => this.log.error('loadMessages failed', err))) || {}
 
           this.reducer.appendMessagesTop({
@@ -682,7 +708,8 @@ export class MessageListStore extends Store<MessageListState> {
               this.accountId,
               state.messageListItems,
               newestFetchedMessageListItemIndex,
-              newNewestFetchedMessageListItemIndex
+              newNewestFetchedMessageListItemIndex,
+              this.state.messageCache
             ).catch(err => this.log.error('loadMessages failed', err))) || {}
 
           this.reducer.appendMessagesBottom({
@@ -725,7 +752,8 @@ export class MessageListStore extends Store<MessageListState> {
               this.accountId,
               messageListItems,
               oldestFetchedMessageListItemIndex,
-              newestFetchedMessageListItemIndex
+              newestFetchedMessageListItemIndex,
+              {} // pass empty cache instead of `this.state.messageCache`
             ).catch(err => this.log.error('loadMessages failed', err))) || {}
 
           this.reducer.refresh(
@@ -886,7 +914,8 @@ export class MessageListStore extends Store<MessageListState> {
         this.accountId,
         messageListItems,
         indexStart,
-        indexEnd
+        indexEnd,
+        this.state.messageCache
       ).catch(err => this.log.error('loadMessages failed', err))) || {}
 
     this.reducer.fetchedIncomingMessages({
@@ -1096,10 +1125,6 @@ export class MessageListStore extends Store<MessageListState> {
             `even belong to chat ${chatId}? Or did the message get deleted?\n` +
             `Anyways, falling back to jumping to the last message.`
         )
-        window.__userFeedback({
-          type: 'error',
-          text: `${window.static_translate('error')}: message not found`,
-        })
         jumpToMessageIndex = messageListItems.length - 1
       }
 
@@ -1193,7 +1218,8 @@ export class MessageListStore extends Store<MessageListState> {
             accountId,
             messageListItems,
             oldestFetchedMessageListItemIndex,
-            newestFetchedMessageListItemIndex
+            newestFetchedMessageListItemIndex,
+            this.state.messageCache
           ).catch(err => this.log.error('loadMessages failed', err))) || {}
       }
 
@@ -1244,11 +1270,20 @@ export class MessageListStore extends Store<MessageListState> {
   }
 }
 
+/**
+ * The return value will only contain messages between
+ * {@linkcode oldestFetchedMessageListItemIndex} and
+ * {@linkcode newestFetchedMessageListItemIndex} in
+ * {@linkcode messageListItems}, even if {@linkcode existingMessages}
+ * contained some messages outside of the range.
+ * (See {@linkcode MessageListState} docs for reasoning).
+ */
 async function loadMessages(
   accountId: number,
   messageListItems: Type.MessageListItem[],
   oldestFetchedMessageListItemIndex: number,
-  newestFetchedMessageListItemIndex: number
+  newestFetchedMessageListItemIndex: number,
+  existingMessages: MessageListState['messageCache']
 ) {
   const view = getView(
     messageListItems,
@@ -1258,12 +1293,39 @@ async function loadMessages(
     .map(m => (m.kind === 'message' ? m.msg_id : C.DC_MSG_ID_LAST_SPECIAL))
     .filter(msgId => msgId !== C.DC_MSG_ID_LAST_SPECIAL)
 
-  if (view.length > 100) {
+  const missingIds = view.filter(msgId => {
+    const m = existingMessages[msgId]
+    const exists =
+      m != undefined &&
+      // Usually if a message failed to load then it's permanent (e.g. deleted),
+      // but let's reload it for good measure.
+      m.kind !== 'loadingError'
+
+    if (exists) {
+      m satisfies T.Message &
+        T.MessageLoadResult & {
+          kind: 'message'
+        }
+    }
+
+    return !exists
+  })
+
+  if (missingIds.length > 100) {
     log.error(
-      `loadMessages is loading too many (${view.length}) messages. ` +
+      `loadMessages is loading too many (${missingIds.length}) messages. ` +
         'This is bad for performance.'
     )
   }
 
-  return await BackendRemote.rpc.getMessages(accountId, view)
+  const missing =
+    missingIds.length > 0
+      ? await BackendRemote.rpc.getMessages(accountId, missingIds)
+      : {}
+
+  const ret: typeof existingMessages = {}
+  for (const id of view) {
+    ret[id] = missing[id] ?? existingMessages[id]
+  }
+  return ret
 }

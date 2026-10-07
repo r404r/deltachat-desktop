@@ -192,7 +192,7 @@ export default function AccountItem({
         // it only applies to a single chat.
         // But it's good enough I guess.
         // Maybe we could also use `n_messages_in_m_chats` instead.
-        aria-label={tx('chat_n_new_messages', String(unreadCount), {
+        aria-label={tx('chat_n_unread_messages', String(unreadCount), {
           quantity: unreadCount,
         })}
       >
@@ -271,16 +271,13 @@ export default function AccountItem({
         aria-busy={!account && accountFetch.loading}
         aria-label={
           account?.kind === 'Configured'
-            ? account.displayName || account.addr || undefined
+            ? account.displayName || tx('unnamed')
             : undefined
         }
         aria-description={
           [
-            account?.kind === 'Configured' && account.displayName
-              ? account.addr
-              : undefined,
             unreadCount
-              ? tx('chat_n_new_messages', String(unreadCount), {
+              ? tx('chat_n_unread_messages', String(unreadCount), {
                   quantity: unreadCount,
                 })
               : undefined,
@@ -325,10 +322,7 @@ export default function AccountItem({
                 className={styles.content}
                 style={{ backgroundColor: account.color }}
               >
-                {avatarInitial(
-                  account.displayName || '',
-                  account.addr || undefined
-                )}
+                {avatarInitial(account.displayName || tx('unnamed'))}
               </div>
             )}
           </div>

@@ -33,7 +33,13 @@ export default function EditProfileDialog({ onClose, ...props }: Props) {
 
   return (
     <Dialog canOutsideClickClose={false} onClose={onClose}>
-      <DialogHeader title={tx('pref_profile_info_headline')} />
+      <DialogHeader
+        title={
+          props.settingsStore.settings.team_profile === '1'
+            ? tx('team_profile')
+            : tx('pref_profile_info_headline')
+        }
+      />
       <EditProfileDialogInner onClose={onClose} {...props} />
     </Dialog>
   )
@@ -89,7 +95,6 @@ function EditProfileDialogInner({
           <div className={styles.editProfileDialog}>
             <ProfileImageSelector
               displayName={displayname}
-              addr={settingsStore.selfContact.address}
               color={settingsStore.selfContact.color}
               profilePicture={profilePicture}
               setProfilePicture={setProfilePicture}
@@ -99,7 +104,11 @@ function EditProfileDialogInner({
             key='displayname'
             id='displayname'
             dataTestId='displayname-input'
-            placeholder={tx('pref_your_name')}
+            placeholder={
+              settingsStore.settings.team_profile === '1'
+                ? tx('team_name')
+                : tx('pref_your_name')
+            }
             value={displayname}
             onChange={(
               event: React.FormEvent<HTMLElement> &

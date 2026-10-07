@@ -1,10 +1,7 @@
 import React, { useCallback, useMemo, useState } from 'react'
 import type { T } from '@deltachat/jsonrpc-client'
 import { getLogger } from '@deltachat-desktop/shared/logger'
-import {
-  RovingTabindexProvider,
-  useRovingTabindex,
-} from '../../contexts/RovingTabindex'
+import { useRovingTabindex } from '../../contexts/RovingTabindex'
 import { useMultiselect } from '../../hooks/useMultiselect'
 
 const log = getLogger('messageFocusAndMultiselect')
@@ -24,9 +21,6 @@ export const MessageMultiselectContext =
   })
 
 export function useMessageFocusAndMultiselectContextValue(props: {
-  wrapperElementRef: Parameters<
-    typeof RovingTabindexProvider
-  >[0]['wrapperElementRef']
   messageIds: Array<T.Message['id']>
 }) {
   const [selectedMessages_, setSelectedMessages] = useState(
@@ -63,10 +57,15 @@ export function useMessageFocusAndMultiselectContextValue(props: {
     // Only enter "multi-select mode" on Shift + Click or Ctrl + Click.
     // Multi-selecting messages is not something that people do all the time.
     // It's annoying that a message keeps being displayed as selected
-    // even though all you did is click a link inside of it.
+    // even though all you did is click on its bubble
+    // to focus it or to select text or something.
     { onNormalClick: 'unselectAll' }
   )
-  return { ...multiselect, resetSelection }
+  // Memoized because it is used as a context value.
+  return useMemo(
+    () => ({ ...multiselect, resetSelection }),
+    [multiselect, resetSelection]
+  )
 }
 
 export function useMessageFocusAndMultiselect(

@@ -112,7 +112,7 @@ export default function CommandPalette({ mode = 'search', onClose }: Props) {
     avatarPath = scopedAccount.avatarPath || undefined
     accountColor = scopedAccount.color || undefined
   } else if (accountInfo?.kind === 'Configured') {
-    accountName = accountInfo.displayName || accountInfo.addr || ''
+    accountName = accountInfo.displayName || tx('unnamed')
     avatarPath = accountInfo.profileImage || undefined
     accountColor = accountInfo.color || undefined
   }
@@ -590,7 +590,7 @@ export default function CommandPalette({ mode = 'search', onClose }: Props) {
                           item.isMuted ? styles.freshMessageCounterMuted : ''
                         }`}
                         aria-label={tx(
-                          'chat_n_new_messages',
+                          'chat_n_unread_messages',
                           String(item.freshMessageCounter),
                           { quantity: item.freshMessageCounter }
                         )}

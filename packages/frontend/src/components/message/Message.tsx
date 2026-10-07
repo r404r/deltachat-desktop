@@ -1117,7 +1117,12 @@ export default function Message(props: {
             >
               {message.reactions && (
                 <Reactions
-                  reactions={message.reactions}
+                  message={
+                    message as typeof message & {
+                      reactions: typeof message.reactions
+                    }
+                  }
+                  chatType={chat.chatType}
                   tabindexForInteractiveContents={
                     tabindexForInteractiveContents
                   }
@@ -1330,7 +1335,7 @@ function WebxdcMessageContent({
   }
 
   const info = webxdcInfo || {
-    name: isLoadingWebxdcInfo ? 'Loading...' : 'INFO MISSING!',
+    name: isLoadingWebxdcInfo ? tx('loading') : 'INFO MISSING!',
     document: undefined,
     summary: isLoadingWebxdcInfo ? '' : 'INFO MISSING!',
   }

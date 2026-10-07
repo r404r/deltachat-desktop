@@ -27,9 +27,18 @@ export async function updateCoreStrings() {
     | typeof C.DC_STR_SYNC_MSG_SUBJECT
     | typeof C.DC_STR_SYNC_MSG_BODY
 
+    // No string for these upstream yet. TODO.
+    | typeof C.DC_STR_MESSAGE_PINNED_BY_OTHER
+    | typeof C.DC_STR_MESSAGE_PINNED_BY_YOU
+
     // Deprecated, see
     // https://github.com/chatmail/core/blob/main/deltachat-ffi/deltachat.h
     | typeof C.DC_STR_E2E_AVAILABLE
+    | typeof C.DC_STR_PHASING_OUT
+    // Deprecated, no longer set since upstream e719bb27f
+    | typeof C.DC_STR_FINGERPRINTS
+    | typeof C.DC_STR_CANNOT_LOGIN
+    | typeof C.DC_STR_QUOTA_EXCEEDING_MSG_BODY
   >
   const strings: StockStringsSomeOmited = {
     [C.DC_STR_NOMESSAGES]: tx('chat_no_messages'),
@@ -41,13 +50,10 @@ export async function updateCoreStrings() {
     [C.DC_STR_VIDEO]: tx('video'),
     [C.DC_STR_AUDIO]: tx('audio'),
     [C.DC_STR_FILE]: tx('file'),
-    [C.DC_STR_FINGERPRINTS]: tx('qrscan_fingerprint_label'),
     [C.DC_STR_ARCHIVEDCHATS]: tx('chat_archived_chats_title'),
-    [C.DC_STR_CANNOT_LOGIN]: tx('login_error_cannot_login'),
     [C.DC_STR_DEVICE_MESSAGES]: tx('device_talk'),
     [C.DC_STR_NEW_GROUP_SEND_FIRST_MESSAGE]: tx('chat_new_group_hint'),
     [C.DC_STR_SAVED_MESSAGES]: tx('saved_messages'),
-    [C.DC_STR_CONTACT_VERIFIED]: tx('contact_verified'),
     [C.DC_STR_DEVICE_MESSAGES_HINT]: tx('device_talk_explain'),
     [C.DC_STR_WELCOME_MESSAGE]: tx('device_talk_welcome_message2'),
     [C.DC_STR_SUBJECT_FOR_NEW_CONTACT]: tx('systemmsg_subject_for_new_contact'),
@@ -60,7 +66,6 @@ export async function updateCoreStrings() {
     [C.DC_STR_BAD_TIME_MSG_BODY]: tx('devicemsg_bad_time'),
     [C.DC_STR_UPDATE_REMINDER_MSG_BODY]: tx('devicemsg_update_reminder'),
     [C.DC_STR_SELF_DELETED_MSG_BODY]: tx('devicemsg_self_deleted'),
-    [C.DC_STR_QUOTA_EXCEEDING_MSG_BODY]: tx('devicemsg_storage_exceeding'),
     [C.DC_STR_INCOMING_MESSAGES]: tx('incoming_messages'),
     [C.DC_STR_OUTGOING_MESSAGES]: tx('outgoing_messages'),
     [C.DC_STR_CONNECTED]: tx('connectivity_connected'),
@@ -177,13 +182,18 @@ export async function updateCoreStrings() {
     [C.DC_STR_CHAT_UNENCRYPTED_EXPLANATON]: tx('chat_unencrypted_explanation'),
     [C.DC_STR_SECURE_JOIN_CHANNEL_QR_DESC]: tx('qrshow_join_channel_hint'),
     [C.DC_STR_MSG_YOU_JOINED_CHANNEL]: tx('you_joined_the_channel'),
-    [C.DC_STR_REMOVE_MEMBER]: tx('remove_member_by_you'),
+    [C.DC_STR_REMOVE_MEMBER]: tx('member_x_removed'),
     [C.DC_STR_SECURE_JOIN_CHANNEL_STARTED]: tx('secure_join_channel_started'),
     [C.DC_STR_STATS_MSG_BODY]: tx('stats_msg_body'),
 
     [C.DC_STR_CHANNEL_IMAGE_CHANGED]: tx('channel_image_changed'),
     [C.DC_STR_CHANNEL_NAME_CHANGED]: tx('channel_name_changed'),
     [C.DC_STR_MESSAGES_ARE_E2EE]: tx('messages_are_e2ee'),
+
+    [C.DC_STR_ADD_YOU]: tx('member_you_added'),
+    [C.DC_STR_ADD_YOU_BY]: tx('add_you_by_other'),
+    [C.DC_STR_REMOVE_YOU]: tx('member_you_removed'),
+    [C.DC_STR_REMOVE_YOU_BY]: tx('remove_you_by_other'),
   }
 
   await BackendRemote.rpc.setStockStrings(strings)

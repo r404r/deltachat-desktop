@@ -7,7 +7,8 @@ Options:
 | **Development Options** | |
 | `--translation-watch` | enable auto-reload for `_locales/_untranslated_en.json`, when that file changes the current language is reloaded |
 | `--devmode` | opens electron devtools and activates `--log-debug` & `--log-to-console` |
-| `--allow-unsafe-core-replacement` | allow changing core with `DELTA_CHAT_RPC_SERVER` and looking for it in `PATH` instead of forcing the use of the prebuilds |
+| `--allow-custom-rpc-server-path` | use the `deltachat-rpc-server` from `DELTA_CHAT_RPC_SERVER` or from `PATH` instead of the prebuild shipped with the app |
+| `--allow-unsafe-core-replacement` | deprecated alias for `--allow-custom-rpc-server-path` |
 | **Theme** | |
 | `--theme <themeid>` | set a specific theme (see [THEMES.md](./THEMES.md)) |
 | `--theme-watch` | enable auto-reload for the active theme |
@@ -25,7 +26,8 @@ useful env vars you can set:
 | Variable (sometimes with value) | Effect |
 | ----------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `NODE_OPTIONS=--enable-source-maps` | Make stacktraces in errors useful by enabling source map support in the main process |
-| `DC_TEST_DIR=<dir>` | specify an alternative data directory |
+| `DC_TEST_DIR=<dir>` | specify an alternative data directory (electron target) |
+| `DATA_DIR=<dir>` | specify an alternative data directory (browser target) |
 | `DELTACHAT_LOCALE_DIR=<path>` | allows to specify an alternative translation data directory in development, the intended purpose is to be used together with `--translation-watch` [^1] |
 
 Most env vars can be set in .env files. Look fo a env.example in the related package for more info.

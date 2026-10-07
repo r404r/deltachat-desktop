@@ -118,11 +118,13 @@
     <string name="this_month">Këtë muaj</string>
     <string name="last_week">Javën e shkuar</string>
     <string name="last_month">Muajin e shkuar</string>
-    <!-- Refers to the time a contact was last seen. Shown below contact name in the profile. The placeholder will be replaced by date or time, resulting in "Last seen at 12:13 AM" or "Last seen Nov 12" -->
+    <!-- deprecated -->
     <string name="last_seen_at">Parë së fundi më %1$s</string>
-    <!-- Refers to the time a contact was last seen. Shown below contact name in the profile. The placeholder will be replaced by a relative point in time as "3 minutes ago" (see https://momentjs.com for more examples and languages) -->
+    <!-- deprecated -->
     <string name="last_seen_relative">Parë së fundi %1$s</string>
+    <!-- deprecated -->
     <string name="last_seen_unknown">Parë së fundi më: S’dihet</string>
+
     <!-- Call duration as shown in the call bubbles. There is some risk to mix with the sending time, so the word "Duration" may be helpful. Might also be "Duration: %d minutes", "%d-minute duration", "%d-minute length" or "%d-minute call" -->
     <plurals name="call_duration_minutes">
         <item quantity="one">Kohëzgjatja %d minutë</item>
@@ -230,7 +232,6 @@
     <!-- short for "Browse through the App Picker/Store/Catalogue"; could also be translated as "Discover" or "Search" -->
     <string name="browse">Shfletoni</string>
     <string name="unknown">E panjohur</string>
-
     <string name="green">E gjelbër</string>
     <string name="red">E kuqe</string>
     <string name="blue">Blu</string>
@@ -280,6 +281,7 @@
     <string name="menu_send">Dërgoje</string>
     <string name="menu_toggle_keyboard">Shfaq/fshih Tastierë Emoji-sh</string>
     <string name="menu_edit_group">Përpunoni Grup</string>
+    <!-- deprecated: "Edit Group" dialog usually also contains the "Group Description" field, use global_menu_edit_desktop instead -->
     <string name="menu_group_name_and_image">Emër dhe Figurë Grupi</string>
     <string name="menu_show_global_map">Krejt Vendndodhjet</string>
     <string name="menu_archive_chat">Arkivoje Fjalosjen</string>
@@ -430,11 +432,11 @@
     <string name="call_answered_elsewhere">Thirrje që ka marrë përgjigje në pajisje tjetër</string>
     <string name="call_requires_camera_permission">Për thirrje me video janë të domosdoshme leje mbi kamerën</string>
     <string name="call_requires_mic_permission">Leja mbi mikrofonin është e domosdoshme për thirrje</string>
+    <string name="call_requires_connection">S’niset dot thirrja. Sigurohuni se keni lidhje internet dhe riprovoni.</string>
     <!-- Used e.g. in a notifications to describe an ongoing call. "Call" is a noun here, in the meaning of "This is the call with ..." where the placeholder is replaced by the name of the contact. -->
     <string name="call_with">Thirrje me %1$s</string>
     <!-- Use e.g. in a notifications during ringing. Placeholder is relaced by the name of the contact being called. -->
     <string name="calling_person">Po thirret %1$s</string>
-
     <!-- get confirmations -->
     <!-- confirmation for leaving groups or channels. If a subject is needed, "Are you sure you want to leave the chat?" would work as well -->
     <string name="ask_leave_group">Jeni i sigurt se doni të largoheni?</string>
@@ -546,6 +548,7 @@
     <string name="search_in">Kërko në %1$s</string>
     <string name="search_files">Kërko në Kartela</string>
     <string name="search_explain">Kërkoni për fjalosje, kontakte dhe mesazhe.</string>
+    <!-- deprecated, there is not much point to repeat the query, use emoji_search_results, or no headline at all -->
     <string name="search_result_for_x">Përfundim për “%1$s</string>
     <string name="search_no_result_for_x">S\’u gjetën përfundime për “%s”</string>
     <!-- Adjective, as in "Show Unread Messages" -->
@@ -644,15 +647,17 @@
     <!-- Instant onboarding title (there is not more to do than to set name and avatar) -->
     <string name="instant_onboarding_title">Profili Juaj</string>
     <!-- The placeholder will be replaced by the default onboarding server -->
+    <!-- deprecated -->
     <string name="instant_onboarding_agree_default2">Rregulla Privatësie për %1$s</string>
     <!-- The placeholder will be replaced by instance name, the whole text will link to the instance page -->
+    <!-- deprecated -->
     <string name="instant_onboarding_agree_instance">Rreth profilesh në %1$s</string>
     <!-- Confirmation button on the instant onboarding screen -->
     <string name="instant_onboarding_create">Pranojeni &amp; Krijoni Profil</string>
     <!-- Secondary, link-like button to open a page with other possible instances -->
     <string name="instant_onboarding_show_more_instances">Përdor Shërbyes Tjetër</string>
     <string name="instant_onboarding_other_server">Paraqit Shërbyes Chatmail</string>
-    <!-- Hint about what happens when "Create Profile" button in pressed; the placeholder will be replaced by the group name -->
+    <!-- Hint about what happens when "Create Profile" button in pressed; the placeholder will be replaced by the group or channel name -->
     <string name="instant_onboarding_group_info">Krijoni një profil, që të merrni pjesë te grupi “%1$s”.</string>
     <!-- Hint about what happens when "Create Profile" button in pressed; the placeholder will be replaced by contact name -->
     <string name="instant_onboarding_contact_info">Krijoni një profil, që të bisedoni me %1$s.</string>
@@ -664,6 +669,7 @@
     <string name="welcome_chat_over_email">Fjalosje e Decentralizuar, e Parrezik</string>
     <string name="scan_invitation_code">Skanoni Kod Ftese</string>
     <string name="login_title">Hyni</string>
+    <string name="login_advanced_hint">Kjo hyrje është për përdorues të thelluar.\n\nMos përdorni një adresë që e përdorni në një aplikacion tjetër.</string>
     <string name="login_inbox">Të marrë</string>
     <string name="login_imap_login">Emër Hyrjeje në IMAP</string>
     <string name="login_imap_server">Shërbyes IMAP</string>
@@ -695,15 +701,17 @@
     <string name="add_transport">Shtoni Rele</string>
     <string name="remove_transport">Hiqni Rele</string>
     <string name="edit_transport">Përpunoni Rele</string>
+    <!-- deprecated -->
     <string name="used_for_sending">E përdorur për dërgim</string>
+    <!-- deprecated -->
     <string name="hide_from_contacts">Fshihe prej Kontaktesh</string>
+    <!-- deprecated -->
     <string name="hidden_from_contacts">Fshehur prej kontakteve</string>
-    <!-- Hint for the list of relays -->
-    <string name="transport_list_hint">Mesazhet merren në të tëra reletë.\n\n⚠️ Nëse ndryshoni diçka këtu, sigurohuni se krejt pajisjet tuaja xhirojnë të paktën versionin 2.47.0. Përndryshe, pajisje më të vjetra mund të humbin mesazhe.</string>
+    <string name="enforce_e2ee">Detyro Fshehtëzim për Krejt Reletë</string>
     <!-- shown if a QR code was scanned that can be used as a relay -->
     <string name="confirm_add_transport">Të shtohet kjo rele?</string>
     <string name="invalid_transport_qr">Kodi QR i skanuar s’përmban një rele të vlefshme.</string>
-    <!-- placeholder will be replaced by a relay server name -->
+    <!-- deprecated -->
     <string name="confirm_remove_or_hide_transport_x">Të hiqet releja “%1$s”?\n\nKontaktet që njohin vetëm këtë rele mund të mos ju\nkapin dot, deri sa t’u dërgoni sërish mesazh.\n\nNëse s’jeni të sigurt, fshiheni, në vend se ta hiqni.</string>
     <string name="login_certificate_checks">Kontrolle Dëshmish</string>
     <string name="login_error_mail">Ju lutemi, jepni një adresë email të vlefshme</string>
@@ -713,7 +721,7 @@
     <string name="import_backup_title">Rikthe prej Kopjeruajtje</string>
     <string name="import_backup_ask">U gjet kopjeruajtje te “%1$s”.\n\nDoni të importohen dhe përdoren krejt të dhënat dhe rregullimet prej atij?</string>
     <string name="import_backup_no_backup_found">S\’u gjetën kopjeruajtje.\n\nKopjojeni kopjeruajtjen te “%1$s” dhe riprovoni.</string>
-    <!-- %1$s will be replaced by the failing address -->
+    <!-- deprecated, %1$s will be replaced by the failing address -->
     <string name="login_error_cannot_login">S\’bëhet dot hyrja si “%1$s”. Ju lutemi, shihni nëse adresa email dhe fjalëkalimi janë të saktë.</string>
     <!-- TLS certificate checks -->
     <string name="accept_invalid_certificates">Prano dëshmi të pavlefshme</string>
@@ -741,6 +749,7 @@
     <!-- first placeholder is replaced by the number of files (always 2 or more); second placeholder is replaced by a chat name -->
     <string name="ask_send_files_to_chat">Të dërgohen %1$d kartela te “%2$s”?</string>
     <string name="ask_send_files_to_selected_chats">Të dërgohet %1$d kartelë(a) te %2$d fjalosje?</string>
+    <!-- deprecated -->
     <string name="videos_sent_without_recoding">(Videot dërgohen si kartelat origjinale, të mëdha. Që të dërgoni video si kartela më të vogla, bashkëngjitini veç e veç)</string>
     <string name="share_text_multiple_chats">Të dërgohet ky tekst te %1$d fjalosje?\n\n“%2$s”</string>
     <string name="share_abort">Ndarja me të tjerë dështoi ngaqë mungojnë leje.</string>
@@ -841,6 +850,7 @@
     <string name="pref_show_emails_all">Krejt</string>
     <string name="pref_experimental_features">Veçori Eksperimentale</string>
     <string name="pref_experimental_features_explain">Këto veçori mund të jenë të paqëndrueshme dhe mund të ndryshohen, ose hiqen</string>
+    <string name="pref_on_demand_location_streaming">Dhënie Vendndodhjeje</string>
     <string name="pref_background_default">Figurë parazgjedhje</string>
     <string name="pref_background_default_color">Ngjyrë parazgjedhje</string>
     <string name="pref_background_custom_image">Figurë vetjake</string>
@@ -1016,10 +1026,13 @@
     <string name="qrscan_failed">Kodi QR s’u shkodua dot</string>
     <string name="qrscan_ask_join_group">Doni të bëheni pjesë e grupit “%1$s”?</string>
     <string name="qrscan_ask_join_channel">Doni të hyni te kanali “%1$s”?</string>
+    <!-- deprecated -->
     <string name="qrscan_fingerprint_mismatch">Shenjat e gishtave të skanuar nuk përputhen me shenjat e gishtave parë së fundi për %1$s.</string>
+    <!-- deprecated -->
     <string name="qrscan_no_addr_found">Ky kod QR përmban shenja gishtash, por jo adresë.\n\nPër një verifikim “out-of-band”, ju lutemi, së pari vendosni me marrësin një lidhje të fshehtëzuar.</string>
     <string name="qrscan_contains_text">Tekst kodi QR të skanuar:\n\n%1$s</string>
     <string name="qrscan_contains_url">URL kodi QR të skanuar:\n\n%1$s</string>
+    <!-- deprecated -->
     <string name="qrscan_fingerprint_label">Shenja gishtash</string>
     <string name="withdraw_verifycontact_explain">Ky kod QR mund të skanohet nga të tjerë për t’u lidhur me ju.\n\nMund ta riprodhoni, në mënyrë që kodi QR ekzistues, ose ftesa, s’do të funksionojnë më.</string>
     <string name="withdraw_verifygroup_explain">Ky kod QR mund të skanohet nga të tjerë për t’u bërë pjesë e grupit “%1$s”.\n\nMund ta riprodhoni, në mënyrë që kodi QR ekzistues, ose ftesa, s’do të funksionojnë më.</string>
@@ -1055,8 +1068,11 @@
     <string name="contact_verified">%1$s u soll.</string>
     <string name="contact_blocked">E bllokuat kontaktin</string>
     <!-- Shown in contact profile. The placeholder will be replaced by the name of the contact that introduced the contact. -->
+    <!-- deprecated -->
     <string name="verified_by">Sjellë nga %1$s</string>
+    <!-- deprecated -->
     <string name="verified_by_you">Sjellë nga unë</string>
+    <!-- deprecated -->
     <string name="verified_by_unknown">Sjellë nga</string>
     <string name="mailto_dialog_header_select_chat">Përzgjidhni fjalosje ku të dërgohet mesazhi</string>
     <!-- first placeholder is the name of the chat -->
@@ -1094,7 +1110,6 @@
     <string name="perm_explain_access_to_storage_denied">Që të merren apo dërgohen kartela, kaloni te rregullime aplikacioni, përzgjidhni “Leje” dhe aktivizoni “Depozitimin”.</string>
     <string name="perm_explain_access_to_location_denied">Që të mund të bashkëngjitet një vendndodhje, kaloni te rregullimet e aplikacionit, përzgjidhni “Leje” dhe aktivizoni “Vendndodhjen”.</string>
     <string name="perm_explain_access_to_notifications_denied">Që të merrni njoftime, kaloni te “Rregullime Sistemi / Aplikacione / Delta Chat” dhe aktivizoni “Njoftime”.</string>
-
     <!-- ImageEditorHud -->
     <string name="ImageEditorHud_draw_anywhere_to_blur">Që të turbullohet, vizatoni kudo qoftë</string>
     <string name="ImageEditorHud_add_text">Shtoni Tekst</string>
@@ -1233,6 +1248,4 @@
     <string name="perm_enable_bg_reminder_title">Prekeni këtu që të merrni mesazhe, teksa Delta Chat rri në prapaskenë.</string>
     <string name="perm_enable_bg_already_done">E keni lejuar tashmë Delta Chat-in të marrë mesazhe në prapaskenë.\n\nNëse mesazhet prapë nuk mbërrijnë në prapaskenë, ju lutemi, kontrolloni edhe rregullimet e sistemit tuaj.</string>
 
-    <!-- device messages for updates -->
-    <string name="update_2_0">Ç’ka të re?\n\n💯 Fshehtëzimi skaj-më-skaj është i qëndrueshëm dhe përgjithmonë tanimë. Drynat 🔒 na lanë shëndenë!\n\n✉️ Emaile-t klasikë pa fshehtëzim skaj-më-skajtregohen me një simbol shkronjë\n\n😻 Skenë e re e zgjeruar profili për krejt kontaktet tuaj\n\n🔲 Buton i ri për hyrje të shpejtë në aplikacionet e përdorur në një fjalosje\n\n❤️ Ju lutemi, dhuroni, që të na ndihmoni të mbesim të pavarur dhe të vazhdojmë të sjellim përmirësime: %1$s</string>
-</resources>
+    </resources>

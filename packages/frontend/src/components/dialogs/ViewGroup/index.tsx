@@ -1,4 +1,10 @@
-import React, { useCallback, useEffect, useState, useRef } from 'react'
+import React, {
+  useCallback,
+  useEffect,
+  useState,
+  useRef,
+  useEffectEvent,
+} from 'react'
 import { C } from '@deltachat/jsonrpc-client'
 import type { T } from '@deltachat/jsonrpc-client'
 
@@ -27,7 +33,6 @@ import useTranslationFunction from '../../../hooks/useTranslationFunction'
 import { LastUsedSlot } from '../../../utils/lastUsedPaths'
 import ProfileInfoHeader from '../../ProfileInfoHeader'
 import ImageSelector from '../../ImageSelector'
-import { modifyGroup } from '../../../backend/group'
 
 import type { DialogProps } from '../../../contexts/DialogContext'
 import ImageCropper from '../../ImageCropper'
@@ -42,6 +47,7 @@ import { runtime } from '@deltachat-desktop/runtime-interface'
 import { unknownErrorToString } from '@deltachat-desktop/shared/unknownErrorToString'
 import { getLogger } from '@deltachat-desktop/shared/logger'
 import styles from './styles.module.scss'
+import { useFetch, useRpcFetch } from '../../../hooks/useFetch'
 const log = getLogger('ViewGroup')
 
 /**
@@ -56,10 +62,10 @@ const log = getLogger('ViewGroup')
  */
 export default function ViewGroup(
   props: {
-    chat: Parameters<typeof ViewGroupInner>[0]['chat']
+    chat: Parameters<typeof ViewGroupInner>[0]['initialGroupState']
   } & DialogProps
 ) {
-  const { chat, onClose } = props
+  const { chat: initialGroupState, onClose } = props
 
   // While the member filter is open we pin the dialog to its maximum height so
   // it doesn't resize as the filtered member list changes length.
@@ -76,7 +82,7 @@ export default function ViewGroup(
     >
       <ViewGroupInner
         onClose={onClose}
-        chat={chat}
+        initialGroupState={initialGroupState}
         onSearchOpenChange={setSearchOpen}
       />
     </Dialog>
@@ -86,35 +92,72 @@ export default function ViewGroup(
 /**
  * manages changes to the group name, image and members
  * and updates the group in the backend
+ *
+ * @param initialGroupState Expected not to be getting updated by the caller
+ * as the group changes on the backend.
  */
-export const useGroup = (accountId: number, chat: T.FullChat) => {
-  const [group, setGroup] = useState(chat)
-  const [groupName, setGroupName] = useState(chat.name)
-  const [groupDescription, setGroupDescription] = useState<string | null>(null)
-  const [groupImage, setGroupImage] = useState(chat.profileImage)
+const useGroup = (accountId: number, initialGroupState: T.FullChat) => {
   const firstLoad = useRef(true)
   const { openDialog } = useDialog()
   const tx = useTranslationFunction()
 
-  useEffect(() => {
-    const fetchGroupDescription = async () => {
-      const groupDescription = await BackendRemote.rpc.getChatDescription(
-        accountId,
-        chat.id
-      )
-      setGroupDescription(groupDescription)
-    }
-    fetchGroupDescription()
-  }, [chat.id, accountId])
+  const groupFetch = useFetch(
+    useCallback(
+      async (...args: Parameters<typeof BackendRemote.rpc.getFullChatById>) => {
+        if (firstLoad.current) {
+          firstLoad.current = false
+          /**
+           * Just use {@linkcode initialGroupState} instead,
+           * no need to re-fetch.
+           */
+          return { type: 'useInitial' } as const
+        }
+        return {
+          type: 'refetched',
+          group: await BackendRemote.rpc.getFullChatById(...args),
+        } as const
+      },
+      []
+    ),
+    [accountId, initialGroupState.id]
+  )
+  const group: T.FullChat =
+    // TODO don't ignore errors and loading state.
+    !groupFetch.lingeringResult?.ok ||
+    groupFetch.lingeringResult.value.type === 'useInitial'
+      ? initialGroupState
+      : groupFetch.lingeringResult.value.group
 
-  useEffect(() => {
-    if (groupDescription === null) return // Not loaded yet
-    if (firstLoad.current) {
-      firstLoad.current = false
-      return
-    }
-    modifyGroup(accountId, chat.id, groupName, groupDescription, groupImage)
-  }, [groupName, groupDescription, groupImage, chat.id, accountId])
+  const groupDescriptionFetch = useRpcFetch(
+    BackendRemote.rpc.getChatDescription,
+    [accountId, initialGroupState.id]
+  )
+  // TODO don't ignore errors and loading state.
+  const groupDescription = groupDescriptionFetch.lingeringResult?.ok
+    ? groupDescriptionFetch.lingeringResult.value
+    : null
+
+  /**
+   * Shows `error` to the user, unless it was caused by us not being a member
+   * of the group anymore. Core reports that case with an
+   * `ErrorSelfNotInGroup` event, which is turned into a toast elsewhere,
+   * so a second, less understandable message would only be in the way.
+   */
+  const reportError = useCallback(
+    (description: string, error: unknown) => {
+      log.error(description, error)
+      if (group.chatType === 'Group' && !group.selfInGroup) {
+        return
+      }
+      openDialog(AlertDialog, {
+        message: tx(
+          'error_x',
+          `${description}: ${unknownErrorToString(error)}`
+        ),
+      })
+    },
+    [group.chatType, group.selfInGroup, openDialog, tx]
+  )
 
   const addMembers = useCallback(
     async (members: number[]) => {
@@ -125,27 +168,25 @@ export const useGroup = (accountId: number, chat: T.FullChat) => {
       try {
         await Promise.all(
           members.map(id =>
-            BackendRemote.rpc.addContactToChat(accountId, chat.id, id)
+            BackendRemote.rpc.addContactToChat(
+              accountId,
+              initialGroupState.id,
+              id
+            )
           )
         )
       } catch (error) {
-        openDialog(AlertDialog, {
-          title: tx('error'),
-          message: tx(
-            'error_x',
-            `Failed to modify group members: ${unknownErrorToString(error)}`
-          ),
-        })
+        reportError('Failed to modify group members', error)
         return
       }
 
       log.info(
-        `Account ${accountId} added ${members.length} members to group ${chat.id} (${members.join(
+        `Account ${accountId} added ${members.length} members to group ${initialGroupState.id} (${members.join(
           ', '
         )})`
       )
     },
-    [tx, openDialog, chat.id, accountId]
+    [reportError, initialGroupState.id, accountId]
   )
 
   const removeMember = useCallback(
@@ -153,25 +194,19 @@ export const useGroup = (accountId: number, chat: T.FullChat) => {
       try {
         await BackendRemote.rpc.removeContactFromChat(
           accountId,
-          chat.id,
+          initialGroupState.id,
           userId
         )
       } catch (error) {
-        openDialog(AlertDialog, {
-          title: tx('error'),
-          message: tx(
-            'error_x',
-            `Failed to modify group members: ${unknownErrorToString(error)}`
-          ),
-        })
+        reportError('Failed to modify group members', error)
         return
       }
 
       log.info(
-        `Account ${accountId} removed member ${userId} from group ${chat.id})`
+        `Account ${accountId} removed member ${userId} from group ${initialGroupState.id})`
       )
     },
-    [tx, openDialog, chat.id, accountId]
+    [reportError, initialGroupState.id, accountId]
   )
 
   const [pastContacts, setPastContacts] = useState<T.Contact[]>([])
@@ -247,35 +282,33 @@ export const useGroup = (accountId: number, chat: T.FullChat) => {
     )
   }, [accountId, group])
 
+  const groupFetchRefresh = useEffectEvent(groupFetch.refresh)
+  const groupDescriptionFetchRefresh = useEffectEvent(
+    groupDescriptionFetch.refresh
+  )
   useEffect(() => {
     return onDCEvent(accountId, 'ChatModified', ({ chatId }) => {
       if (chatId === group.id) {
-        BackendRemote.rpc.getFullChatById(accountId, group.id).then(setGroup)
-        BackendRemote.rpc
-          .getChatDescription(accountId, chatId)
-          .then(setGroupDescription)
+        groupFetchRefresh()
+        groupDescriptionFetchRefresh()
       }
     })
   }, [accountId, group.id])
 
   return {
     group,
-    groupName,
     groupDescription,
-    groupImage,
-    setGroupName,
-    setGroupDescription,
     groupContacts,
     addMembers,
     removeMember,
-    setGroupImage,
     pastContacts,
+    reportError,
   }
 }
 
 function ViewGroupInner(
   props: {
-    chat: T.FullChat & {
+    initialGroupState: T.FullChat & {
       chatType: 'Group' | 'OutBroadcast'
     }
     /** Notifies the parent when the member filter is shown/hidden, so it can
@@ -283,14 +316,14 @@ function ViewGroupInner(
     onSearchOpenChange: (open: boolean) => void
   } & DialogProps
 ) {
-  const { chat, onClose, onSearchOpenChange } = props
-  const isBroadcast = chat.chatType === 'OutBroadcast'
+  const { initialGroupState, onClose, onSearchOpenChange } = props
+  const isBroadcast = initialGroupState.chatType === 'OutBroadcast'
   const { openDialog } = useDialog()
   const accountId = selectedAccountId()
   const openConfirmationDialog = useConfirmationDialog()
   const tx = useTranslationFunction()
 
-  const chatDisabled = !chat.canSend
+  const chatDisabled = !initialGroupState.canSend
 
   const groupMemberContactListWrapperRef = useRef<HTMLDivElement>(null)
   const groupPastMemberContactListWrapperRef = useRef<HTMLDivElement>(null)
@@ -299,17 +332,13 @@ function ViewGroupInner(
 
   const {
     group,
-    groupName,
     groupDescription,
-    groupImage,
-    setGroupName,
-    setGroupDescription,
     groupContacts,
     pastContacts,
     addMembers,
     removeMember,
-    setGroupImage,
-  } = useGroup(accountId, chat)
+    reportError,
+  } = useGroup(accountId, initialGroupState)
 
   const [showMemberFilter, setShowMemberFilter] = useState(false)
 
@@ -375,22 +404,44 @@ function ViewGroupInner(
       return
     }
     openDialog(EditGroupNameDialog, {
-      groupName,
+      groupName: group.name,
       groupDescription,
-      groupImage,
-      groupColor: chat.color,
-      onOk: (
+      groupImage: group.profileImage,
+      groupColor: initialGroupState.color,
+      onOk: async (
         groupName: string,
         groupDescription: string,
         groupImage: string | null
       ) => {
-        // TODO this check should be way earlier, you should not be able to "OK" the dialog if there is no group name
-        if (groupName.length > 1) {
-          setGroupName(groupName)
+        const chatId = initialGroupState.id
+        try {
+          const chat = await BackendRemote.rpc.getBasicChatInfo(
+            accountId,
+            chatId
+          )
+
+          await BackendRemote.rpc.setChatName(accountId, chatId, groupName)
+          await BackendRemote.rpc.setChatDescription(
+            accountId,
+            chatId,
+            groupDescription
+          )
+
+          if (chat.profileImage !== groupImage) {
+            await BackendRemote.rpc.setChatProfileImage(
+              accountId,
+              chatId,
+              groupImage || null
+            )
+          }
+        } catch (error) {
+          reportError(
+            !isBroadcast
+              ? 'Failed to modify group'
+              : 'Failed to modify channel',
+            error
+          )
         }
-        // Description can be empty, so always set it
-        setGroupDescription(groupDescription)
-        setGroupImage(groupImage)
       },
       isBroadcast,
     })
@@ -417,13 +468,13 @@ function ViewGroupInner(
   const showQRDialog = async () => {
     const [qrCode, svg] = await BackendRemote.rpc.getChatSecurejoinQrCodeSvg(
       accountId,
-      chat.id
+      initialGroupState.id
     )
 
     openDialog(ShowQRDialog, {
       qrCode,
       qrCodeSVG: svg,
-      groupName,
+      groupName: group.name,
     })
   }
 
@@ -439,7 +490,7 @@ function ViewGroupInner(
   )
 
   const onClickViewGroupMenu = useViewGroupMenu({
-    chat,
+    chat: initialGroupState,
     allowEdit,
     isBroadcast,
     onClickEdit,
@@ -481,10 +532,10 @@ function ViewGroupInner(
       <DialogBody>
         <DialogContent>
           <ProfileInfoHeader
-            avatarPath={groupImage ? groupImage : undefined}
-            color={chat.color}
-            displayName={groupName}
-            disableFullscreen={shouldDisableFullscreenAvatar(chat)}
+            avatarPath={group.profileImage ? group.profileImage : undefined}
+            color={initialGroupState.color}
+            displayName={group.name}
+            disableFullscreen={shouldDisableFullscreenAvatar(initialGroupState)}
             subtitle={
               <div className='group-profile-subtitle'>
                 {!isBroadcast
@@ -607,7 +658,7 @@ function ViewGroupInner(
   )
 }
 
-export function ShowQRDialog({
+function ShowQRDialog({
   qrCode,
   groupName,
   qrCodeSVG,
@@ -633,7 +684,7 @@ export function ShowQRDialog({
   )
 }
 
-export function EditGroupNameDialog({
+function EditGroupNameDialog({
   onClose,
   onOk,
   isBroadcast,
@@ -654,6 +705,7 @@ export function EditGroupNameDialog({
   isBroadcast?: boolean
 } & DialogProps) {
   const [groupName, setGroupName] = useState(initialGroupName)
+  const groupNameIsInvalid = groupName === ''
   const [groupDescription, setGroupDescription] = useState(
     initialGroupDescription
   )
@@ -665,6 +717,9 @@ export function EditGroupNameDialog({
   }
 
   const onClickOk = () => {
+    if (groupNameIsInvalid) {
+      return
+    }
     onClose()
     onOk(groupName, groupDescription, groupImage)
   }
@@ -702,7 +757,7 @@ export function EditGroupNameDialog({
                 setGroupName(event.target.value)
               }}
             />
-            {groupName === '' && (
+            {groupNameIsInvalid && (
               <p
                 style={{
                   color: 'var(--colorDanger)',
@@ -734,7 +789,7 @@ export function EditGroupNameDialog({
   )
 }
 
-export function GroupImageSelector(props: {
+function GroupImageSelector(props: {
   groupName: string
   groupColor: string
   groupImage: string | null

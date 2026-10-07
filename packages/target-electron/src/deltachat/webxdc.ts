@@ -7,13 +7,7 @@ import {
   screen,
 } from 'electron/main'
 import Mime from 'mime-types'
-import {
-  Menu,
-  nativeImage,
-  MenuItemConstructorOptions,
-  dialog,
-  IpcMainInvokeEvent,
-} from 'electron'
+import { Menu, nativeImage, dialog, IpcMainInvokeEvent } from 'electron'
 import { join } from 'path'
 import { platform } from 'os'
 import { readdir, stat, rmdir, writeFile } from 'fs/promises'
@@ -29,7 +23,6 @@ import {
 } from '@deltachat-desktop/shared/shared-types.js'
 import { DesktopSettings } from '../desktop_settings.js'
 import { window as main_window, send } from '../windows/main.js'
-import { writeTempFileFromBase64 } from '../ipc.js'
 import {
   getAppMenu,
   getEditMenu,
@@ -52,6 +45,15 @@ type AppInstance = {
   accountId: number
   internet_access: boolean
   displayName: string
+  /**
+   * Whether the user accepted the risk of opening developer tools on this app,
+   * see https://delta.chat/en/2023-05-22-webxdc-security,
+   * "XDC-01-004 WP1: Data exfiltration via desktop app DevTools".
+   *
+   * Deliberately neither persisted nor shared between apps: every app has to
+   * be confirmed on its own, and again after it was closed and reopened.
+   */
+  devToolsConfirmed: boolean
 } & Pick<
   T.WebxdcMessageInfo,
   | 'selfAddr'
@@ -242,7 +244,10 @@ export default class DCWebxdc {
             if (details.url.startsWith('webxdc://')) {
               cancelRequest = false
             } else if (details.url.startsWith('devtools://')) {
-              cancelRequest = !DesktopSettings.state.enableWebxdcDevTools
+              // devtools can only be open at all if their risk was confirmed
+              cancelRequest = !Object.values(open_apps).some(
+                app => app.devToolsConfirmed
+              )
             } else if (details.url.startsWith('https://')) {
               cancelRequest = !internetAccess
             }
@@ -334,13 +339,17 @@ export default class DCWebxdc {
           webSecurity: true,
           nodeIntegration: false,
           navigateOnDragDrop: false,
-          devTools: DesktopSettings.state.enableWebxdcDevTools,
+          // Devtools can only be opened from the "View / Developer" menu,
+          // which asks the user to confirm the risk for this app first,
+          // see `devToolsConfirmed`.
+          devTools: true,
           javascript: true,
           preload: join(htmlDistDir(), 'webxdc-preload.js'),
         },
         title: makeTitle(webxdcInfo, chatName),
         alwaysOnTop: main_window?.isAlwaysOnTop(),
         show: false,
+        autoHideMenuBar: DesktopSettings.state.hideMenuBar,
       })
       // Settings this should make WebRTC always use the proxy.
       // However, since the proxy won't work, this should, in theory,
@@ -376,19 +385,28 @@ export default class DCWebxdc {
       const appIconPromise = this.rpc
         .getWebxdcBlob(accountId, msg_id, webxdcInfo.icon)
         .then(blob => nativeImage.createFromBuffer(Buffer.from(blob, 'base64')))
+        // core refuses to load icons with unexpected dimensions or format,
+        // and the menu below waits for this promise
+        .catch(error => {
+          log.warn(`could not load icon of webxdc app ${appId}`, error)
+          return undefined
+        })
       let app_icon: Awaited<typeof appIconPromise> | undefined
-      appIconPromise.then(i => (app_icon = i))
       appIconPromise.then(i => {
-        webxdcWindow.setIcon(i)
+        app_icon = i
+        if (i) {
+          webxdcWindow.setIcon(i)
+        }
       })
 
       open_apps[appId] = {
         win: webxdcWindow,
+        devToolsConfirmed: false,
         accountId,
         msgId: msg_id,
         internet_access: webxdcInfo['internetAccess'],
         selfAddr: webxdcInfo.selfAddr || 'unknown@unknown',
-        displayName: p.displayname || webxdcInfo.selfAddr || 'unknown',
+        displayName: p.displayname || tx('unnamed'),
         sendUpdateInterval: webxdcInfo.sendUpdateInterval,
         sendUpdateMaxSize: webxdcInfo.sendUpdateMaxSize,
         isAppSender: webxdcInfo.isAppSender,
@@ -429,29 +447,55 @@ export default class DCWebxdc {
                 checked: webxdcWindow.isAlwaysOnTop(),
                 click: () => {
                   webxdcWindow.setAlwaysOnTop(!webxdcWindow.isAlwaysOnTop())
-                  if (platform() !== 'darwin') {
-                    webxdcWindow.setMenu(makeMenu())
-                  } else {
+                  if (isMac) {
                     // change to webxdc menu
                     Menu.setApplicationMenu(makeMenu())
+                  } else {
+                    webxdcWindow.setMenu(makeMenu())
                   }
                 },
               },
               { role: 'togglefullscreen' },
-              ...(DesktopSettings.state.enableWebxdcDevTools
-                ? [
-                    { type: 'separator' } as MenuItemConstructorOptions,
-                    {
-                      label: tx('global_menu_view_developer_desktop'),
-                      submenu: [
-                        {
-                          label: tx('global_menu_view_developer_tools_desktop'),
-                          role: 'toggleDevTools',
-                        } as MenuItemConstructorOptions,
-                      ],
+              { type: 'separator' },
+              {
+                label: tx('global_menu_view_developer_desktop'),
+                submenu: [
+                  {
+                    label: tx('global_menu_view_developer_tools_desktop'),
+                    accelerator: isMac ? 'Alt+Command+I' : 'Ctrl+Shift+I',
+                    // Deliberately no `role: 'toggleDevTools'`: the role opens
+                    // devtools directly, bypassing the confirmation below.
+                    // Its shortcuts are bound to this item instead.
+                    click: async () => {
+                      const { webContents } = webxdcWindow
+                      if (webContents.isDevToolsOpened()) {
+                        webContents.closeDevTools()
+                        return
+                      }
+                      const instance = open_apps[appId]
+                      if (!instance.devToolsConfirmed) {
+                        const confirmed =
+                          (
+                            await dialog.showMessageBox(webxdcWindow, {
+                              type: 'warning',
+                              buttons: [tx('cancel'), tx('open')],
+                              defaultId: 0,
+                              cancelId: 0,
+                              title: tx('webxdc_devtools_dialog_title'),
+                              message: tx('webxdc_devtools_dialog_title'),
+                              detail: tx('webxdc_devtools_dialog_message'),
+                            })
+                          ).response === 1
+                        if (!confirmed) {
+                          return
+                        }
+                        instance.devToolsConfirmed = true
+                      }
+                      webContents.openDevTools()
                     },
-                  ]
-                : []),
+                  },
+                ],
+              },
             ],
           },
           {
@@ -480,11 +524,9 @@ export default class DCWebxdc {
       }
 
       if (!isMac) {
-        if (app_icon != undefined) {
-          webxdcWindow.setMenu(makeMenu())
-        } else {
-          appIconPromise.then(() => webxdcWindow.setMenu(makeMenu()))
-        }
+        // the menu shows the app icon, so it can only be built once the
+        // icon is loaded
+        appIconPromise.then(() => webxdcWindow.setMenu(makeMenu()))
       }
 
       webxdcWindow.on('focus', () => {
@@ -646,15 +688,6 @@ export default class DCWebxdc {
           callback(permission_handler(permission))
         }
       )
-
-      webxdcWindow.webContents.on('before-input-event', (event, input) => {
-        if (input.code === 'F12') {
-          if (DesktopSettings.state.enableWebxdcDevTools) {
-            webxdcWindow.webContents.toggleDevTools()
-            event.preventDefault()
-          }
-        }
-      })
     }
 
     // actual webxdc instances
@@ -775,30 +808,6 @@ export default class DCWebxdc {
     ipcMain.handle('close-all-webxdc', () => {
       this._closeAll()
     })
-
-    ipcMain.handle(
-      'webxdc:custom:drag-file-out',
-      async (
-        event,
-        file_name: string,
-        base64_content: string,
-        icon_data_url?: string
-      ) => {
-        const path = await writeTempFileFromBase64(file_name, base64_content)
-        let icon: string | Electron.NativeImage = join(
-          htmlDistDir(),
-          'images/electron-file-drag-out.png'
-        )
-        if (icon_data_url) {
-          icon = nativeImage.createFromDataURL(icon_data_url)
-        }
-        // if xdc extract icon?
-        event.sender.startDrag({
-          file: path,
-          icon,
-        })
-      }
-    )
 
     ipcMain.handle(
       'webxdc:status-update',

@@ -14,6 +14,7 @@ import {
   clickThroughTestIds,
   test,
   createProfileAndJoinChat,
+  skipOnIpRelay,
 } from '../playwright-helper.js'
 
 /**
@@ -79,6 +80,7 @@ test.afterAll(async ({ browser }) => {
 })
 
 test('instant onboarding with contact invite link', async ({ browserName }) => {
+  skipOnIpRelay()
   if (browserName.toLowerCase().indexOf('chrom') > -1) {
     await page.context().grantPermissions(['clipboard-read', 'clipboard-write'])
   }
@@ -106,6 +108,7 @@ test('instant onboarding with contact invite link', async ({ browserName }) => {
 test('instant onboarding with withdrawn and revived invite link', async ({
   browserName,
 }) => {
+  skipOnIpRelay()
   if (browserName.toLowerCase().indexOf('chrom') > -1) {
     await page.context().grantPermissions(['clipboard-read', 'clipboard-write'])
   }
@@ -183,6 +186,8 @@ test('instant onboarding with withdrawn and revived invite link', async ({
  * account creation
  */
 test('onboarding with manual credentials', async ({ browserName }) => {
+  // Reuses the profile created by 'instant onboarding with contact invite link'.
+  skipOnIpRelay()
   if (browserName.toLowerCase().indexOf('chrom') > -1) {
     await page.context().grantPermissions(['clipboard-read', 'clipboard-write'])
   }
@@ -231,6 +236,7 @@ test('onboarding with manual credentials', async ({ browserName }) => {
   expect(addressFromSettings).toEqual(address)
   await page.getByTestId('cancel').click()
   await page.getByTestId('transports-settings-close').click()
+  await expect(page.getByTestId('open-transport-settings')).toBeFocused()
   await page.getByTestId('settings-advanced-close').click()
   // needed in deleteAllProfiles
   existingProfiles.push({
@@ -311,6 +317,7 @@ test('wrong qr code for onboarding shows error message', async ({
 test('instant onboarding fails with withdrawn group invite link', async ({
   browserName,
 }) => {
+  skipOnIpRelay()
   if (browserName.toLowerCase().indexOf('chrom') > -1) {
     await page.context().grantPermissions(['clipboard-read', 'clipboard-write'])
   }
@@ -380,6 +387,7 @@ test('instant onboarding fails with withdrawn group invite link', async ({
 test('instant onboarding works with DCLOGIN qr code', async ({
   browserName,
 }) => {
+  skipOnIpRelay()
   if (browserName.toLowerCase().indexOf('chrom') > -1) {
     await page.context().grantPermissions(['clipboard-read', 'clipboard-write'])
   }

@@ -167,13 +167,13 @@ class TauriRuntime implements Runtime {
       bounds: {}, // managed by tauri_plugin_window_state plugin
       HTMLEmailWindowBounds: undefined, // managed by tauri_plugin_window_state plugin
       autostartElectron: false, // not needed in tauri version
+      hideMenuBar: false, // not used in tauri version
     } satisfies Partial<DesktopSettingsType>
 
     const frontendAndTauri = {
       zoomFactor: 1, // ? not sure yet
       minimizeToTray: true,
       lastSaveDialogLocation: undefined,
-      enableWebxdcDevTools: false, // likely impossible in mac appstore version, either hide setting there or use sth like eruda js to fill the gap?
       HTMLEmailAskForRemoteLoadingConfirmation: true,
       HTMLEmailAlwaysLoadRemoteContent: false,
       contentProtectionEnabled: false,
@@ -251,6 +251,7 @@ class TauriRuntime implements Runtime {
       'translation-watch': false,
 
       // does not exist in delta tauri
+      'allow-custom-rpc-server-path': false,
       'allow-unsafe-core-replacement': false,
       'machine-readable-stacktrace': true,
       // these are not relevant for frontend (--version, --help and their shorthand forms)
@@ -719,6 +720,12 @@ class TauriRuntime implements Runtime {
     | undefined
   onResumeFromSleep: (() => void) | undefined
   onToggleNotifications: (() => void) | undefined
+  onDesktopSettingChanged:
+    | (<T extends keyof DesktopSettingsType>(
+        key: T,
+        value: DesktopSettingsType[T]
+      ) => void)
+    | undefined
   checkMediaAccess(mediaType: MediaType): Promise<MediaAccessStatus> {
     return invoke('check_media_permission', {
       permission: mediaTypeToPermission[mediaType],

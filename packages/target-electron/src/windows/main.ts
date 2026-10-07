@@ -1,5 +1,5 @@
 import debounce from 'debounce'
-import electron, { BrowserWindow, Rectangle, session } from 'electron'
+import electron, { BrowserWindow, session } from 'electron'
 import { isAbsolute, join, sep } from 'path'
 import { platform } from 'os'
 import { fileURLToPath } from 'url'
@@ -39,7 +39,7 @@ let lastRendererReloadAttempt = 0
 let crashDialogOpen = false
 const RENDERER_RELOAD_COOLDOWN_MS = 30_000
 
-export function init(options: { hidden: boolean }) {
+export function init(options: { hidden: boolean; hideMenuBar: boolean }) {
   if (window) {
     return window.show()
   }
@@ -72,6 +72,7 @@ export function init(options: { hidden: boolean }) {
         allowRunningInsecureContent: false,
         contextIsolation: true,
       },
+      autoHideMenuBar: options.hideMenuBar,
       titleBarStyle: isMac ? 'hidden' : 'default',
       titleBarOverlay: true,
     })
@@ -266,10 +267,6 @@ export function init(options: { hidden: boolean }) {
   )
 }
 
-export function hide() {
-  window?.hide()
-}
-
 async function promptUserAfterRendererCrash(
   win: BrowserWindow,
   details: electron.RenderProcessGoneDetails
@@ -334,72 +331,6 @@ export function send(channel: string, ...args: any[]) {
   }
 }
 
-/**
- * Enforce window aspect ratio. Remove with 0. (Mac)
- */
-// export function setAspectRatio(aspectRatio) {
-//   window?.setAspectRatio(aspectRatio)
-// }
-
-export function setBounds(
-  bounds: Rectangle & { contentBounds: boolean },
-  maximize: boolean
-) {
-  if (!window) {
-    throw new Error('window does not exist, this should never happen')
-  }
-  // Maximize or minimize, if the second argument is present
-  if (maximize === true && !window.isMaximized()) {
-    log.debug('setBounds: maximizing')
-    window.maximize()
-  } else if (maximize === false && window.isMaximized()) {
-    log.debug('setBounds: unmaximizing')
-    window.unmaximize()
-  }
-
-  const willBeMaximized =
-    typeof maximize === 'boolean' ? maximize : window.isMaximized()
-  // Assuming we're not maximized or maximizing, set the window size
-  if (!willBeMaximized) {
-    log.debug(`setBounds: setting bounds to ${JSON.stringify(bounds)}`)
-    if (bounds.x === null && bounds.y === null) {
-      // X and Y not specified? By default, center on current screen
-      const scr = electron.screen.getDisplayMatching(window.getBounds())
-      bounds.x = Math.round(
-        scr.bounds.x + scr.bounds.width / 2 - bounds.width / 2
-      )
-      bounds.y = Math.round(
-        scr.bounds.y + scr.bounds.height / 2 - bounds.height / 2
-      )
-      log.debug(`setBounds: centered to ${JSON.stringify(bounds)}`)
-    }
-    // Resize the window's content area (so window border doesn't need to be taken
-    // into account)
-    if (bounds.contentBounds) {
-      window.setContentBounds(bounds, true)
-    } else {
-      window.setBounds(bounds, true)
-    }
-  } else {
-    log.debug('setBounds: not setting bounds because of window maximization')
-  }
-}
-
-/**
- * Set progress bar to [0, 1]. Indeterminate when > 1. Remove with < 0.
- */
-export function setProgress(progress: number) {
-  window?.setProgressBar(progress)
-}
-
-export function setTitle(title?: string) {
-  if (title) {
-    window?.setTitle(`${appWindowTitle} - ${title}`)
-  } else {
-    window?.setTitle(appWindowTitle)
-  }
-}
-
 export function show() {
   window?.show()
 }
@@ -415,6 +346,30 @@ export function isAlwaysOnTop() {
   return window ? window.isAlwaysOnTop() : false
 }
 
+export function applyHideMenuBar(hide: boolean) {
+  if (!window) return
+  // macOS has a system-level menu bar that sits outside the window,
+  // so auto-hide and menu bar visibility APIs have no effect.
+  if (process.platform === 'darwin') return
+  log.info(`applyHideMenuBar ${hide}`)
+  window.setAutoHideMenuBar(hide)
+  window.setMenuBarVisibility(!hide)
+}
+
+export function toggleHideMenuBar() {
+  if (!window) return
+  if (process.platform === 'darwin') return
+  const flag = !window.autoHideMenuBar
+  applyHideMenuBar(flag)
+  DesktopSettings.update({ hideMenuBar: flag })
+  // Notify frontend (Settings UI) about the change from View menu
+  send('desktop-setting-changed', 'hideMenuBar', flag)
+}
+
+export function isHideMenuBar() {
+  return window ? window.autoHideMenuBar : false
+}
+
 export function toggleDevTools() {
   if (!window) return
   log.info('toggleDevTools')
@@ -427,9 +382,4 @@ export function toggleDevTools() {
 
 export function chooseLanguage(locale: string) {
   send('chooseLanguage', locale)
-}
-
-export function setZoomFactor(factor: number) {
-  log.info('setZoomFactor', factor)
-  window?.webContents.setZoomFactor(factor)
 }

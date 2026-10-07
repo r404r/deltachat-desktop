@@ -109,11 +109,13 @@
     <string name="this_month">Ĉi-monate</string>
     <string name="last_week">Pasint-semajne</string>
     <string name="last_month">Pasint-monate</string>
-    <!-- Refers to the time a contact was last seen. Shown below contact name in the profile. The placeholder will be replaced by date or time, resulting in "Last seen at 12:13 AM" or "Last seen Nov 12" -->
+    <!-- deprecated -->
     <string name="last_seen_at">Laste vidita je%1$s</string>
-    <!-- Refers to the time a contact was last seen. Shown below contact name in the profile. The placeholder will be replaced by a relative point in time as "3 minutes ago" (see https://momentjs.com for more examples and languages) -->
+    <!-- deprecated -->
     <string name="last_seen_relative">Laste vidita %1$s</string>
+    <!-- deprecated -->
     <string name="last_seen_unknown">Laste vidita: nedisponebla informo</string>
+
     <!-- Shown beside messages that are "N minutes old". Prefer short strings, or well-known abbreviations. -->
     <plurals name="n_minutes">
         <item quantity="one">%d min</item>
@@ -190,7 +192,6 @@
     <!-- plural of "App"; used to present "Webxdc App" (https://webxdc.org) in a user friendly way. Please stay close to the original term and keep it short (it is used in menus with few screen space). -->
     <string name="webxdc_apps">Apoj</string>
     <string name="unknown">Nekonata</string>
-
     <string name="green">Verda</string>
     <string name="red">Ruĝa</string>
     <string name="blue">Blua</string>
@@ -217,6 +218,7 @@
     <string name="menu_send">Sendi</string>
     <string name="menu_toggle_keyboard">Baskuligi emoĝian klavaron</string>
     <string name="menu_edit_group">Redakti grupon</string>
+    <!-- deprecated: "Edit Group" dialog usually also contains the "Group Description" field, use global_menu_edit_desktop instead -->
     <string name="menu_group_name_and_image">Grup-nomo kaj bildo</string>
     <string name="menu_show_global_map">Montri ĉiujn lokojn</string>
     <string name="menu_archive_chat">Enarĥivigi babilon</string>

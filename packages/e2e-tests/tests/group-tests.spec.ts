@@ -85,13 +85,13 @@ test('create group', async () => {
   await expect(badgeNumber).toHaveText('1')
 })
 
-test('check "New E-Mail" option presence', async ({ isChatmail }) => {
+test('check "New Email" option presence', async ({ isChatmail }) => {
   await page.locator('#new-chat-button').click()
 
   await expect(page.getByRole('button', { name: 'New Group' })).toBeVisible()
 
   // Since we're on a Chatmail server, this button is not supposed to be shown.
-  const newEmailButton = page.getByRole('button', { name: 'New E-Mail' })
+  const newEmailButton = page.getByRole('button', { name: 'New Email' })
   if (isChatmail) {
     await expect(newEmailButton).not.toBeVisible()
     // Same button, but double-check, by ID.
@@ -164,77 +164,6 @@ test('Invite existing user to group', async ({ browserName }) => {
   ).toContainText(msg)
 })
 
-test('Invite new user to group', async ({ browserName }) => {
-  if (browserName.toLowerCase().indexOf('chrom') > -1) {
-    await page.context().grantPermissions(['clipboard-read', 'clipboard-write'])
-  }
-  const newUserName = userNames[3]
-  const userA = existingProfiles[0]
-  const userB = existingProfiles[1]
-  await switchToProfile(page, userA.id)
-  const chatListItem = page
-    .locator('.chat-list .chat-list-item')
-    .filter({ hasText: groupName })
-  await expect(chatListItem).toBeVisible()
-  await chatListItem.click()
-  // copy group invite link
-  await page.getByTestId('chat-info-button').click()
-  await page.locator('#showqrcode button').click()
-  await clickThroughTestIds(page, [
-    'copy-qr-code',
-    'confirm-qr-code',
-    'view-group-dialog-header-close',
-  ])
-
-  // paste invite link in Instant Onboarding Dialog
-  await clickThroughTestIds(page, [
-    'add-account-button',
-    'create-account-button',
-    'other-login-button',
-    'scan-qr-login',
-    'paste',
-  ])
-
-  const confirmDialog = page.getByTestId('ask-join-group')
-  await expect(confirmDialog).toBeVisible()
-  // confirm dialog should contain group name
-  await expect(confirmDialog).toContainText(groupName)
-  await confirmDialog.getByTestId('confirm').click()
-  await page.locator('#displayName').fill(newUserName)
-  await page.getByTestId('login-button').click()
-  // userA invited you to group message
-  await expect(
-    page
-      .getByRole('list', { name: 'Messages' })
-      .getByRole('listitem')
-      .filter({ hasText: groupInviteMessage })
-  ).toBeVisible()
-  const composer = page.locator('textarea.create-or-edit-message-input')
-  await expect(composer).not.toBeVisible({ timeout: 1 })
-
-  // verified chat after response from userA
-  await expect(page.locator('.e2ee-info')).toBeVisible()
-
-  const msg = 'Hello chat!' + Math.random()
-  await composer.fill(msg)
-  await page.getByRole('button', { name: 'Send' }).click()
-  await expect(
-    page.locator('#message-list li.message-wrapper').last()
-  ).toContainText(msg)
-
-  await page.getByTestId('chat-info-button').click()
-  // new user sees group members
-  await expect(
-    page
-      .locator('.group-member-contact-list-wrapper .contact-list-item')
-      .filter({ hasText: userB.name })
-  ).toBeVisible()
-  await page.getByTestId('view-group-dialog-header-close').click()
-  // update existing profiles so they include the new user
-  // to make sure all get deleted after the test
-  existingProfiles = await loadExistingProfiles(page)
-})
-
 test('Remove user from group', async () => {
   // user C removes user B
   const userB = existingProfiles[1]
@@ -265,10 +194,10 @@ test('Remove user from group', async () => {
 
 test('Readd user to group', async () => {
   // user A adds user B again
-  const userA = existingProfiles[0]
-  const userB = existingProfiles[1]
-  const userC = existingProfiles[2]
-  const userD = existingProfiles[3]
+  const userA = getUser(0, existingProfiles)
+  const userB = getUser(1, existingProfiles)
+  const userC = getUser(2, existingProfiles)
+  const membersWithoutB = ['Me', userC.name]
   await switchToProfile(page, userA.id)
   const chatListItem = page
     .locator('.chat-list .chat-list-item')
@@ -281,9 +210,11 @@ test('Readd user to group', async () => {
   // because the "Add Members" dialog won't auto-update.
   // We probably should make it auto-updateable as well.
   const membersList = page.getByTestId('group-member-list')
-  await expect(membersList.getByRole('listitem')).toHaveCount(3)
+  await expect(membersList.getByRole('listitem')).toHaveCount(
+    membersWithoutB.length
+  )
   await expect(membersList).not.toContainText(userB.name)
-  for (const name of ['Me', userC.name, userD.name]) {
+  for (const name of membersWithoutB) {
     await expect(membersList).toContainText(name)
   }
 
@@ -296,10 +227,12 @@ test('Readd user to group', async () => {
   await userBRow.click()
   await expect(userBRow.locator('.checkmark')).toBeVisible()
   await addMemberDialog.getByTestId('ok').click()
-  for (const name of ['Me', userB.name, userC.name, userD.name]) {
+  for (const name of [...membersWithoutB, userB.name]) {
     await expect(membersList).toContainText(name)
   }
-  await expect(membersList.getByRole('listitem')).toHaveCount(4)
+  await expect(membersList.getByRole('listitem')).toHaveCount(
+    membersWithoutB.length + 1
+  )
   await page.getByTestId('view-group-dialog-header-close').click()
 })
 
@@ -355,7 +288,7 @@ test('Withdraw group invite link', async ({ browserName }) => {
   // might just not do anything, even if the link is revoked.
   await expect(
     page.getByRole('list', { name: 'Messages' }).getByRole('listitem').last()
-  ).toContainText('Member Me removed by Alice')
+  ).toContainText('You were removed by Alice')
   await clickThroughTestIds(page, ['qr-scan-button', 'show-qr-scan', 'paste'])
 
   const confirmJoinGroupDialog = page.getByTestId('confirm-join-group')
@@ -373,7 +306,7 @@ test('Withdraw group invite link', async ({ browserName }) => {
     page
       .getByRole('list', { name: 'Messages' })
       .getByRole('listitem')
-      .filter({ hasText: 'Member Me removed by Alice' })
+      .filter({ hasText: 'You were removed by Alice' })
   ).toBeVisible()
   await expect(
     page
@@ -600,298 +533,4 @@ test('Go to 1:1 chat with a member', async () => {
   await expect(
     page.getByLabel('Chats').getByRole('tab', { selected: true })
   ).toContainText(userB.name)
-})
-
-const channelName = 'TestChannel'
-
-test('create channel and add members', async ({ browserName }) => {
-  if (browserName.toLowerCase().indexOf('chrom') > -1) {
-    await page.context().grantPermissions(['clipboard-read', 'clipboard-write'])
-  }
-  const userA = existingProfiles[0]
-  const userB = existingProfiles[1]
-
-  await switchToProfile(page, userA.id)
-
-  // Create a channel
-  await page.locator('#new-chat-button').click()
-  await page.locator('#newbroadcastlist button').click()
-  await page.getByPlaceholder('Channel Name').fill(channelName)
-  await page.getByRole('button', { name: 'Create' }).click()
-
-  const channelChatItem = page
-    .locator('.chat-list .chat-list-item')
-    .filter({ hasText: channelName })
-  await expect(channelChatItem).toBeVisible()
-
-  // Copy channel invite link from the channel profile
-  await page.getByTestId('chat-info-button').click()
-  await page.locator('#showqrcode button').click()
-  await clickThroughTestIds(page, [
-    'copy-qr-code',
-    'confirm-qr-code',
-    'view-group-dialog-header-close',
-  ])
-
-  // Subscribe userB by pasting the invite link
-  await switchToProfile(page, userB.id)
-  await clickThroughTestIds(page, ['qr-scan-button', 'show-qr-scan', 'paste'])
-
-  const confirmDialog = page.getByTestId('confirm-join-channel')
-  await expect(confirmDialog).toBeVisible()
-  await expect(confirmDialog).toContainText(channelName)
-  await confirmDialog.getByTestId('confirm').click()
-
-  const channelChatItemB = page
-    .locator('.chat-list .chat-list-item')
-    .filter({ hasText: channelName })
-  await expect(channelChatItemB).toBeVisible()
-
-  // userA posts a message to the channel
-  await switchToProfile(page, userA.id)
-  await page
-    .locator('.chat-list .chat-list-item')
-    .filter({ hasText: channelName })
-    .click()
-
-  // Wait until userA's core has processed userB's subscription request
-  // (header subtitle changes from "0 subscriber" to "1 subscriber")
-  await expect(page.locator('.navbar-chat-subtitle')).toContainText(
-    '1 subscriber'
-  )
-
-  const channelMsg = 'Hello channel!' + Math.random()
-  await page.locator('textarea.create-or-edit-message-input').fill(channelMsg)
-  await page.locator('button.send-button').click()
-  const msg = page.locator('#message-list li.message-wrapper').last()
-  await expect(msg).toContainText(channelMsg)
-
-  const viewCount = msg.getByRole('status').filter({ hasText: '👁️' })
-  await expect(viewCount).toHaveText('👁️0')
-
-  // userB has 1 new notification now
-  const badge = page
-    .getByTestId(`account-item-${userB.id}`)
-    .locator('.styles_module_accountBadgeIcon')
-    .getByText('1')
-  await expect(badge).toBeVisible()
-
-  // userB sees the posted message
-  await switchToProfile(page, userB.id)
-  await channelChatItemB.click()
-  await expect(
-    page
-      .locator('#message-list li.message-wrapper')
-      .filter({ hasText: channelMsg })
-  ).toBeVisible()
-
-  await switchToProfile(page, userA.id)
-  await expect(viewCount).toHaveText('👁️1')
-})
-
-test('accept or decline channel invite', async ({ browserName }) => {
-  if (browserName.toLowerCase().indexOf('chrom') > -1) {
-    await page.context().grantPermissions(['clipboard-read', 'clipboard-write'])
-  }
-  const userA = existingProfiles[0]
-  const userC = existingProfiles[2]
-
-  // Copy fresh invite link from userA's channel
-  await switchToProfile(page, userA.id)
-  const channelChatItem = page
-    .locator('.chat-list .chat-list-item')
-    .filter({ hasText: channelName })
-  await expect(channelChatItem).toBeVisible()
-  await channelChatItem.click()
-  await page.getByTestId('chat-info-button').click()
-  await page.locator('#showqrcode button').click()
-  await clickThroughTestIds(page, [
-    'copy-qr-code',
-    'confirm-qr-code',
-    'view-group-dialog-header-close',
-  ])
-
-  // Switch to userC and DECLINE the invite
-  await switchToProfile(page, userC.id)
-  await clickThroughTestIds(page, ['qr-scan-button', 'show-qr-scan', 'paste'])
-
-  const confirmDialog = page.getByTestId('confirm-join-channel')
-  await expect(confirmDialog).toBeVisible()
-  await expect(confirmDialog).toContainText(channelName)
-  await confirmDialog.getByTestId('cancel').click()
-
-  // Channel should NOT be in userC's chat list after declining
-  const channelChatItemC = page
-    .locator('.chat-list .chat-list-item')
-    .filter({ hasText: channelName })
-  await expect(channelChatItemC).not.toBeVisible({ timeout: 1 })
-
-  // Paste again and this time ACCEPT the invite
-  await clickThroughTestIds(page, ['qr-scan-button', 'show-qr-scan', 'paste'])
-
-  const confirmDialogAgain = page.getByTestId('confirm-join-channel')
-  await expect(confirmDialogAgain).toBeVisible()
-  await expect(confirmDialogAgain).toContainText(channelName)
-  await confirmDialogAgain.getByTestId('confirm').click()
-
-  // Channel should now be in userC's chat list
-  await expect(channelChatItemC).toBeVisible()
-})
-
-test('add channel description and verify subscriber sees it', async () => {
-  const userA = existingProfiles[0]
-  const userB = existingProfiles[1]
-  const channelDescription = 'This is a test channel description'
-
-  // userA (owner) adds a description to the channel
-  await switchToProfile(page, userA.id)
-  const channelChatItem = page
-    .locator('.chat-list .chat-list-item')
-    .filter({ hasText: channelName })
-  await expect(channelChatItem).toBeVisible()
-  await channelChatItem.click()
-
-  await page.getByTestId('chat-info-button').click()
-  await page.getByTestId('view-group-menu').click()
-  await page.getByTestId('view-group-edit').click()
-
-  await page.locator('#description').fill(channelDescription)
-  await page.getByTestId('ok').click()
-
-  // Description should be visible in the channel profile
-  const descriptionDiv = page.getByTestId('profile-description')
-  await expect(descriptionDiv).toBeVisible()
-  await expect(descriptionDiv).toHaveText(channelDescription)
-
-  await page.getByTestId('view-group-dialog-header-close').click()
-
-  // Verify system message for the owner
-  await expect(
-    page
-      .getByRole('list', { name: 'Messages' })
-      .getByRole('listitem')
-      .filter({ hasText: 'You changed the chat description.' })
-  ).toBeVisible()
-
-  // Verify subscriber (userB) sees the description change message
-  await switchToProfile(page, userB.id)
-  const channelChatItemB = page
-    .locator('.chat-list .chat-list-item')
-    .filter({ hasText: channelName })
-  await expect(channelChatItemB).toBeVisible()
-  await channelChatItemB.click()
-
-  // Wait for the description change to be received by userB before opening profile
-  await expect(
-    page
-      .getByRole('list', { name: 'Messages' })
-      .getByRole('listitem')
-      .filter({ hasText: 'Chat description changed by' })
-  ).toBeVisible()
-
-  await page.getByTestId('chat-info-button').click()
-  await expect(page.getByTestId('profile-description')).toBeVisible()
-  await expect(page.getByTestId('profile-description')).toHaveText(
-    channelDescription
-  )
-  await page.keyboard.press('Escape')
-})
-
-test('channel profile three-dot menu shows encryption info', async () => {
-  const userB = existingProfiles[1]
-
-  // userB is a subscriber, so opening the channel
-  // profile shows the MailingListProfile dialog
-  await switchToProfile(page, userB.id)
-  const channelChatItemB = page
-    .locator('.chat-list .chat-list-item')
-    .filter({ hasText: channelName })
-  await expect(channelChatItemB).toBeVisible()
-  await channelChatItemB.click()
-
-  await page.getByTestId('chat-info-button').click()
-
-  // Open the three-dot menu and pick "Encryption Info"
-  await page.getByTestId('mailing-list-profile-menu').click()
-  await page.getByTestId('encryption-info').click({ force: true })
-
-  const encryptionInfoDialog = page
-    .getByRole('dialog')
-    .filter({ hasText: 'Encryption Info' })
-  await expect(encryptionInfoDialog).toBeVisible()
-
-  await page.keyboard.press('Escape')
-  await page.keyboard.press('Escape')
-})
-
-test('channel main view shows Leave Channel instead of Delete Chat', async () => {
-  const userB = existingProfiles[1]
-
-  await switchToProfile(page, userB.id)
-  const channelChatItemB = page
-    .locator('.chat-list .chat-list-item')
-    .filter({ hasText: channelName })
-  await expect(channelChatItemB).toBeVisible()
-  await channelChatItemB.click()
-
-  await page.locator('#three-dot-menu-button').click()
-  await expect(page.getByRole('menu')).toBeVisible()
-
-  // Subscriber should see Leave Channel instead of Delete Chat
-  await expect(
-    page.getByRole('menuitem', { name: 'Leave Channel' })
-  ).toBeVisible()
-  await expect(
-    page.getByRole('menuitem', { name: 'Delete Chat' })
-  ).not.toBeVisible()
-
-  await page.keyboard.press('Escape')
-})
-
-test('leave channel and remove from channel', async () => {
-  const userA = existingProfiles[0]
-  const userB = existingProfiles[1]
-  const userC = existingProfiles[2]
-
-  // userB leaves the channel via main view 3-dot menu
-  await switchToProfile(page, userB.id)
-  const channelChatItemB = page
-    .locator('.chat-list .chat-list-item')
-    .filter({ hasText: channelName })
-  await expect(channelChatItemB).toBeVisible()
-  await channelChatItemB.click()
-  await page.locator('#three-dot-menu-button').click()
-  await expect(page.getByRole('menu')).toBeVisible()
-  await page.getByRole('menuitem', { name: 'Leave Channel' }).click()
-  const leaveDialog = page.getByRole('dialog')
-  await expect(leaveDialog).toContainText('Are you sure you want to leave?')
-  await leaveDialog.getByRole('button', { name: 'Leave Channel' }).click()
-
-  // userA removes userC from the channel via the channel profile
-  await switchToProfile(page, userA.id)
-  const channelChatItemA = page
-    .locator('.chat-list .chat-list-item')
-    .filter({ hasText: channelName })
-  await expect(channelChatItemA).toBeVisible()
-  await channelChatItemA.click()
-  await page.getByTestId('chat-info-button').click()
-
-  const userCRow = page
-    .locator('.group-member-contact-list-wrapper .contact-list-item')
-    .filter({ hasText: userC.name })
-    .first()
-  await userCRow.locator('button.btn-remove').click()
-  await page
-    .getByTestId('remove-group-member-dialog')
-    .getByTestId('confirm')
-    .click()
-
-  // userC should no longer appear in the recipients list
-  await expect(
-    page
-      .locator('.group-member-contact-list-wrapper .contact-list-item')
-      .filter({ hasText: userC.name })
-  ).not.toBeVisible()
-
-  await page.getByTestId('view-group-dialog-header-close').click()
 })

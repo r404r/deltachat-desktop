@@ -37,7 +37,7 @@ function FreshMessageCounter({
     return (
       <span className='visually-hidden'>
         {' ' +
-          tx('chat_n_new_messages', String(counter), {
+          tx('chat_n_unread_messages', String(counter), {
             quantity: counter,
           })}
       </span>
@@ -68,7 +68,7 @@ function Header({
           <FreshMessageCounter counter={freshMessageCounter} visible={false} />
         </span>
       </div>
-      {isMuted && <div className='mute_icon' aria-label={tx('mute')} />}
+      {isMuted && <div className='mute_icon' aria-label={tx('muted')} />}
       <div>
         {lastUpdated && lastUpdated !== 0 && (
           <Timestamp
@@ -251,6 +251,7 @@ function ChatListItemError({
 >) {
   log.info('Error Loading Chatlistitem ' + chatListItem.id, chatListItem.error)
 
+  const tx = useTranslationFunction()
   const ref = useRef<HTMLButtonElement>(null)
 
   const {
@@ -294,7 +295,9 @@ function ChatListItemError({
       <div className='content'>
         <div className='header'>
           <div className='name'>
-            <span>Error Loading Chat {chatListItem.id}</span>
+            <span>
+              {tx('error_x', `Error Loading Chat ${chatListItem.id}`)}
+            </span>
           </div>
         </div>
         <div className='chat-list-item-message'>
@@ -390,7 +393,7 @@ function RegularChatListItem({
           displayName: chat.name,
           avatarPath: chat.avatarPath || undefined,
           color: chat.color,
-          wasSeenRecently: chat.wasSeenRecently,
+          freshness: chat.freshness,
           // Avatar is purely decorative here,
           // and is redundant accessibility-wise,
           // because we display the chat name below.

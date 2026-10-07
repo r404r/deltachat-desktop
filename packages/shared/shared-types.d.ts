@@ -71,7 +71,6 @@ export interface DesktopSettingsType {
   lastSaveDialogLocation: string | undefined
   /** @deprecated */
   experimentalEnableMarkdownInMessages?: boolean
-  enableWebxdcDevTools: boolean
   /** set to false to disable the confirmation dialog for loading remote content */
   HTMLEmailAskForRemoteLoadingConfirmation: boolean
   /** always loads remote content without asking, for non contact requests  */
@@ -89,6 +88,8 @@ export interface DesktopSettingsType {
   autostart: boolean
   /** whether to start Electron with system on supported platforms */
   autostartElectron: boolean
+  /** whether to auto-hide the native window menu bar */
+  hideMenuBar: boolean
   /** Enable key management UI (experimental) */
   enableKeyManagement: boolean
   /**
@@ -112,6 +113,12 @@ export interface RC_Config {
   v: boolean
   help: boolean
   h: boolean
+  /**
+   * Allow resolving the `deltachat-rpc-server` binary from the
+   * `DELTA_CHAT_RPC_SERVER` environment variable or from `PATH`
+   */
+  'allow-custom-rpc-server-path': boolean
+  /** @deprecated use {@linkcode RC_Config['allow-custom-rpc-server-path']} instead */
   'allow-unsafe-core-replacement': boolean
 }
 
@@ -132,7 +139,12 @@ export type RuntimeInfo = {
   isMac: boolean
   /** currently used to check for an additional device message */
   isAppx: boolean
-  /** to show / hide elements/options that are not supported, like tray icon options on browser */
+  /** to show / hide elements/options that are not supported, like tray icon options on browser
+   *
+   * 'tauri' has no target package in this repository — it is implemented in
+   * https://github.com/deltachat/deltachat-tauri, which builds against this
+   * type. Keep the tauri branches in the frontend, they are not dead code.
+   */
   target: 'electron' | 'browser' | 'tauri'
   /** runtime library versions, be it electron, node, tauri or whatever,
    *  used for showing to user in the About dialog */
@@ -162,7 +174,7 @@ export interface BuildInfo {
 }
 
 export interface DcNotification {
-  title: string
+  title?: string
   body: string
   /**
    * path to image that should be shown instead of icon

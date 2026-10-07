@@ -5,6 +5,7 @@ import React, {
   useEffect,
   useState,
   useMemo,
+  useContext,
 } from 'react'
 import classNames from 'classnames'
 import moment from 'moment'
@@ -33,7 +34,6 @@ import {
 import {
   useMessageFocusAndMultiselect,
   MessageMultiselectContext,
-  useMessageFocusAndMultiselectContextValue,
 } from './focusAndMultiselect'
 import { marknoticedChat } from '../../backend/chat'
 
@@ -107,7 +107,6 @@ export default function MessageList({
   } = messageListStore
   const {
     oldestFetchedMessageListItemIndex,
-    newestFetchedMessageListItemIndex,
     messageCache,
     messageListItems,
     viewState,
@@ -281,17 +280,20 @@ export default function MessageList({
       messageListRef.current.scrollTop -
       messageListRef.current.clientHeight
 
+    const {
+      newestFetchedMessageListItemIndex: newestFetchedIndex,
+      messageListItems: currentMessageListItems,
+    } = messageListStore.getState()
+
     const isNewestMessageLoaded =
-      newestFetchedMessageListItemIndex === messageListItems.length - 1
+      newestFetchedIndex === currentMessageListItems.length - 1
     const newShowJumpDownButton =
       !isNewestMessageLoaded ||
       distanceToBottom > maxScrollToBottomDistanceConsideredShort
     // Don't flash the button during a programmatic smooth scroll —
     // we already know we're scrolling to the bottom.
     if (pendingProgrammaticSmoothScrollTo.current === null) {
-      if (newShowJumpDownButton != showJumpDownButton) {
-        setShowJumpDownButton(newShowJumpDownButton)
-      }
+      setShowJumpDownButton(newShowJumpDownButton)
     }
     if (!newShowJumpDownButton) {
       clearJumpStack()
@@ -324,10 +326,8 @@ export default function MessageList({
     clearJumpStack,
     fetchMoreBottom,
     fetchMoreTop,
-    messageListItems.length,
-    newestFetchedMessageListItemIndex,
+    messageListStore,
     scheduler,
-    showJumpDownButton,
   ])
   const onScrollEnd = useCallback((_ev: Event) => {
     clearTimeout(pendingProgrammaticSmoothScrollTimeout.current)
@@ -461,8 +461,8 @@ export default function MessageList({
       // https://developer.mozilla.org/en-US/docs/Web/CSS/overflow-anchor/Guide_to_scroll_anchoring
       // Well, I am not sure why it is introduced back then,
       // but the reason we need it now is because scroll anchoring
-      // isn't supported by Safari (WebKit) yet, and we are gonna run on WebKit
-      // when we switch to Tauri, so let's not remove it yet.
+      // isn't supported by Safari (WebKit) yet, and the Tauri build runs
+      // on WebKit, so let's not remove it yet.
 
       log.debug(
         'scrollTo type: scrollToLastKnownPosition; lastKnownScrollHeight: ' +
@@ -527,7 +527,7 @@ export default function MessageList({
           //   until they finish scrolling.
           // - Because 'scrollend' is not supported by WebKit yet
           //   https://webkit.org/b/201556
-          //   and we'll be running on WebKit when we switch to Tauri.
+          //   and the Tauri build runs on WebKit.
           clearTimeout(pendingProgrammaticSmoothScrollTimeout.current)
           pendingProgrammaticSmoothScrollTimeout.current = window.setTimeout(
             () => {
@@ -617,8 +617,7 @@ export default function MessageList({
   // A probably better approach would be to use
   // `flex-direction: column-reverse;`, as in
   // https://github.com/deltachat/deltachat-desktop/pull/4116,
-  // but it is buggy in Chromium and maybe WebKit (which we'll be using
-  // when we switch to Tauri).
+  // but it is buggy in Chromium and maybe WebKit (which the Tauri build uses).
   //
   // `useEffect` instead of `useLayoutEffect` because we read `el.clientHeight`
   // on the first run and for that we want the contents to be painted already.
@@ -669,14 +668,17 @@ export default function MessageList({
     }
   }, [])
 
+  const messagesDisplayContextValue = useMemo(
+    () => ({
+      context: 'chat_messagelist' as const,
+      chatId: chat.id,
+      isDeviceChat: chat.isDeviceChat,
+    }),
+    [chat.id, chat.isDeviceChat]
+  )
+
   return (
-    <MessagesDisplayContext.Provider
-      value={{
-        context: 'chat_messagelist',
-        chatId: chat.id,
-        isDeviceChat: chat.isDeviceChat,
-      }}
-    >
+    <MessagesDisplayContext.Provider value={messagesDisplayContextValue}>
       <MessageListInner
         onScroll={onScroll}
         onScrollEnd={onScrollEnd}
@@ -748,11 +750,14 @@ export const MessageListInner = React.memo(
       loadMissingMessages,
     } = props
 
-    const conversationType: ConversationType = {
-      hasMultipleParticipants: chat.chatType !== 'Single',
-      isDeviceChat: chat.isDeviceChat as boolean,
-      chatType: chat.chatType,
-    }
+    const conversationType: ConversationType = useMemo(
+      () => ({
+        hasMultipleParticipants: chat.chatType !== 'Single',
+        isDeviceChat: chat.isDeviceChat as boolean,
+        chatType: chat.chatType,
+      }),
+      [chat.chatType, chat.isDeviceChat]
+    )
 
     useKeyBindingAction(KeybindAction.MessageList_PageUp, () => {
       if (messageListRef.current) {
@@ -857,16 +862,9 @@ export const MessageListInner = React.memo(
       // over the lifetime of this component.
     })
 
-    const messageIds = useMemo(
-      () =>
-        messageListItems.filter(v => v.kind !== 'dayMarker').map(v => v.msg_id),
-      [messageListItems]
+    const focusAndMultiselectContextValue = useContext(
+      MessageMultiselectContext
     )
-    const focusAndMultiselectContextValue =
-      useMessageFocusAndMultiselectContextValue({
-        messageIds,
-        wrapperElementRef: messageListRef,
-      })
 
     if (!loaded) {
       return (
@@ -882,114 +880,82 @@ export const MessageListInner = React.memo(
     }
 
     return (
-      <>
-        <div
-          id='message-list'
-          ref={messageListRef}
-          onScroll={onScroll2}
-          onWheel={onWheel}
-          className={classNames({
-            'multiselected-one-or-more':
-              focusAndMultiselectContextValue.selectedItems.size >= 1,
-            'multiselected-two-or-more':
-              focusAndMultiselectContextValue.selectedItems.size >= 2,
-          })}
-          onClick={e => {
-            // If clicked on dead space, reset selection.
+      <div
+        id='message-list'
+        ref={messageListRef}
+        onScroll={onScroll2}
+        onWheel={onWheel}
+        className={classNames({
+          'multiselected-one-or-more':
+            focusAndMultiselectContextValue.selectedItems.size >= 1,
+          'multiselected-two-or-more':
+            focusAndMultiselectContextValue.selectedItems.size >= 2,
+        })}
+        onClick={e => {
+          // If clicked on dead space, reset selection.
 
-            if (e.ctrlKey || e.shiftKey || e.metaKey || e.altKey) {
-              return
-            }
-            if (!(e.target instanceof HTMLElement)) {
-              return
-            }
-            if (e.target.closest('.multiselectable-message') != null) {
-              // Clicked on a message. This is handled
-              // by the message click handler.
-              return
-            }
+          if (e.ctrlKey || e.shiftKey || e.metaKey || e.altKey) {
+            return
+          }
+          if (!(e.target instanceof HTMLElement)) {
+            return
+          }
+          if (e.target.closest('.multiselectable-message') != null) {
+            // Clicked on a message. This is handled
+            // by the message click handler.
+            return
+          }
 
-            focusAndMultiselectContextValue.resetSelection()
-          }}
-        >
-          <ol aria-label={tx('messages')}>
-            <RovingTabindexProvider wrapperElementRef={messageListRef}>
-              <MessageMultiselectContext.Provider
-                value={focusAndMultiselectContextValue}
-              >
-                {messageListItems.length === 0 && (
-                  <EmptyChatMessage chat={chat} />
-                )}
-                {activeView.map(messageId => {
-                  if (messageId.kind === 'dayMarker') {
-                    return (
-                      <DayMarker
-                        key={`daymarker-${messageId.timestamp}`}
-                        timestamp={messageId.timestamp}
-                      />
-                    )
-                  }
+          focusAndMultiselectContextValue.resetSelection()
+        }}
+      >
+        <ol aria-label={tx('messages')}>
+          <RovingTabindexProvider wrapperElementRef={messageListRef}>
+            {messageListItems.length === 0 && <EmptyChatMessage chat={chat} />}
+            {activeView.map(messageId => {
+              if (messageId.kind === 'dayMarker') {
+                return (
+                  <DayMarker
+                    key={`daymarker-${messageId.timestamp}`}
+                    timestamp={messageId.timestamp}
+                  />
+                )
+              }
 
-                  if (messageId.kind === 'message') {
-                    const message = messageCache[messageId.msg_id]
-                    if (message?.kind === 'message') {
-                      return (
-                        <MessageWrapper
-                          key={messageId.msg_id}
-                          key2={`${messageId.msg_id}`}
-                          chat={chat}
-                          message={message}
-                          conversationType={conversationType}
-                          unreadMessageInViewIntersectionObserver={
-                            unreadMessageInViewIntersectionObserver
-                          }
-                        />
-                      )
-                    } else if (message?.kind === 'loadingError') {
-                      return (
-                        <MessageLoadingError
-                          messageId={messageId}
-                          message={message}
-                        />
-                      )
-                    } else {
-                      // setTimeout tells it to call method in next event loop iteration, so after rendering
-                      // it is debounced later so we can call it here multiple times and it's ok
-                      setTimeout(loadMissingMessages)
-                      return <MessageLoading messageId={messageId} />
-                    }
-                  }
-                })}
-              </MessageMultiselectContext.Provider>
-            </RovingTabindexProvider>
-          </ol>
-        </div>
-
-        <div role='status' style={{ display: 'contents' }}>
-          {focusAndMultiselectContextValue.selectedItems.size > 0 && (
-            <div className='num-selected-messages-status'>
-              {tx(
-                'n_selected',
-                focusAndMultiselectContextValue.selectedItems.size.toString(),
-                {
-                  quantity: focusAndMultiselectContextValue.selectedItems.size,
+              if (messageId.kind === 'message') {
+                const message = messageCache[messageId.msg_id]
+                if (message?.kind === 'message') {
+                  return (
+                    <MessageWrapper
+                      key={messageId.msg_id}
+                      key2={`${messageId.msg_id}`}
+                      chat={chat}
+                      message={message}
+                      conversationType={conversationType}
+                      unreadMessageInViewIntersectionObserver={
+                        unreadMessageInViewIntersectionObserver
+                      }
+                    />
+                  )
+                } else if (message?.kind === 'loadingError') {
+                  return (
+                    <MessageLoadingError
+                      messageId={messageId}
+                      message={message}
+                    />
+                  )
+                } else {
+                  // setTimeout tells it to call method in next event loop iteration, so after rendering
+                  // it is debounced later so we can call it here multiple times and it's ok
+                  setTimeout(loadMissingMessages)
+                  return <MessageLoading messageId={messageId} />
                 }
-              )}
-            </div>
-          )}
-        </div>
-      </>
+              }
+            })}
+          </RovingTabindexProvider>
+        </ol>
+      </div>
     )
-  },
-  (prevProps, nextProps) => {
-    const areEqual: boolean =
-      prevProps.activeView === nextProps.activeView &&
-      prevProps.messageCache === nextProps.messageCache &&
-      prevProps.oldestFetchedMessageIndex ===
-        nextProps.oldestFetchedMessageIndex &&
-      prevProps.onScroll === nextProps.onScroll &&
-      prevProps.onWheel === nextProps.onWheel
-    return areEqual
   }
 )
 
@@ -1031,11 +997,16 @@ function MessageLoading({
 }: {
   messageId: T.MessageListItem & { kind: 'message' }
 }) {
+  const tx = useTranslationFunction()
   const ref = useRef<HTMLDivElement>(null)
   const focusAndMultiselect = useMessageFocusAndMultiselect(
     messageId.msg_id,
     ref
   )
+
+  useEffect(() => {
+    log.warn(`Rendered message ${messageId.msg_id} that is not loaded yet`)
+  }, [messageId.msg_id])
 
   return (
     <div className='info-message' id={String(messageId.msg_id)}>
@@ -1052,7 +1023,7 @@ function MessageLoading({
         onKeyDown={focusAndMultiselect.onKeyDown}
         onFocus={focusAndMultiselect.onFocus}
       >
-        Loading Message {messageId.msg_id}
+        {tx('loading')}
       </div>
     </div>
   )
@@ -1098,9 +1069,11 @@ function JumpDownButton({
           )}
           // Even though this is not focusable as of the time of writing,
           // let's still apply label, for future-proofing.
-          aria-label={tx('chat_n_new_messages', String(countUnreadMessages), {
-            quantity: countUnreadMessages,
-          })}
+          aria-label={tx(
+            'chat_n_unread_messages',
+            String(countUnreadMessages),
+            { quantity: countUnreadMessages }
+          )}
           style={countUnreadMessages === 0 ? { visibility: 'hidden' } : {}}
         >
           {countToShow}
@@ -1137,7 +1110,9 @@ function JumpDownButton({
   )
 }
 
-export function DayMarker(props: { timestamp: number }) {
+export const DayMarker = React.memo(function DayMarker(props: {
+  timestamp: number
+}) {
   const { timestamp } = props
   const tx = useTranslationFunction()
 
@@ -1170,4 +1145,4 @@ export function DayMarker(props: { timestamp: number }) {
       </div>
     </li>
   )
-}
+})

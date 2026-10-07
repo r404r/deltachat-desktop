@@ -1,5 +1,5 @@
 import styles from './styles.module.scss'
-import React, { useCallback, useContext, useId } from 'react'
+import React, { useCallback, useContext, useId, useMemo } from 'react'
 import { C } from '@deltachat/jsonrpc-client'
 
 import MessageListAndComposer from '../message/MessageListAndComposer'
@@ -8,7 +8,7 @@ import useChat from '../../hooks/chat/useChat'
 import { RecoverableCrashScreen } from '../screens/RecoverableCrashScreen'
 import { Avatar } from '../Avatar'
 import MailingListProfile from '../dialogs/MailingListProfile'
-import { useSettingsStore } from '../../stores/settings'
+import { useDesktopSettingsStore } from '../../stores/settings'
 import { BackendRemote } from '../../backend-com'
 import Button from '../Button'
 import Icon, { IconButton } from '../Icon'
@@ -30,30 +30,87 @@ import { useChatContextMenu } from '../chat/ChatContextMenu'
 import useContextMenu from '../../hooks/useContextMenu'
 import { ContextMenuContext } from '../../contexts/ContextMenuContext'
 import { mouseEventToPosition } from '../../utils/mouseEventToPosition'
+import { getContactStatusLine } from '../../utils/contactFreshness'
 import useMessage from '../../hooks/chat/useMessage'
 import classNames from 'classnames'
+import {
+  MessageMultiselectContext,
+  useMessageFocusAndMultiselectContextValue,
+} from '../message/focusAndMultiselect'
+import { useMessageList } from '../../stores/messagelist'
 
 const log = getLogger('ChatView')
 
-export function ChatView({
-  accountId,
-  lastUsedApps,
-  className,
-}: {
-  accountId: number | undefined
-  lastUsedApps: T.Message[]
-  className?: string
-}) {
-  const tx = useTranslationFunction()
-  const { chatWithLinger, unselectChat } = useChat()
-  const { smallScreenMode } = useContext(ScreenContext)
-
+export function ChatView(
+  props: Omit<
+    Parameters<typeof ChatViewInner>[0],
+    'accountId' | 'chatWithLinger'
+  > & {
+    accountId: T.Account['id'] | undefined
+    className?: string
+  }
+) {
+  const { chatWithLinger } = useChat()
   return (
     <section
       role='region'
       aria-labelledby='chat-section-heading'
-      className={classNames(className, styles.chatAndNavbar)}
+      className={classNames(props.className, styles.chatAndNavbar)}
     >
+      {props.accountId != undefined && chatWithLinger ? (
+        <ChatViewInner
+          // Note that `key` has not always been here.
+          // Some downstream components still try to support variable `chatId`.
+          // To name a few:
+          // - `hasChatChanged` in `MessageList`.
+          // - `useHasChanged2(chatId)` in `Composer`.
+          //
+          // However, most of that code is about resetting some state,
+          // so it probably can be removed.
+          // We do not and should actually rely on any kind of cross-chat state.
+          key={`${props.accountId}_${chatWithLinger.id}`}
+          {...(props as typeof props & { accountId: typeof props.accountId })}
+          chatWithLinger={chatWithLinger}
+        />
+      ) : (
+        <>
+          {/* Dummy header to reduce layout shifting
+          when unselecting/selecting a chat. */}
+          <nav className={styles.chatNavbar} data-tauri-drag-region></nav>
+          <NoChatSelected />
+        </>
+      )}
+    </section>
+  )
+}
+export function ChatViewInner({
+  accountId,
+  lastUsedApps,
+  chatWithLinger,
+}: {
+  accountId: number
+  lastUsedApps: T.Message[]
+  chatWithLinger: NonNullable<ReturnType<typeof useChat>['chatWithLinger']>
+}) {
+  const tx = useTranslationFunction()
+  const { unselectChat } = useChat()
+  const { smallScreenMode } = useContext(ScreenContext)
+
+  const messageListData = useMessageList(accountId, chatWithLinger.id)
+  const messageIds = useMemo(
+    () =>
+      messageListData.state.messageListItems
+        .filter(v => v.kind !== 'dayMarker')
+        .map(v => v.msg_id),
+    [messageListData.state.messageListItems]
+  )
+  const focusAndMultiselectContextValue =
+    useMessageFocusAndMultiselectContextValue({ messageIds })
+  const numSelectedMessages = focusAndMultiselectContextValue.selectedItems.size
+  const showMessageMultiselectCounter = numSelectedMessages > 0
+
+  return (
+    <>
       <nav className={styles.chatNavbar} data-tauri-drag-region>
         {smallScreenMode && (
           <span data-no-drag-region>
@@ -68,51 +125,49 @@ export function ChatView({
           </span>
         )}
         <div className={styles.chatNavbarHeadingWrapper} data-tauri-drag-region>
-          {chatWithLinger && <ChatHeading chat={chatWithLinger} />}
+          {chatWithLinger && (
+            <>
+              <div role='status' style={{ display: 'contents' }}>
+                {showMessageMultiselectCounter && (
+                  <div className={styles.messageMultiselectCounter}>
+                    {tx('n_selected', numSelectedMessages.toString(), {
+                      quantity: numSelectedMessages,
+                    })}
+                  </div>
+                )}
+              </div>
+              <ChatHeading
+                chat={chatWithLinger}
+                // Why `hidden` instead of simply not rendering?
+                // Because this component contains the accessible title
+                // for the "ChatView" section (`id='chat-section-heading'`).
+                hidden={showMessageMultiselectCounter}
+              />
+            </>
+          )}
         </div>
         {chatWithLinger && (
           <ChatNavButtons chat={chatWithLinger} lastUsedApps={lastUsedApps} />
         )}
       </nav>
-      <MessageListView accountId={accountId} />
-    </section>
-  )
-}
-
-function MessageListView({
-  accountId,
-}: {
-  accountId?: number
-}): React.JSX.Element {
-  const { chatWithLinger } = useChat()
-
-  if (chatWithLinger && accountId) {
-    return (
       <RecoverableCrashScreen reset_on_change_key={chatWithLinger.id}>
-        <MessageListAndComposer
-          // Note that `key` has not always been here.
-          // Some downstream components still try to support variable `chatId`.
-          // To name a few:
-          // - `hasChatChanged` in `MessageList`.
-          // - `useHasChanged2(chatId)` in `Composer`.
-          //
-          // However, most of that code is about resetting some state,
-          // so it probably can be removed.
-          // We do not and should actually rely on any kind of cross-chat state.
-          key={`${accountId}_${chatWithLinger.id}`}
-          accountId={accountId}
-          chat={chatWithLinger}
-        />
+        <MessageMultiselectContext.Provider
+          value={focusAndMultiselectContextValue}
+        >
+          <MessageListAndComposer
+            accountId={accountId}
+            chat={chatWithLinger}
+            messageListData={messageListData}
+          />
+        </MessageMultiselectContext.Provider>
       </RecoverableCrashScreen>
-    )
-  }
-
-  return <NoChatSelected />
+    </>
+  )
 }
 
 /**
  * @param chat
- * @param firstContact The fist contact of chat and null if not loaded */
+ * @param firstContact The first contact of chat and null if not loaded */
 function chatSubtitle(chat: T.FullChat, firstContact: T.Contact | null) {
   const tx = window.static_translate
   if (chat.id && chat.id > C.DC_CHAT_ID_LAST_SPECIAL) {
@@ -124,8 +179,6 @@ function chatSubtitle(chat: T.FullChat, firstContact: T.Contact | null) {
       } else {
         return '…'
       }
-    } else if (chat.chatType === 'Single' && firstContact?.isBot) {
-      return tx('bot')
     } else if (chat.chatType === 'Mailinglist') {
       if (chat.mailingListAddress) {
         return `${tx('mailing_list')} – ${chat.mailingListAddress}`
@@ -144,17 +197,19 @@ function chatSubtitle(chat: T.FullChat, firstContact: T.Contact | null) {
       } else if (chat.isDeviceChat) {
         return tx('device_talk_subtitle')
       }
-      if (chat.isEncrypted) {
+      const pendingInvite = !chat.canSend && !chat.isContactRequest
+      if (pendingInvite) {
         return null
-      } else {
-        return firstContact != null ? firstContact.address : tx('loading')
       }
+      return firstContact != null
+        ? getContactStatusLine(firstContact, tx, true)
+        : tx('loading')
     }
   }
   return 'ErrTitle'
 }
 
-function ChatHeading({ chat }: { chat: T.FullChat }) {
+function ChatHeading({ chat, hidden }: { chat: T.FullChat; hidden: boolean }) {
   const tx = useTranslationFunction()
   const { openDialog } = useDialog()
   const openViewGroupDialog = useOpenViewGroupDialog()
@@ -226,13 +281,18 @@ function ChatHeading({ chat }: { chat: T.FullChat }) {
   )
 
   return (
-    <div className='navbar-heading' data-no-drag-region>
+    <div
+      className={classNames('navbar-heading', {
+        'visually-hidden': hidden,
+      })}
+      data-no-drag-region
+    >
       <Avatar
         displayName={chat.name}
         color={chat.color}
         avatarPath={chat.profileImage || undefined}
         small
-        wasSeenRecently={chat.wasSeenRecently}
+        freshness={chat.freshness}
         // Avatar is purely decorative here,
         // and is redundant accessibility-wise,
         // because we display the chat name below.
@@ -266,6 +326,8 @@ function ChatHeading({ chat }: { chat: T.FullChat }) {
         aria-label={buttonLabel}
         data-testid='chat-info-button'
         className='navbar-heading-chat-info-button'
+        // Ensure that it can't be tab-focused.
+        disabled={hidden}
       ></button>
     </div>
   )
@@ -287,7 +349,7 @@ function ChatNavButtons({
     [openMainViewContextMenu, chat]
   )
   const chatId = chat.id
-  const settingsStore = useSettingsStore()[0]
+  const desktopSettingsStore = useDesktopSettingsStore()[0]
   const { openDialog } = useDialog()
 
   const openMediaViewDialog = useCallback(() => {
@@ -296,21 +358,25 @@ function ChatNavButtons({
     })
   }, [openDialog, chatId])
 
+  const hasLastUsedApps = lastUsedApps && lastUsedApps.length > 0
+
   return (
     <div className='views' data-no-drag-region>
-      {lastUsedApps && lastUsedApps.length > 0 && (
-        <AppIcons accountId={selectedAccountId()} apps={lastUsedApps} />
-      )}
-      <IconButton
-        onClick={openMediaViewDialog}
-        aria-label={tx('apps_and_media')}
-        title={tx('apps_and_media')}
-        className={styles.navbarButton}
-        coloring='navbar'
-        icon='apps'
-        size={18}
-      />
-      {settingsStore?.desktopSettings.enableOnDemandLocationStreaming && (
+      <div className={styles.appsGroup}>
+        {hasLastUsedApps && (
+          <AppIcons accountId={selectedAccountId()} apps={lastUsedApps} />
+        )}
+        <IconButton
+          onClick={openMediaViewDialog}
+          aria-label={tx('apps_and_media')}
+          title={tx('apps_and_media')}
+          className={styles.navbarButton}
+          coloring='navbar'
+          icon='apps'
+          size={22}
+        />
+      </div>
+      {desktopSettingsStore?.enableOnDemandLocationStreaming && (
         <IconButton
           onClick={() => openMapWebxdc(selectedAccountId(), chatId)}
           aria-label={tx('tab_map')}
@@ -318,7 +384,7 @@ function ChatNavButtons({
           title={tx('tab_map')}
           coloring='navbar'
           icon='map'
-          size={18}
+          size={22}
         />
       )}
       {/* Calls are only implemented on Electron; Tauri and Browser

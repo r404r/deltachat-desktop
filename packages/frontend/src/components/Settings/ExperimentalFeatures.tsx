@@ -1,8 +1,8 @@
 import React from 'react'
 
-import SettingsStoreInstance, {
-  useSettingsStore,
-  type SettingsStoreState,
+import {
+  DesktopSettingsStoreInstance,
+  useDesktopSettingsStore,
 } from '../../stores/settings'
 import DesktopSettingsSwitch from './DesktopSettingsSwitch'
 import useTranslationFunction from '../../hooks/useTranslationFunction'
@@ -23,17 +23,18 @@ import { getLogger } from '@deltachat-desktop/shared/logger'
 import { DeltaInput } from '../Login-Styles'
 import SettingsSelector from './SettingsSelector'
 import { defaultAppStoreBaseUrl } from '@deltachat-desktop/shared/state'
+import type { DesktopSettingsType } from '@deltachat-desktop/shared/shared-types'
 
 const log = getLogger('ExperimentalFeatures')
 
 export function ExperimentalFeatures() {
   const tx = useTranslationFunction()
-  const settingsStore = useSettingsStore()[0]
+  const desktopSettingsStore = useDesktopSettingsStore()[0]
   const { openDialog } = useDialog()
 
   const showExperimentalInfoDialog = async (
     settingsKey: keyof Pick<
-      SettingsStoreState['desktopSettings'],
+      DesktopSettingsType,
       'enableOnDemandLocationStreaming'
     >,
     updatedValue: boolean
@@ -56,10 +57,7 @@ export function ExperimentalFeatures() {
 
     message +=
       '\n\n• If you want to quit the experimental feature, you can disable it at "Settings / Advanced"'
-    openDialog(AlertDialog, {
-      message,
-      confirmLabel: tx('ok'),
-    })
+    openDialog(AlertDialog, { message })
   }
 
   return (
@@ -82,10 +80,9 @@ export function ExperimentalFeatures() {
       <SettingsSelector
         onClick={() => openDialog(AppPickerUrlDialog)}
         currentValue={
-          settingsStore == undefined
+          desktopSettingsStore == undefined
             ? undefined
-            : settingsStore.desktopSettings.appStoreBaseUrl ||
-              defaultAppStoreBaseUrl
+            : desktopSettingsStore.appStoreBaseUrl || defaultAppStoreBaseUrl
         }
       >
         {tx('webxdc_store_url')}
@@ -95,39 +92,27 @@ export function ExperimentalFeatures() {
         label={tx('key_management')}
         description={tx('key_management_desc')}
       />
-      <DesktopSettingsSwitch
-        settingsKey='enableWebxdcDevTools'
-        label='Enable Webxdc Devtools'
-        // See https://delta.chat/en/2023-05-22-webxdc-security,
-        // "XDC-01-004 WP1: Data exfiltration via desktop app DevTools"
-        //
-        // Although thanks to another hardening measure this shouldn't be
-        // easy to pull off. Namely, direct internet access is sort of
-        // disabled for the Electron part of the app:
-        // 853b584251a5dacf60ebc616f7fb10edffb5c5e5/src/main/index.ts#L12-L21
-        description='Careful: opening developer tools on a malicious webxdc app could lead to the app getting access to the Internet'
-      />
     </>
   )
 }
 
-export default function SyncAllAccountsSwitch() {
+function SyncAllAccountsSwitch() {
   const tx = useTranslationFunction()
-  const settingsStore = useSettingsStore()[0]
+  const desktopSettingsStore = useDesktopSettingsStore()[0]
 
   return (
     <SettingsSwitch
       label={tx('pref_background_sync_disabled')}
       description={tx('explain_background_sync_disabled')}
-      value={settingsStore?.desktopSettings.syncAllAccounts !== true}
-      disabled={settingsStore == null}
+      value={desktopSettingsStore?.syncAllAccounts !== true}
+      disabled={desktopSettingsStore == null}
       onChange={() => {
-        if (settingsStore == null) {
+        if (desktopSettingsStore == null) {
           return
         }
-        SettingsStoreInstance.effect.setDesktopSetting(
+        DesktopSettingsStoreInstance.effect.set(
           'syncAllAccounts',
-          !settingsStore.desktopSettings.syncAllAccounts
+          !desktopSettingsStore.syncAllAccounts
         )
       }}
     />
@@ -136,7 +121,7 @@ export default function SyncAllAccountsSwitch() {
 
 function AppPickerUrlDialog({ onClose }: DialogProps) {
   const tx = useTranslationFunction()
-  const settingsStore = useSettingsStore()[0]
+  const desktopSettingsStore = useDesktopSettingsStore()[0]
 
   return (
     <Dialog onClose={onClose}>
@@ -148,7 +133,7 @@ function AppPickerUrlDialog({ onClose }: DialogProps) {
             log.error('App picker URL form submitted, but URL is', url)
             return
           }
-          SettingsStoreInstance.effect.setDesktopSetting(
+          DesktopSettingsStoreInstance.effect.set(
             'appStoreBaseUrl',
             url === '' ? undefined : url
           )
@@ -161,14 +146,14 @@ function AppPickerUrlDialog({ onClose }: DialogProps) {
             <p className='whitespace'>
               {tx('webxdc_store_url_explain_2_desktop')}
             </p>
-            {settingsStore && (
+            {desktopSettingsStore && (
               <DeltaInput
                 value={undefined}
                 placeholder={defaultAppStoreBaseUrl}
                 onChange={() => {}}
                 type='url'
                 name='url'
-                defaultValue={settingsStore.desktopSettings.appStoreBaseUrl}
+                defaultValue={desktopSettingsStore.appStoreBaseUrl}
               />
             )}
           </DialogContent>

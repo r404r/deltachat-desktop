@@ -189,6 +189,9 @@ test.describe('Shift + Click', () => {
       .getByRole('button', { name: 'Delete' })
       .click()
     await expectSelectedChats([])
+    // The chat list update is throttled. While the deleted chat is still
+    // in it, it stays the anchor and Shift + click range-selects from the top.
+    await expect(chat).toHaveCount(0)
 
     await getChat(3).click({ modifiers: ['Shift'] })
     await expectSelectedChats([3])
@@ -389,8 +392,8 @@ test.describe('context menu', () => {
     })
     await page.getByRole('menuitem', { name: 'Mute Notifications' }).click()
     await page.getByRole('menuitem', { name: 'Mute for 1 hour' }).click()
-    await expect(getChat(2).getByLabel('Mute')).toBeVisible()
-    await expect(getChat(7).getByLabel('Mute')).toBeVisible()
+    await expect(getChat(2).getByLabel('Muted')).toBeVisible()
+    await expect(getChat(7).getByLabel('Muted')).toBeVisible()
     await expectSelectedChats([7, 2])
     await getChat(2).click({
       button: 'right',

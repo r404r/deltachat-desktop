@@ -8,6 +8,7 @@ import SettingsSwitch from '../../Settings/SettingsSwitch'
 import { DeltaTextarea } from '../../Login-Styles'
 import { BackendRemote, onDCEvent } from '../../../backend-com'
 import useAlertDialog from '../../../hooks/dialog/useAlertDialog'
+import useToast from '../../../hooks/useToast'
 import useDialog from '../../../hooks/dialog/useDialog'
 import Button from '../../Button'
 
@@ -74,6 +75,7 @@ export default function ProxyConfiguration(
   } = props
 
   const openAlertDialog = useAlertDialog()
+  const showToast = useToast()
   const { openDialog } = useDialog()
 
   const [proxyState, setProxyState] = useState<ProxyStateType>({
@@ -332,10 +334,10 @@ export default function ProxyConfiguration(
         // Needed to update the settings store since
         // `batchSetConfig` bypasses the store reducer
         // and we want to show the proxy status in the UI immediately
-        await SettingsStoreInstance.effect.loadCoreKey(
-          accountId,
-          'proxy_enabled'
-        )
+        await Promise.all([
+          SettingsStoreInstance.effect.loadCoreKey(accountId, 'proxy_enabled'),
+          SettingsStoreInstance.effect.loadCoreKey(accountId, 'proxy_url'),
+        ])
 
         await BackendRemote.rpc.stopIo(accountId)
         await BackendRemote.rpc.startIo(accountId)
@@ -375,11 +377,9 @@ export default function ProxyConfiguration(
   const copyToClipboard = useCallback(
     (url: string) => {
       navigator.clipboard.writeText(url)
-      openAlertDialog({
-        message: `${url}\n${tx('copied_to_clipboard')}`,
-      })
+      showToast(tx('copied_to_clipboard'))
     },
-    [tx, openAlertDialog]
+    [tx, showToast]
   )
 
   return (

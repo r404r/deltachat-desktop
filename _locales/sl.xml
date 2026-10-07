@@ -69,8 +69,6 @@
     <string name="mark_all_as_read">Označi vse kot prebrano</string>
     <!-- Used as an menu entry or button -->
     <string name="mark_as_read">Označi kot prebrano</string>
-    <!-- Used beside an icon with very few space. Shortest text for "Mark as being read". In english, this could be "Read" (past tense of "to read"), in german, this could be "Gelesen". -->
-    <string name="mark_as_read_short">Prebrano</string>
     <!-- Placeholder text when something is loading -->
     <string name="loading">Nalaganje...</string>
     <string name="hide">Skrij</string>
@@ -109,11 +107,13 @@
     <string name="this_month">Ta mesec</string>
     <string name="last_week">Zadnji teden</string>
     <string name="last_month">Zadnji mesec</string>
-    <!-- Refers to the time a contact was last seen. Shown below contact name in the profile. The placeholder will be replaced by date or time, resulting in "Last seen at 12:13 AM" or "Last seen Nov 12" -->
+    <!-- deprecated -->
     <string name="last_seen_at">Nazadnje viden %1$s</string>
-    <!-- Refers to the time a contact was last seen. Shown below contact name in the profile. The placeholder will be replaced by a relative point in time as "3 minutes ago" (see https://momentjs.com for more examples and languages) -->
+    <!-- deprecated -->
     <string name="last_seen_relative">Nazadnje viden %1$s</string>
+    <!-- deprecated -->
     <string name="last_seen_unknown">Nazadnje viden: neznano</string>
+
     <!-- Shown beside messages that are "N minutes old". Prefer short strings, or well-known abbreviations. -->
     <plurals name="n_minutes">
         <item quantity="one">%d min</item>
@@ -229,7 +229,6 @@
     <!-- short for "Browse through the App Picker/Store/Catalogue"; could also be translated as "Discover" or "Search" -->
     <string name="browse">Brskaj</string>
     <string name="unknown">Neznano</string>
-
     <string name="green">Zeleno</string>
     <string name="red">Rdeče</string>
     <string name="blue">Modro</string>

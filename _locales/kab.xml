@@ -116,11 +116,13 @@
     <string name="this_month">Aggur-a </string>
     <string name="last_week">Dduṛt yezrin</string>
     <string name="last_month">Aggur yezrin</string>
-    <!-- Refers to the time a contact was last seen. Shown below contact name in the profile. The placeholder will be replaced by date or time, resulting in "Last seen at 12:13 AM" or "Last seen Nov 12" -->
+    <!-- deprecated -->
     <string name="last_seen_at">yettwaẓer i tikkelt taneggarut ɣef %1$s</string>
-    <!-- Refers to the time a contact was last seen. Shown below contact name in the profile. The placeholder will be replaced by a relative point in time as "3 minutes ago" (see https://momentjs.com for more examples and languages) -->
+    <!-- deprecated -->
     <string name="last_seen_relative">yettwaẓer i tikkelt taneggarut %1$s</string>
+    <!-- deprecated -->
     <string name="last_seen_unknown">yettwaẓer i tikkelt taneggarut: Arussin</string>
+
     <!-- Call duration as shown in the call bubbles. There is some risk to mix with the sending time, so the word "Duration" may be helpful. Might also be "Duration: %d minutes", "%d-minute duration", "%d-minute length" or "%d-minute call" -->
     <plurals name="call_duration_minutes">
         <item quantity="one">tanzagt n %d n tesdat</item>
@@ -231,7 +233,6 @@
     <!-- short for "Browse through the App Picker/Store/Catalogue"; could also be translated as "Discover" or "Search" -->
     <string name="browse">Snirem</string>
     <string name="unknown">Arussin</string>
-
     <string name="green">Adal</string>
     <string name="red">Azeggaɣ</string>
     <string name="blue">Azegzaw</string>
@@ -281,6 +282,7 @@
     <string name="menu_send">Azen</string>
     <string name="menu_toggle_keyboard">Ldi/Fer anasiw n yimujit </string>
     <string name="menu_edit_group">Ẓreg agraw</string>
+    <!-- deprecated: "Edit Group" dialog usually also contains the "Group Description" field, use global_menu_edit_desktop instead -->
     <string name="menu_group_name_and_image">Isem n ugraw d tugna</string>
     <string name="menu_show_global_map">Akk adigen </string>
     <string name="menu_archive_chat">Ɣber adiwenni usrid</string>
@@ -622,15 +624,17 @@
     <!-- Instant onboarding title (there is not more to do than to set name and avatar) -->
     <string name="instant_onboarding_title">Amaɣnu-ik·im</string>
     <!-- The placeholder will be replaced by the default onboarding server -->
+    <!-- deprecated -->
     <string name="instant_onboarding_agree_default2">Tsertit tabaḍnit i %1$s</string>
     <!-- The placeholder will be replaced by instance name, the whole text will link to the instance page -->
+    <!-- deprecated -->
     <string name="instant_onboarding_agree_instance">Ɣef yimaɣnuten deg %1$s</string>
     <!-- Confirmation button on the instant onboarding screen -->
     <string name="instant_onboarding_create">Qebleɣ &amp; Rnu amaɣnu</string>
     <!-- Secondary, link-like button to open a page with other possible instances -->
     <string name="instant_onboarding_show_more_instances">Seqdec aqeddac nniḍen</string>
     <string name="instant_onboarding_other_server">Umuɣ n yiqeddacen n Chatmail</string>
-    <!-- Hint about what happens when "Create Profile" button in pressed; the placeholder will be replaced by the group name -->
+    <!-- Hint about what happens when "Create Profile" button in pressed; the placeholder will be replaced by the group or channel name -->
     <string name="instant_onboarding_group_info">Rnu amaɣnu akken ad tkecmeḍ ɣer ugraw \"%1$s\".</string>
     <!-- Hint about what happens when "Create Profile" button in pressed; the placeholder will be replaced by contact name -->
     <string name="instant_onboarding_contact_info">Rnu amaɣnu akken ad temmeslayeḍ d %1$s.</string>
@@ -673,13 +677,16 @@
     <string name="add_transport">Rnu amedwel</string>
     <string name="remove_transport">Kkes amedwel</string>
     <string name="edit_transport">Ẓreg amedwel</string>
+    <!-- deprecated -->
     <string name="used_for_sending">Yettwaseqdec i tuzzna</string>
+    <!-- deprecated -->
     <string name="hide_from_contacts">Ffer-it ɣef inermisen</string>
+    <!-- deprecated -->
     <string name="hidden_from_contacts">Uffir ɣef inermisen</string>
     <!-- shown if a QR code was scanned that can be used as a relay -->
     <string name="confirm_add_transport">Rnu amedwel-agi?</string>
     <string name="invalid_transport_qr">Tangalt QR ittusemḍen ur tesɛi ara amedwel ameɣtu</string>
-    <!-- placeholder will be replaced by a relay server name -->
+    <!-- deprecated -->
     <string name="confirm_remove_or_hide_transport_x">Kkes amedwel \"%1$s\"?\n\nInermasen i yessnen kan amedwel-a, ahat ur d-ttawḍen ara ɣur-k·m alarma tuzneḍ-asen izen tikkelt nniḍen.\n\nMa yella ccek, ffer-it axir n tukksa-ines.</string>
     <string name="login_certificate_checks">Asenqed n uselkin</string>
     <string name="login_error_mail">Ma ulac aɣilif, sekcem tansa imayl tameɣtut</string>
@@ -689,7 +696,7 @@
     <string name="import_backup_title">Err-d seg uḥraz</string>
     <string name="import_backup_ask">Aḥraz yettwaf di \"%1$s\".\n\nTebɣiḍ ad d-tketreḍ u ad tesqedceḍ akk isefka d yiɣewwaren seg-s?</string>
     <string name="import_backup_no_backup_found">Ulac Iḥrazen yettwafen.\n\nNɣel aḥraz ɣer \"%1$s\" sakin ɛreḍ tikelt nniḍen.</string>
-    <!-- %1$s will be replaced by the failing address -->
+    <!-- deprecated, %1$s will be replaced by the failing address -->
     <string name="login_error_cannot_login">Ur izmir ara ad yeqqen am \"%1$s\". Ma ulac aɣilif, senqed ma yella tansa d wawal uffir d tameɣtut.</string>
     <!-- TLS certificate checks -->
     <string name="accept_invalid_certificates">Qbel iselkan arameɣtu</string>
@@ -717,6 +724,7 @@
     <!-- first placeholder is replaced by the number of files (always 2 or more); second placeholder is replaced by a chat name -->
     <string name="ask_send_files_to_chat">Azen %1$d ifuyla ɣer \"%2$s\"?</string>
     <string name="ask_send_files_to_selected_chats">Azen %1$d afaylu(ifuyla) ɣer %2$d idiwenniyen?</string>
+    <!-- deprecated -->
     <string name="videos_sent_without_recoding">(Tividyutin ttwaznent d akken d ifuyla meqqren. Akken ad tazneḍ tividyutin d ifuyla meẓẓiyen, qqen-itent yal yiwet i yiman-is)</string>
     <string name="share_text_multiple_chats">Azen aḍris-a ɣer %1$d idwenniyin?\n\n\"%2$s\"</string>
     <string name="share_abort">Beṭṭu ur yedda ara ɣef sebba n tsirag ixuṣṣen.</string>
@@ -988,10 +996,13 @@
     <string name="qrscan_failed">Tangalt QR ur tezmir ara ad ttwakestengel</string>
     <string name="qrscan_ask_join_group">Tebɣiḍ ad tettekkiḍ deg ugraw \"%1$s\"?</string>
     <string name="qrscan_ask_join_channel">Tebɣiḍ ad tettekkiḍ deg ubadu \"%1$s\"?</string>
+    <!-- deprecated -->
     <string name="qrscan_fingerprint_mismatch">Adsil umḍin yettwaḍummen ur imṣada ara akked win yettwaẓerren i tikelt taneggarut i %1$s.</string>
+    <!-- deprecated -->
     <string name="qrscan_no_addr_found">Tangalt-a QR tegber adsil umḍin maca ulac tansa.\n\nI usenqed beṛṛa n tasfift, ttxil-k-im eg tuqqna tawgelhant akked uɣerwaḍ. </string>
     <string name="qrscan_contains_text">Aḍris n tengalt QR yettwaḍummen:\n\n%1$s</string>
     <string name="qrscan_contains_url">URL n tangalt QR yettwaḍummen:\n\n%1$s</string>
+    <!-- deprecated -->
     <string name="qrscan_fingerprint_label">Adsil umḍin</string>
     <string name="withdraw_verifycontact_explain">Tangalt-a QR tezmer ad tt-id-ḍummen wiyaḍ akken ad k·m-id-nermsen.\n\nTzemreḍ ad talseḍ awennez, akken tangalt QR yellan neɣ aseɣwen n uεraḍ ur iteddu ara.</string>
     <string name="withdraw_verifygroup_explain">Tangalt-a QR tezmer ad tt-id-ḍummen wiyaḍ akken ad kecmen ɣer ugraw \"%1$s\".\n\nTzemreḍ ad talseḍ awennez, akken tangalt QR yellan neɣ aseɣwen n uεraḍ ur iteddu ara.</string>
@@ -1027,8 +1038,11 @@
     <string name="contact_verified">%1$s ittwasenked.</string>
     <string name="contact_blocked">Tesweḥleḍ anermis</string>
     <!-- Shown in contact profile. The placeholder will be replaced by the name of the contact that introduced the contact. -->
+    <!-- deprecated -->
     <string name="verified_by">Yettwasenked sɣur %1$s</string>
+    <!-- deprecated -->
     <string name="verified_by_you">Yettwasenked sɣur nekk</string>
+    <!-- deprecated -->
     <string name="verified_by_unknown">Yettwasenked</string>
     <string name="mailto_dialog_header_select_chat">Fren adiwenni i tuzna n yizen ɣer</string>
     <!-- first placeholder is the name of the chat -->
@@ -1059,7 +1073,6 @@
     <string name="perm_explain_access_to_storage_denied">Akken ad tremseḍ neɣ ad tazneḍ ifuyla, ddu ɣer iɣewwaṛen n usnas, fren \" tisirag \", sakin rmed \" takatut \".</string>
     <string name="perm_explain_access_to_location_denied">Akken ad teqqneḍ adig, ddu ɣer iɣewwaṛen n usnas, fren \" tisirag \", sakin rmed \" adig \". </string>
     <string name="perm_explain_access_to_notifications_denied">Akken ad d-remseḍ ilɣa, ddu ɣer \"Iɣewwaṛen n Unagraw / Isnas / Delta Chat\" akken ad tremdeḍ \"Ilɣa\".</string>
-
     <!-- ImageEditorHud -->
     <string name="ImageEditorHud_draw_anywhere_to_blur">Suneɣ-d anda tebɣiḍ i wakken ad tesluɣeḍ</string>
     <string name="ImageEditorHud_add_text">Rnu aḍris</string>
@@ -1186,6 +1199,4 @@
     <string name="perm_enable_bg_reminder_title">Sit dagi akken ad tremseḍ iznan ticki Delta Chat yella deg ugilal.</string>
     <string name="perm_enable_bg_already_done">Tsirgeḍ yakan Delta Chat i wakken ad d-remseḍ iznan deg ugilal.\n\nMa yella iznan ur d-ttawḍen ara deg ugilal, ttxil-k·m senqed daɣen iɣewwaṛen n unagraw.</string>
 
-    <!-- device messages for updates -->
-    <string name="update_2_0">D acu i d amaynut?\n\n💯Awgelhen n yixef ɣer yixef d ayen iɣef ara tettekleḍ u i lebda. Inekcaman 🔒 ruḥen!\n\n✉️ Imayl aklasik war awgelhen yettwacreḍ s usekkil azamulan.\n\n 😻 Agdil amaynut yettwasneflin n umaɣnu i akk inermisen-ik·im\n\n🔲 Taqeffalt tamaynutt i unekcum uzrib ɣer yisnasen yettwasqedcen deg udiwenni usrid\n\n❤️ Ma ulac aɣilif mudd-aɣ-d afus akken ad neqqim d imunanen, daɣen ad nkemmel ad d-nawi asnerni: %1$s</string>
-</resources>
+    </resources>

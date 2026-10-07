@@ -9,6 +9,7 @@ import {
   User,
   loadExistingProfiles,
   clickThroughTestIds,
+  openReactionsBar,
   reloadPage,
   sendMessage,
   test,
@@ -92,13 +93,13 @@ test('create profiles', async ({ browserName, isChatmail }) => {
   expect(existingProfiles.length).toBe(numberOfProfiles)
 })
 
-test('check "New E-Mail" option presence', async ({ isChatmail }) => {
+test('check "New Email" option presence', async ({ isChatmail }) => {
   await page.locator('#new-chat-button').click()
 
   await expect(page.getByRole('button', { name: 'New Group' })).toBeVisible()
 
   // Since we're on a Chatmail server, this button is not supposed to be shown.
-  const newEmailButton = page.getByRole('button', { name: 'New E-Mail' })
+  const newEmailButton = page.getByRole('button', { name: 'New Email' })
   if (isChatmail) {
     await expect(newEmailButton).not.toBeVisible()
     // Same button, but double-check, by ID.
@@ -241,11 +242,8 @@ test('message menu items presence', async () => {
 
 test('React to a message', async () => {
   const someMessage = page.getByLabel('Messages').getByText('Hello').first()
-  await someMessage.click({ button: 'right' })
-  await page.getByRole('menu').getByRole('menuitem', { name: 'React' }).click()
-  await expect(
-    page.getByRole('menu', { name: 'React' }).getByRole('menuitemradio').first()
-  ).toBeFocused()
+  const reactionsBar = await openReactionsBar(page, someMessage)
+  await expect(reactionsBar.getByRole('menuitemradio').first()).toBeFocused()
 
   await page.keyboard.press('Escape')
   await expect(
@@ -257,9 +255,7 @@ test('React to a message', async () => {
   // but this is how it works now.
   await someMessage.click()
   await page.keyboard.press('ControlOrMeta+R')
-  await expect(
-    page.getByRole('menu', { name: 'React' }).getByRole('menuitemradio').first()
-  ).toBeFocused()
+  await expect(reactionsBar.getByRole('menuitemradio').first()).toBeFocused()
 
   const chatList = page.getByLabel('Chats').getByRole('tablist')
   await expect(chatList).not.toContainText('You reacted')
@@ -433,40 +429,71 @@ test('add app from picker to chat', async () => {
   expect(finalAppIconsCount).toBeGreaterThan(initialAppIconsCount)
 })
 
-test('custom app picker URL', async () => {
-  const userA = existingProfiles[0]
-  const userB = existingProfiles[1]
-  await switchToProfile(page, userA.id)
-  await selectChat(page, userB.name)
+test.describe('custom app picker URL', () => {
+  test.afterAll(async () => {
+    // Restore the default value, so that the next time the test doesn't fail
+    // because unfortunately the config file is persisted between test runs.
+    for (let i = 0; i < 5; i++) {
+      await page.keyboard.press('Escape')
+    }
 
-  // It's the default URL but with different casing.
-  // The behavior will remain the same network-wise,
-  // but this still allows us to check that the setting change is stored
-  // and that the picker still works after that.
-  const newUrl = 'HTTPS://APPS.testRUN.ORG/'
+    await page.getByRole('button', { name: 'Settings' }).click()
+    await page.getByRole('button', { name: 'Advanced' }).click()
+    await page.getByRole('button', { name: 'App Picker URL' }).click()
+    await page.getByRole('dialog').last().getByRole('textbox').clear()
+    await page.keyboard.press('Enter')
 
-  await page.getByRole('button', { name: 'Settings' }).click()
-  await page.getByRole('button', { name: 'Advanced' }).click()
-  const advancedDialog = page
-    .getByRole('dialog')
-    .filter({ hasText: 'Advanced' })
-    .filter({ hasText: 'Experimental' })
+    for (let i = 0; i < 5; i++) {
+      await page.keyboard.press('Escape')
+    }
+  })
 
-  await expect(advancedDialog).not.toContainText(newUrl, { ignoreCase: false })
-  await page.getByRole('button', { name: 'App Picker URL' }).click()
-  await page.getByRole('dialog').last().getByRole('textbox').fill(newUrl)
-  await page.keyboard.press('Enter')
-  await expect(advancedDialog).toContainText(newUrl, { ignoreCase: false })
+  test('works', async () => {
+    const userA = existingProfiles[0]
+    const userB = existingProfiles[1]
+    await switchToProfile(page, userA.id)
+    await selectChat(page, userB.name)
 
-  await page.keyboard.press('Escape')
-  await page.keyboard.press('Escape')
+    // It's the default URL but with different casing.
+    // The behavior will remain the same network-wise,
+    // but this still allows us to check that the setting change is stored
+    // and that the picker still works after that.
+    const newUrl = 'HTTPS://APPS.testRUN.ORG/'
 
-  await page.getByRole('button', { name: 'Attach' }).click()
-  await page.getByRole('menuitem', { name: 'App' }).click()
-  await page.getByRole('button', { name: 'Poll' }).first().click()
-  await page.getByRole('button', { name: 'Add to Chat' }).click()
-  await page.getByRole('button', { name: 'Send', exact: true }).click()
-  await expect(page.locator(`.message`).last()).toContainText('Poll')
+    await page.getByRole('button', { name: 'Settings' }).click()
+    await page.getByRole('button', { name: 'Advanced' }).click()
+    const advancedDialog = page
+      .getByRole('dialog')
+      .filter({ hasText: 'Advanced' })
+      .filter({ hasText: 'Experimental' })
+
+    await expect(advancedDialog).not.toContainText(newUrl, {
+      ignoreCase: false,
+    })
+    await page.getByRole('button', { name: 'App Picker URL' }).click()
+    await page.getByRole('dialog').last().getByRole('textbox').fill(newUrl)
+    await page.keyboard.press('Enter')
+    await expect(advancedDialog).toContainText(newUrl, { ignoreCase: false })
+
+    await page.keyboard.press('Escape')
+    await page.keyboard.press('Escape')
+
+    await page.getByRole('button', { name: 'Attach' }).click()
+    await page.getByRole('menuitem', { name: 'App' }).click()
+    // Narrow down the list first, and then pick the app by its name only:
+    // the name of a list entry also includes the description,
+    // and other apps describe themselves as poll apps as well.
+    const appPicker = page.locator('.styles_module_appPickerContainer')
+    await appPicker.getByPlaceholder('Search').fill('Poll')
+    await appPicker
+      .getByRole('button')
+      .filter({ has: page.getByText('Poll', { exact: true }) })
+      .first()
+      .click()
+    await page.getByRole('button', { name: 'Add to Chat' }).click()
+    await page.getByRole('button', { name: 'Send', exact: true }).click()
+    await expect(page.locator(`.message`).last()).toContainText('Poll')
+  })
 })
 
 test('recent apps context menu', async () => {
@@ -574,6 +601,7 @@ test('correct handling of changed profile displaynames', async () => {
   await page.getByTestId('edit-contact-name').click()
   await page.getByTestId('edit-contact-name-input').fill(contactNameGivenByMe)
   await page.getByTestId('ok').click()
+  await expect(page.locator('#view-profile-menu')).toBeFocused()
   await page.getByTestId('dialog-header-close').click()
   // profile shows the name I gave to the contact
   await expect(chatHeading).toContainText(contactNameGivenByMe)
@@ -588,6 +616,28 @@ test('correct handling of changed profile displaynames', async () => {
       .locator('.chat-list .chat-list-item')
       .filter({ hasText: contactNameGivenByMe })
   ).toBeVisible()
+})
+
+test('switching profile closes dialogs of the previous profile', async () => {
+  const userA = getUser(0, existingProfiles)
+  const userB = getUser(1, existingProfiles)
+  await switchToProfile(page, userA.id)
+  await selectChat(page, userB.name)
+
+  await page.getByRole('button', { name: 'Apps & Media' }).click()
+  await expect(page.getByRole('dialog')).toBeVisible()
+
+  // While a modal dialog is open, the account sidebar can't be clicked,
+  // so call window.__selectAccount with another accountId directly
+  await page.evaluate(
+    accountId => (window as any).__selectAccount(Number(accountId)),
+    userB.id
+  )
+  await expect(page.getByTestId(`selected-account:${userB.id}`)).toHaveCount(1)
+
+  // The dialog belongs to the previous profile, so it must not stay open,
+  // see https://github.com/deltachat/deltachat-desktop/issues/6602
+  await expect(page.getByRole('dialog')).toHaveCount(0)
 })
 
 test('delete profiles', async () => {
