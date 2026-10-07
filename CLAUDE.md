@@ -101,7 +101,7 @@ here; the fork keeps it. Fork-owned pieces upstream will never touch again:
   and set every `DesktopSettingsType` / `RC_Config` key; `src-tauri/` links core as Rust crates
 - Root `Cargo.toml` + `Cargo.lock` (cargo workspace), `bin/webxdc-check-permissions-policy-count.js`
 - Tauri branches in `bin/build/update_desktop_version.js` and `bin/link_core/*`
-- `.github/workflows/r404r-tauri-check.yml` — type check + JS build + `cargo check`/`cargo test`
+- `.github/workflows/r404r-ci.yml` — `tauri-*` jobs: type check + JS build + `cargo check`/`cargo test`
   on every push/PR to `r404r-main`
 
 Building `src-tauri` locally needs `libwebkit2gtk-4.1-dev libgtk-3-dev libsoup-3.0-dev
@@ -138,7 +138,7 @@ libayatana-appindicator3-dev librsvg2-dev`; without them rely on the CI workflow
    - `pnpm --filter=@deltachat-desktop/target-tauri build` — catches moved `bin/` scripts
      (upstream renamed `bin/copy.js` → `bin/tools/copy.js`).
 6. Run `pnpm -w check` and `pnpm -w test` (needs `pnpm -w translations:convert` once in a fresh
-   checkout), and make sure `r404r Tauri Check` is green after pushing, before tagging.
+   checkout), and make sure `r404r CI` is green after pushing, before tagging.
 
 ### Release
 
@@ -146,5 +146,5 @@ Push an annotated tag matching `r404r-v*` to trigger `.github/workflows/r404r-re
 (5 build jobs + GitHub Release). The workflow uses the tag name (`github.ref_name`) for
 version info and artifact names; `package.json` version may stay at the upstream base
 version — use a `-N` suffix (e.g. `r404r-v2.53.1-2`) for rebuilds of the same base.
-Branch pushes to `r404r-main` only run `r404r-tauri-check.yml` (plus upstream workflows that
+Branch pushes to `r404r-main` only run `r404r-ci.yml` (plus upstream workflows that
 match); release builds are tag-only.

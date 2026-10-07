@@ -1,14 +1,18 @@
-# r404r fork: continuous Tauri build check.
+# r404r fork: continuous checks for pushes/PRs to `r404r-main`.
 #
-# Upstream moved the Tauri target out of this repo (f839866f4) and removed
-# its CI, but the fork keeps packages/target-tauri. Without this workflow the
-# Rust side is only compiled by r404r-release.yml at tag time, so breakage
-# from upstream merges (runtime interface changes, core crate bumps, bin/
-# script moves) would only surface during a release.
+# Upstream's checks don't cover this branch: basic-tests.yml only runs on
+# `main` pushes and PRs, and test.yml is broken (calls a nonexistent root
+# `build` script) and disabled. So without this workflow nothing would
+# verify r404r-main until a release tag is built.
+#
+# Tauri: upstream moved the Tauri target out of this repo (f839866f4) and
+# removed its CI, but the fork keeps packages/target-tauri. The tauri-* jobs
+# catch breakage from upstream merges (runtime interface changes, core crate
+# bumps, bin/ script moves) before release time.
 #
 # Lives only on `r404r-main`; see README.r404r.md for the branch strategy.
 
-name: r404r Tauri Check
+name: r404r CI
 
 on:
   push:
@@ -24,9 +28,36 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  # Same as upstream basic-tests.yml (check + build + unit tests).
+  check:
+    name: Check, build + unit tests
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          show-progress: false
+          persist-credentials: false
+          # Make `git describe` work
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22.x
+      - name: install pnpm
+        run: npm i -g pnpm
+      - name: install deps
+        run: pnpm install --frozen-lockfile
+      - name: check (types, lint, format, versions)
+        run: pnpm check
+      - name: build electron
+        run: pnpm build:electron
+      - name: unit tests
+        run: pnpm test
+
   # Runtime interface conformance + the JS build scripts (catches e.g.
   # moved bin/ helpers and runtime.ts drifting from packages/runtime).
-  js:
+  tauri-js:
     name: Tauri runtime types + JS build
     runs-on: ubuntu-latest
     permissions:
@@ -50,7 +81,7 @@ jobs:
 
   # Compiles src-tauri against the pinned core crates. Uses a fake
   # html-dist since tauri's `generate_context!` only needs the dir to exist.
-  rust:
+  tauri-rust:
     name: Tauri Rust check + tests
     runs-on: ubuntu-22.04
     permissions:
