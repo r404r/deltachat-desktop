@@ -79,6 +79,8 @@ experimental **key management** feature (PGP key import/export/view UI) gated be
 - `packages/frontend/src/backend/key-management.ts` — RPC adapter; most `BackendRemote.rpc.*`
   calls live here (`getChatSecurejoinQrCode`, `checkQr`, `getContactEncryptionInfo`,
   `exportSelfKeys`, …)
+- `packages/frontend/src/utils/parseEncryptionInfo.ts` (+ `src/tests/parseEncryptionInfo.test.ts`) —
+  parses the contact fingerprint out of `getContactEncryptionInfo` text
 - `packages/frontend/src/components/Settings/Advanced.tsx` — gated entry point (`enableKeyManagement` check)
 - `packages/frontend/src/components/Settings/ExperimentalFeatures.tsx` — toggle (`DesktopSettingsSwitch`)
 - `packages/shared/shared-types.d.ts` + `packages/shared/state.ts` — flag type + default

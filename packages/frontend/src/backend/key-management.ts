@@ -1,6 +1,7 @@
 import { BackendRemote } from '../backend-com'
 import { unknownErrorToString } from '@deltachat-desktop/shared/unknownErrorToString'
 import { getLogger } from '@deltachat-desktop/shared/logger'
+import { parseFingerprintFromInfo } from '../utils/parseEncryptionInfo'
 
 const log = getLogger('renderer/backend/key-management')
 
@@ -121,7 +122,7 @@ export async function getContactKeyInfo(
     contactId,
     displayName: contact.displayName,
     address: contact.address,
-    fingerprint: parseFingerprintFromInfo(encryptionInfo),
+    fingerprint: parseFingerprintFromInfo(encryptionInfo, contact.address),
     isEncrypted: contact.e2eeAvail,
     encryptionInfo,
   }
@@ -212,28 +213,6 @@ export async function exportSelfSecretKey(
 function parseFingerprintFromQr(qr: string): string {
   const match = qr.match(/^OPENPGP4FPR:([A-Fa-f0-9]+)/i)
   return match ? match[1].toUpperCase() : ''
-}
-
-/**
- * Parse fingerprint from the encryption info text returned by core.
- * The text contains fingerprint lines as groups of 4-hex-char blocks.
- */
-function parseFingerprintFromInfo(info: string): string {
-  const lines = info.split('\n')
-  for (let i = 0; i < lines.length; i++) {
-    const line = lines[i].trim()
-    if (/^[A-Fa-f0-9]{4}(\s+[A-Fa-f0-9]{4}){4,}$/.test(line)) {
-      let fp = line
-      if (i + 1 < lines.length) {
-        const nextLine = lines[i + 1].trim()
-        if (/^[A-Fa-f0-9]{4}(\s+[A-Fa-f0-9]{4}){4,}$/.test(nextLine)) {
-          fp += ' ' + nextLine
-        }
-      }
-      return fp
-    }
-  }
-  return ''
 }
 
 /**
