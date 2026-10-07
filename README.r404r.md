@@ -32,8 +32,8 @@ origin/main ──────────────────────�
                                            cut from here, pushed to open PRs
                                            against deltachat/deltachat-desktop
 
-                                                   rebase r404r-main onto main
-                                                   to absorb upstream updates
+                                                   merge upstream main into
+                                                   r404r-main to absorb updates
                                                          ↓
 origin/r404r-main ──●──●──●──●──●──●──●──●──●──●──●──●──→   (fork integration / default)
                           ↑                    ↑
@@ -50,7 +50,7 @@ origin/r404r-main ──●──●──●──●──●──●──�
 | -------------------------------------------- | -------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------- |
 | `deltachat/deltachat-desktop/main` (remote)  | Source of truth for upstream project.                                                                          | (nothing — read-only from our side)                                                                                                 | (n/a)                                                                                       |
 | [`origin/main`](../../tree/main)             | Pristine mirror of upstream. Used as the base for outgoing PRs so upstream sees a clean diff.                  | Only fast-forward merges from `deltachat/deltachat-desktop/main`. Never rebase, never force-push, never merge `r404r-main` into it. | `git merge --ff-only` + plain `git push`.                                                   |
-| [`origin/r404r-main`](../../tree/r404r-main) | Integration branch for all fork-specific work. Default branch of this repo. Build artifacts are cut from here. | (a) rebases onto `main` to absorb upstream updates; (b) `--no-ff` merges from `r404r/*` sub-feature branches.                       | `git rebase main` + `git push --force-with-lease`.                                          |
+| [`origin/r404r-main`](../../tree/r404r-main) | Integration branch for all fork-specific work. Default branch of this repo. Build artifacts are cut from here. | (a) merges of upstream `main` to absorb upstream updates; (b) `--no-ff` merges from `r404r/*` sub-feature branches.                 | `git merge` + plain `git push`. Never rebase, never force-push.                             |
 | `r404r/*` (short-lived)                      | One per fork-only feature or bugfix. Keeps big changes isolated while in progress.                             | Normal commits.                                                                                                                     | Normal push; delete after merging to `r404r-main`.                                          |
 | `fix/*`, `feat/*` (short-lived)              | One per PR going to upstream.                                                                                  | Normal commits.                                                                                                                     | Push to `origin`, open PR with base `deltachat/deltachat-desktop:main`. Delete after merge. |
 
@@ -58,8 +58,9 @@ origin/r404r-main ──●──●──●──●──●──●──�
 
 - **Upstream merges never conflict with fork features.** Fork features only
   live on `r404r-main`. When upstream lands work that touches the same
-  files, the conflict surfaces during `git rebase main` on `r404r-main` —
-  and we resolve it once, in isolation, away from any PR submission.
+  files, the conflict surfaces when merging upstream into `r404r-main` —
+  and we resolve it once, in a single merge commit, away from any PR
+  submission.
 - **Upstream PRs stay clean.** Because `fix/*` / `feat/*` branches start
   from `main` (which is byte-identical to upstream), diffs contain only the
   intended change. Upstream maintainers see no fork contamination.
@@ -105,8 +106,14 @@ We intentionally re-enable functionality that upstream has removed:
 - **Export self key** — removed in upstream PR #5801 (2025-12-05). Re-enabled
   with multi-step warnings; see
   [`docs-fix/10-export-self-key.md`](./docs-fix/10-export-self-key.md).
+- **Tauri target** — upstream moved it to
+  [`deltachat/deltachat-tauri`](https://github.com/deltachat/deltachat-tauri)
+  and deleted it here (upstream f839866f4, 2026-08-18). The fork keeps
+  `packages/target-tauri` and keeps it building against the current
+  frontend and core; [`r404r-ci.yml`](./.github/workflows/r404r-ci.yml)
+  checks it on every push to `r404r-main`.
 
-Both features are protected by strong in-UI warnings about the underlying
+The two key-management features are protected by strong in-UI warnings about the underlying
 Autocrypt/SecureJoin constraints (no key rotation protocol, unencrypted
 export, etc.).
 
@@ -150,9 +157,10 @@ real pain).
 ### Sync upstream into `main`
 
 ```bash
-git fetch deltachat/deltachat-desktop
+# one-time: git remote add upstream https://github.com/deltachat/deltachat-desktop.git
+git fetch upstream
 git checkout main
-git merge --ff-only deltachat/deltachat-desktop/main
+git merge --ff-only upstream/main
 git push origin main
 ```
 
@@ -163,14 +171,21 @@ producing a merge commit.
 ### Pull upstream changes into `r404r-main`
 
 ```bash
+git fetch upstream
 git checkout r404r-main
-git rebase main
-# resolve any conflicts, then:
-git push origin r404r-main --force-with-lease
+git branch backup/r404r-main-pre-merge-<version>   # cheap safety net
+git merge upstream/main
+# resolve any conflicts, run `pnpm -w check` + `pnpm -w test`, then:
+git push origin r404r-main
 ```
 
-We use `rebase` (not `merge`) so `r404r-main` stays linear and readable as
-"upstream + a few patches on top".
+We use `merge` (not `rebase`): `r404r-main` is the published default branch
+that users clone and build from, so its history must never be rewritten.
+Conflicts are resolved once, in the merge commit, instead of being replayed
+for every fork commit on each sync, and fork commits keep their hashes (tags
+like `r404r-v*` stay reachable). The full post-merge checklist, including the
+key management and Tauri checks, lives in the "Fork maintenance" section of
+[`CLAUDE.md`](./CLAUDE.md).
 
 ### Submit a PR to upstream
 
@@ -185,7 +200,7 @@ git push origin fix/clear-bug-title
 ```
 
 The fix typically flows back into `r404r-main` automatically the next time
-we sync upstream and rebase.
+we merge upstream.
 
 ### Add a fork-only feature
 

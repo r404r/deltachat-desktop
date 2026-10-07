@@ -111,8 +111,7 @@ libayatana-appindicator3-dev librsvg2-dev`; without them rely on the CI workflow
 
 1. `git branch backup/r404r-main-pre-merge-<ver>`, then `git fetch upstream && git merge upstream/main`
    into `r404r-main` — conflicts cluster in the key management surface above plus
-   `pnpm-workspace.yaml`. Sync is by **merge**, not rebase (the rebase + force-push flow in
-   `README.r404r.md` is outdated; `r404r-main` history is merge-based).
+   `pnpm-workspace.yaml`. Sync is by **merge**, never rebase/force-push (see `README.r404r.md`).
 2. **Check `pnpm-workspace.yaml` for duplicate YAML keys** — git auto-merge has produced a
    duplicated `supportedArchitectures` block that breaks pnpm entirely (duplicated mapping key).
 3. pnpm config lives in `pnpm-workspace.yaml`, NOT `.npmrc` (pnpm ≥11 ignores `.npmrc` for
