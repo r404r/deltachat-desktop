@@ -67,13 +67,18 @@ Watch mode only hot-reloads frontend code. Main process changes require `pnpm -w
 
 ## Fork maintenance (r404r)
 
-This is a fork of `deltachat/deltachat-desktop` (remote `upstream`). The fork carries an
+This is a fork of `deltachat/deltachat-desktop`. Remotes: `origin` = `r404r/deltachat-desktop`,
+`upstream` = `deltachat/deltachat-desktop` (fresh clones lack it — add with
+`git remote add upstream https://github.com/deltachat/deltachat-desktop.git`). The fork carries an
 experimental **key management** feature (PGP key import/export/view UI) gated behind
 `desktopSettings.enableKeyManagement`.
 
 ### Key management surface (check after every upstream merge)
 
 - `packages/frontend/src/components/dialogs/KeyManagement/` — dialog components
+- `packages/frontend/src/backend/key-management.ts` — RPC adapter; most `BackendRemote.rpc.*`
+  calls live here (`getChatSecurejoinQrCode`, `checkQr`, `getContactEncryptionInfo`,
+  `exportSelfKeys`, …)
 - `packages/frontend/src/components/Settings/Advanced.tsx` — gated entry point (`enableKeyManagement` check)
 - `packages/frontend/src/components/Settings/ExperimentalFeatures.tsx` — toggle (`DesktopSettingsSwitch`)
 - `packages/shared/shared-types.d.ts` + `packages/shared/state.ts` — flag type + default
@@ -85,8 +90,10 @@ duplicate keys in `_untranslated_en.json`.
 
 ### Upstream merge checklist
 
-1. `git fetch upstream && git merge upstream/main` — conflicts cluster in the key management
-   surface above plus `pnpm-workspace.yaml` / `packages/target-tauri/package.json`.
+1. `git fetch upstream && git merge upstream/main` into `r404r-main` — conflicts cluster in
+   the key management surface above plus `pnpm-workspace.yaml` /
+   `packages/target-tauri/package.json`. Sync is by **merge**, not rebase (the rebase +
+   force-push flow in `README.r404r.md` is outdated; `r404r-main` history is merge-based).
 2. **Check `pnpm-workspace.yaml` for duplicate YAML keys** — git auto-merge has produced a
    duplicated `supportedArchitectures` block that breaks pnpm entirely (duplicated mapping key).
 3. pnpm config lives in `pnpm-workspace.yaml`, NOT `.npmrc` (pnpm ≥11 ignores `.npmrc` for
