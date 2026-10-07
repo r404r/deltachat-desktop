@@ -1,0 +1,97 @@
+# r404r fork: continuous Tauri build check.
+#
+# Upstream moved the Tauri target out of this repo (f839866f4) and removed
+# its CI, but the fork keeps packages/target-tauri. Without this workflow the
+# Rust side is only compiled by r404r-release.yml at tag time, so breakage
+# from upstream merges (runtime interface changes, core crate bumps, bin/
+# script moves) would only surface during a release.
+#
+# Lives only on `r404r-main`; see README.r404r.md for the branch strategy.
+
+name: r404r Tauri Check
+
+on:
+  push:
+    branches: ['r404r-main']
+  pull_request:
+    branches: ['r404r-main']
+  workflow_dispatch:
+
+permissions: {}
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # Runtime interface conformance + the JS build scripts (catches e.g.
+  # moved bin/ helpers and runtime.ts drifting from packages/runtime).
+  js:
+    name: Tauri runtime types + JS build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          show-progress: false
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22.x
+      - name: install pnpm
+        run: npm i -g pnpm
+      - name: install deps
+        run: pnpm install --frozen-lockfile
+      - name: type check tauri runtime
+        run: pnpm --filter=@deltachat-desktop/target-tauri check:types
+      - name: build tauri frontend bundle
+        run: pnpm --filter=@deltachat-desktop/target-tauri build
+
+  # Compiles src-tauri against the pinned core crates. Uses a fake
+  # html-dist since tauri's `generate_context!` only needs the dir to exist.
+  rust:
+    name: Tauri Rust check + tests
+    runs-on: ubuntu-22.04
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          show-progress: false
+          persist-credentials: false
+      - name: install Linux build deps
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            libwebkit2gtk-4.1-dev \
+            libappindicator3-dev \
+            librsvg2-dev \
+            patchelf
+      - uses: dtolnay/rust-toolchain@3c5f7ea28cd621ae0bf5283f0e981fb97b8a7af9
+        with:
+          # same toolchain as r404r-release.yml
+          toolchain: stable
+      - uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            target/
+          key: ${{ runner.os }}-cargo-check-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-cargo-check-
+      - name: fake html dist dir to make it build
+        run: |
+          mkdir -p packages/target-tauri/html-dist
+          touch packages/target-tauri/html-dist/tauri_main.html
+      - name: cargo check
+        env:
+          VERSION_INFO_GIT_REF: ${{ github.sha }}
+        run: cargo check --workspace --all-targets --locked
+      - name: cargo test
+        env:
+          VERSION_INFO_GIT_REF: testing
+        run: cargo test --workspace --locked
